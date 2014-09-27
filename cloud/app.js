@@ -4,7 +4,6 @@ var app = express();
 var name = require('cloud/name.js');
 var avosExpressHttpsRedirect = require('avos-express-https-redirect');
 
-
 // App全局配置
 //设置模板目录
 if(__production)
@@ -38,8 +37,56 @@ function renderIndex(res, name){
 
 }
 
+var mime = {
+    "html" : "text/html",
+    "css"  : "text/css",
+    "js"   : "text/javascript",
+    "json" : "application/json",
+    "ico"  : "image/x-icon",
+    "gif"  : "image/gif",
+    "jpeg" : "image/jpeg",
+    "jpg"  : "image/jpeg",
+    "png"  : "image/png",
+    "pdf"  : "application/pdf",
+    "svg"  : "image/svg+xml",
+    "swf"  : "application/x-shockwave-flash",
+    "tiff" : "image/tiff",
+    "txt"  : "text/plain",
+    "wav"  : "audio/x-wav",
+    "wma"  : "audio/x-ms-wma",
+    "wmv"  : "video/x-ms-wmv",
+    "xml"  : "text/xml"
+};
+
+// FServer.js
+var fs   = require('fs');
+function filesLoad(filePath, type, req, res){
+    fs.exists(filePath, function(exists){
+        if ( !exists ) {
+            res.writeHead(404, {'Content-Type': 'text/plain'});
+            // res.write();
+            res.end();
+        } else {
+            fs.readFile(filePath, 'binary', function(err, file){
+                if ( err ) {
+                    res.writeHead(500, {'Content-Type': 'text/plain'});
+                    // res.write();
+                    res.end();
+                } else {
+                    res.writeHead(200, {'Content-Type': mime[type]});
+                    res.write(file, 'binary');
+                    res.end();
+                }
+            });
+        }
+    });
+}
+exports.filesLoad = filesLoad;
+
 app.get('/', function(req, res){
-    res.redirect("/index.html");
+    var redirectfile = __dirname + '/../public/index.html';
+    filesLoad(redirectfile, "html", req, res);
+//    res.redirect("/index.html");
 });
 
 /*
