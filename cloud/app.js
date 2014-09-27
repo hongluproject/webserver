@@ -39,11 +39,17 @@ function renderIndex(res, name){
 }
 
 app.get('/', function(req, res){
+    res.redirect("./index.html");
+});
+
+/*
+app.get('/', function(req, res){
 	var name = req.query.name;
 	if(!name)
 		name = 'AVOS Cloud';
 	renderIndex(res, name);
 });
+*/
 
 app.post('/',function(req, res){
 	var name = req.body.name;
