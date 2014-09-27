@@ -125,7 +125,5 @@ app.post('/',function(req, res){
 	}
 });
 
-console.log(__dirname);
-
 // This line is required to make Express respond to http requests.
 app.listen();
