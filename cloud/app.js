@@ -87,10 +87,14 @@ app.get('/', function(req, res){
 //    var redirectfile = __dirname + '/../public/index.html';
 //    filesLoad(redirectfile, "html", req, res);
 //    res.redirect("/index.html");
+    /*
     var myContent = '<html><head><meta property=\"wb:webmaster\" content=\"3cfad08e6e2c794b\" /></head><body>this is a test</body></html>';
     res.writeHead(200, {'Content-Type': 'text/html'});
     res.write(myContent);
     res.end();
+    */
+    res.sendfile('public/index.html');
+
 });
 
 /*
@@ -120,6 +124,8 @@ app.post('/',function(req, res){
 		res.redirect('/');
 	}
 });
+
+console.log(__dirname);
 
 // This line is required to make Express respond to http requests.
 app.listen();
