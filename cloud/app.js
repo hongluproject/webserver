@@ -39,7 +39,7 @@ function renderIndex(res, name){
 }
 
 app.get('/', function(req, res){
-    res.redirect("./index.html");
+    res.redirect("/index.html");
 });
 
 /*
