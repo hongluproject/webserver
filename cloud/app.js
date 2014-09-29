@@ -2,6 +2,7 @@
 var express = require('express');
 var app = express();
 var name = require('cloud/name.js');
+var common = require('cloud/common.js');
 var avosExpressHttpsRedirect = require('avos-express-https-redirect');
 
 // App全局配置
@@ -17,6 +18,46 @@ app.use(express.bodyParser());    // 读取请求body的中间件
 //使用express路由API服务/hello的http GET请求
 app.get('/hello', function(req, res) {
 	res.render('hello', { message: 'Congrats, you just set up your app!' });
+});
+
+//列表页
+app.get('/articleList', function(req, res) {
+    var interestList = AV.Object.extend("interestList");
+    var query = new AV.Query(interestList);
+    query.skip(0);
+    query.limit(100);
+    query.descending('createdAt');
+    query.find({
+        success: function(results){
+            res.render('articleList',{ articleList: results});
+        },
+        error: function(error){
+            console.log(error);
+            res.send("404 file not foud!");
+            res.end();
+        }
+    });
+});
+
+//详情页
+app.get('/article/:objid', function(req, res) {
+    var articleid = req.param("objid");
+    console.log(articleid);
+    var interestList = AV.Object.extend("interestList");
+    var query = new AV.Query(interestList);
+    query.get(articleid, {
+        success: function(obj) {
+                console.log(" id:" + obj.id);
+                var myContent = obj.get("content");
+                myContent = myContent.replace("<html>", "").replace("</html>", "").replace("<head>", "").replace("</head>", "");
+                res.render('article',{ content: myContent});
+        },
+        error: function(object, error) {
+            console.log("Error: " + error.code + " " + error.message);
+            res.send("404 file not foud!");
+            res.end();
+        }
+    });
 });
 
 var Visitor = AV.Object.extend('Visitor');
@@ -37,52 +78,6 @@ function renderIndex(res, name){
 
 }
 
-var mime = {
-    "html" : "text/html",
-    "css"  : "text/css",
-    "js"   : "text/javascript",
-    "json" : "application/json",
-    "ico"  : "image/x-icon",
-    "gif"  : "image/gif",
-    "jpeg" : "image/jpeg",
-    "jpg"  : "image/jpeg",
-    "png"  : "image/png",
-    "pdf"  : "application/pdf",
-    "svg"  : "image/svg+xml",
-    "swf"  : "application/x-shockwave-flash",
-    "tiff" : "image/tiff",
-    "txt"  : "text/plain",
-    "wav"  : "audio/x-wav",
-    "wma"  : "audio/x-ms-wma",
-    "wmv"  : "video/x-ms-wmv",
-    "xml"  : "text/xml"
-};
-
-// FServer.js
-var fs   = require('fs');
-function filesLoad(filePath, type, req, res){
-    fs.exists(filePath, function(exists){
-        if ( !exists ) {
-            res.writeHead(404, {'Content-Type': 'text/plain'});
-            // res.write();
-            res.end();
-        } else {
-            fs.readFile(filePath, 'binary', function(err, file){
-                if ( err ) {
-                    res.writeHead(500, {'Content-Type': 'text/plain'});
-                    // res.write();
-                    res.end();
-                } else {
-                    res.writeHead(200, {'Content-Type': mime[type]});
-                    res.write(file, 'binary');
-                    res.end();
-                }
-            });
-        }
-    });
-}
-exports.filesLoad = filesLoad;
-
 app.get('/', function(req, res){
 //    var redirectfile = __dirname + '/../public/index.html';
 //    filesLoad(redirectfile, "html", req, res);
@@ -93,7 +88,7 @@ app.get('/', function(req, res){
     res.write(myContent);
     res.end();
     */
-    res.sendfile('public/index.html');
+    res.sendfile('./public/index.html');
 
 });
 
