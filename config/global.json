@@ -4,6 +4,8 @@
     "applicationId": "z6g1g10012kcbv4x9kwpxywiz3g3hus6d5oeotnh47f8vdq5",
     "applicationKey": "zkbi6vcmpnz2qlcm7yyt4lyhrvoa08ag62yfrtc1igqvsx98",
     "global": {
-        "avVersion": "0.2.0"
+        "avVersion": "0.2.0",
+        "qiniu":"6.1.3",
+        "node-qiniu": "6.1.6"
     }
 }
