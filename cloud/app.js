@@ -5,16 +5,11 @@ var name = require('cloud/name.js');
 var common = require('cloud/common.js');
 var avosExpressHttpsRedirect = require('avos-express-https-redirect');
 var qiniu = require('qiniu');
+var utils = require('cloud/utils');
 
 //七牛的AK和SK
 qiniu.conf.ACCESS_KEY = 'bGJ2PX1QjaSuy4Y9AaX-WgcKoGzIIFHXmVBqWHMt';
 qiniu.conf.SECRET_KEY = '7PHdOXp912l54TYzG2P7Mmqw-AALLZ3Kaamv4885';
-
-//融云appkey
-var rongCloudAppKey = '25wehl3uw655w';
-var rongCloudAppSecret = 'XC8BtPoSdBHu';
-
-var qiniuExpireTimeSecond = 7*24*3600;    //七牛过期时间，以秒为单位
 
 // App全局配置
 //设置模板目录
@@ -23,7 +18,9 @@ if(__production)
 else
 	app.set('views', 'cloud/dev_views');
 app.set('view engine', 'ejs');    // 设置template引擎
+
 app.use(express.bodyParser());    // 读取请求body的中间件
+
 app.use(avosExpressHttpsRedirect()); //启用HTTPS
 
 //使用express路由API服务/hello的http GET请求
@@ -70,6 +67,7 @@ app.get('/qiniutoken', function(req,res) {
     }
 
     res.json(retObj);
+    res.end();
 });
 
 //列表页
@@ -97,16 +95,31 @@ app.get('/articleList', function(req, res) {
  */
 app.post('/getimtoken', function(req, res){
     var ret = {
-        status:"success",
+        status:"success"
     }
 
-    //从body中取得userid，bodyparser有点问题，暂时写死一个
-    var userobjid = '545b2a30e4b0d285a0ebf96f';//req.body.userid;
+    //从body中取得userid，由于avos采用json格式传递body体，所以需要取得json字符串，转换成json object
+    var bodytext = '';
+    for (var k in req.body) {
+        bodytext = k;
+        console.log("key:%s value:%s", k, req.body[k]);
+    }
+
+    var bodyObj = JSON.parse(bodytext);
+    if (bodyObj == undefined) {
+        ret.status = 'fail';
+        ret.errmsg = 'body content is not expected';
+        res.json(ret);
+        res.end();
+        return;
+    }
+
+    var userobjid = bodyObj.userid;
     console.log("userid:%s", userobjid);
 
-    if (userobjid==undefined || userobjid=='') {
+    if (userobjid == undefined) {
         ret.status = 'fail';
-        ret.errmsg = 'user id not sent';
+        ret.errmsg = 'user id is expected';
         res.json(ret);
         res.end();
         return;
@@ -121,13 +134,13 @@ app.post('/getimtoken', function(req, res){
             var icon = userObj.get('icon');
 
             //融云校验信息
-            var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
+            var appSecret = common.rongCloudAppSecret; // 开发者平台分配的 App Secret。
             var nonce = Math.floor(Math.random()*100000); // 获取随机数。
             var nowTime = new Date();
             var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
 
             var sourcedata = appSecret + nonce.toString() + timestamp.toString();
-            var signature = common.SHA1(sourcedata); //生成签名
+            var signature = utils.SHA1(sourcedata); //生成签名
 
             console.log("nonce:%d timestamp:%d singature:%s source:%s", nonce, timestamp, signature, sourcedata);
 
@@ -136,7 +149,7 @@ app.post('/getimtoken', function(req, res){
                 method: 'POST',
                 url: 'https://api.cn.rong.io/user/getToken.json',
                 headers: {
-                    'App-Key': rongCloudAppKey,
+                    'App-Key': common.rongCloudAppKey,
                     'Nonce': nonce,
                     'Timestamp': timestamp,
                     'Signature': signature
@@ -158,6 +171,7 @@ app.post('/getimtoken', function(req, res){
                     console.error('Request failed with response code ' + httpResponse.status);
 
                     ret.status = 'fail';
+                    ret.errmsg = 'Request failed with response code ' + httpResponse.status;
                     ret.json(ret);
                     res.end();
                 }
@@ -168,6 +182,7 @@ app.post('/getimtoken', function(req, res){
             // error is a AV.Error with an error code and description.
             console.log(error);
 
+            ret.errmsg = error.code + ':' +error.description;
             ret.status = 'fail';
             res.json(ret);
             res.end();
@@ -275,9 +290,9 @@ for (var i=0; i<3000; i++) {
     var interestList = AV.Object.extend("interestList");
     var iList = new interestList();
     console.log("current index " + i);
-    iList.set("title", common.randomString(32));
-    iList.set("content", common.randomString(100));
-    iList.set("from", common.randomString(10));
+    iList.set("title", utils.randomString(32));
+    iList.set("content", utils.randomString(100));
+    iList.set("from", utils.randomString(10));
     iList.set("tag", Math.floor(Math.random()*tagNum));
     iList.save(null, {
         success: function(item) {

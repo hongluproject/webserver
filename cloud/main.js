@@ -2,6 +2,9 @@
 // For example:
 var name = require('cloud/name.js');
 require('cloud/app.js')
+var utils = require('cloud/utils');
+var common = require('cloud/common');
+
 AV.Cloud.define("hello", function(request, response) {
     console.log(request.user);
 	response.success("Hello world," + request.params.name);
@@ -14,7 +17,7 @@ AV.Cloud.define("hello", function(request, response) {
 AV.Cloud.define('getimtoken', function(req, res){
 	var ret = {
 		status:"success",
-	}
+	};
 
 	//从body中取得userid，bodyparser有点问题，暂时写死一个
 	var userobjid = '545b2a30e4b0d285a0ebf96f';//req.body.userid;
@@ -37,7 +40,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 			var icon = userObj.get('icon');
 
 			//融云校验信息
-			var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
+			var appSecret = common.rongCloudAppSecret; // 开发者平台分配的 App Secret。
 			var nonce = Math.floor(Math.random()*100000); // 获取随机数。
 			var nowTime = new Date();
 			var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
@@ -52,7 +55,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 				method: 'POST',
 				url: 'https://api.cn.rong.io/user/getToken.json',
 				headers: {
-					'App-Key': rongCloudAppKey,
+					'App-Key': common.rongCloudAppKey,
 					'Nonce': nonce,
 					'Timestamp': timestamp,
 					'Signature': signature
