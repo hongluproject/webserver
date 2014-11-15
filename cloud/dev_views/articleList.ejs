@@ -7,18 +7,20 @@
 <body>
 <div class="page-header"></div>
 <div class='container'>
-    <h3>文章列表：</h3>
+    <h1>文章列表：</h1>
     <br/>
     <table class='table table-bordered'>
         <tr>
-            <td><h1>标题</h1></td>
-            <td><h1>来源</h1></td>
+            <td><h3>标题</h3></td>
+            <td><h3>来源</h3></td>
+            <td><h3>更新时间</h3></td>
         </tr>
         <% if (articleList){ %>
         <%  articleList.forEach(function (article){ %>
         <tr>
             <td><a href="/article/<%= article.id%>" target="_blank"><%= article.get("title")%></a>  </td>
             <td><%= article.get("from")%></td>
+            <td><%= article.updatedAt%></td>
         </tr>
         <% })
         } %>
