@@ -1,7 +1,7 @@
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 var name = require('cloud/name.js');
-require('cloud/app.js')
+require('cloud/app.js');
 var utils = require('cloud/utils');
 var common = require('cloud/common');
 
@@ -16,16 +16,31 @@ AV.Cloud.define("hello", function(request, response) {
  */
 AV.Cloud.define('getimtoken', function(req, res){
 	var ret = {
-		status:"success",
-	};
+		status:"success"
+	}
 
-	//从body中取得userid，bodyparser有点问题，暂时写死一个
-	var userobjid = '545b2a30e4b0d285a0ebf96f';//req.body.userid;
+	//从body中取得userid，由于avos采用json格式传递body体，所以需要取得json字符串，转换成json object
+	var bodytext = '';
+	for (var k in req.body) {
+		bodytext = k;
+		console.log("key:%s value:%s", k, req.body[k]);
+	}
+
+	var bodyObj = JSON.parse(bodytext);
+	if (bodyObj == undefined) {
+		ret.status = 'fail';
+		ret.errmsg = 'body content is not expected';
+		res.json(ret);
+		res.end();
+		return;
+	}
+
+	var userobjid = bodyObj.userid;
 	console.log("userid:%s", userobjid);
 
-	if (userobjid==undefined || userobjid=='') {
+	if (userobjid == undefined) {
 		ret.status = 'fail';
-		ret.errmsg = 'user id not sent';
+		ret.errmsg = 'user id is expected';
 		res.json(ret);
 		res.end();
 		return;
@@ -46,7 +61,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 			var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
 
 			var sourcedata = appSecret + nonce.toString() + timestamp.toString();
-			var signature = common.SHA1(sourcedata); //生成签名
+			var signature = utils.SHA1(sourcedata); //生成签名
 
 			console.log("nonce:%d timestamp:%d singature:%s source:%s", nonce, timestamp, signature, sourcedata);
 
@@ -77,6 +92,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 					console.error('Request failed with response code ' + httpResponse.status);
 
 					ret.status = 'fail';
+					ret.errmsg = 'Request failed with response code ' + httpResponse.status;
 					ret.json(ret);
 					res.end();
 				}
@@ -87,6 +103,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 			// error is a AV.Error with an error code and description.
 			console.log(error);
 
+			ret.errmsg = error.code + ':' +error.description;
 			ret.status = 'fail';
 			res.json(ret);
 			res.end();
