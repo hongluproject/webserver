@@ -47,6 +47,7 @@ AV.Query.doCloudQuery('select id0=row_number() over (partition by tag order by u
 });
 */
 
+/*
 app.get('/qiniutoken', function(req,res) {
     function uptoken(bucketname) {
         var putPolicy = new qiniu.rs.PutPolicy(bucketname);
@@ -68,6 +69,7 @@ app.get('/qiniutoken', function(req,res) {
     res.json(retObj);
     res.end();
 });
+*/
 
 //列表页
 app.get('/articleList', function(req, res) {
