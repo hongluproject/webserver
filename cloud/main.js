@@ -2,12 +2,13 @@
 // For example:
 var name = require('cloud/name.js');
 require('cloud/app.js');
-var utils = require('cloud/utils');
-var common = require('cloud/common');
+var myutils = require('cloud/utils.js');
+var common = require('cloud/common.js');
 
 AV.Cloud.define("hello", function(request, response) {
-    console.log(request.user);
-	response.success("Hello world," + request.params.name);
+	var dumpOutput = myutils.dumpObj(request,'request','1', 3);
+	console.log(dumpOutput);
+	response.success("Hello world," + request.params.userid);
 });
 
 /**
@@ -17,34 +18,19 @@ AV.Cloud.define("hello", function(request, response) {
 AV.Cloud.define('getimtoken', function(req, res){
 	var ret = {
 		status:"success"
-	}
+	};
 
-	//从body中取得userid，由于avos采用json格式传递body体，所以需要取得json字符串，转换成json object
-	var bodytext = '';
-	for (var k in req.body) {
-		bodytext = k;
-		console.log("key:%s value:%s", k, req.body[k]);
-	}
+	myutils.printObject();
+	var dumpOutput = myutils.dumpObj(req,'request','1', 3);
+	console.log(dumpOutput);
 
-	var bodyObj = JSON.parse(bodytext);
-	if (bodyObj == undefined) {
-		ret.status = 'fail';
-		ret.errmsg = 'body content is not expected';
-		res.json(ret);
-		res.end();
+	var userobjid = req.params.userid;
+	if (userobjid ==  undefined) {
+		res.error('userid is expected!');
 		return;
 	}
 
-	var userobjid = bodyObj.userid;
 	console.log("userid:%s", userobjid);
-
-	if (userobjid == undefined) {
-		ret.status = 'fail';
-		ret.errmsg = 'user id is expected';
-		res.json(ret);
-		res.end();
-		return;
-	}
 
 	//根据id查询用户表
 	var hpUser = AV.Object.extend("_User");
@@ -61,7 +47,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 			var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
 
 			var sourcedata = appSecret + nonce.toString() + timestamp.toString();
-			var signature = utils.SHA1(sourcedata); //生成签名
+			var signature = myutils.SHA1(sourcedata); //生成签名
 
 			console.log("nonce:%d timestamp:%d singature:%s source:%s", nonce, timestamp, signature, sourcedata);
 
@@ -81,20 +67,15 @@ AV.Cloud.define('getimtoken', function(req, res){
 					portraitUri:icon
 				},
 				success: function(httpResponse) {
+					console.log(myutils.dumpObj(httpResponse, 'httpresponse', 'mark', 5));
 					console.log(httpResponse.text);
-					ret.content = JSON.parse(httpResponse.text);
-					console.log(ret);
 
-					res.json(ret);
-					res.end();
+					res.success(httpResponse.data);
 				},
 				error: function(httpResponse) {
-					console.error('Request failed with response code ' + httpResponse.status);
-
-					ret.status = 'fail';
-					ret.errmsg = 'Request failed with response code ' + httpResponse.status;
-					ret.json(ret);
-					res.end();
+					var errmsg = 'Request failed with response code ' + httpResponse.status;
+					console.log(errmsg);
+					res.error(errmsg);
 				}
 			});
 		},
@@ -103,10 +84,9 @@ AV.Cloud.define('getimtoken', function(req, res){
 			// error is a AV.Error with an error code and description.
 			console.log(error);
 
-			ret.errmsg = error.code + ':' +error.description;
-			ret.status = 'fail';
-			res.json(ret);
-			res.end();
+			var errmsg = 'query object fail:' + error.code;
+
+			res.error(errmsg);
 		}
 	});
 });
