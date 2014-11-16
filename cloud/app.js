@@ -5,7 +5,6 @@ var name = require('cloud/name.js');
 var common = require('cloud/common.js');
 var avosExpressHttpsRedirect = require('avos-express-https-redirect');
 var qiniu = require('qiniu');
-var utils = require('cloud/utils');
 
 //七牛的AK和SK
 qiniu.conf.ACCESS_KEY = 'bGJ2PX1QjaSuy4Y9AaX-WgcKoGzIIFHXmVBqWHMt';
