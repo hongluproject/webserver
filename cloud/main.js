@@ -3,6 +3,10 @@
 var name = require('cloud/name.js');
 require('cloud/app.js')
 
+//融云appkey
+var rongCloudAppKey = '25wehl3uw655w';
+var rongCloudAppSecret = 'XC8BtPoSdBHu';
+
 AV.Cloud.define("hello", function(request, response) {
 	response.success("Hello world," + request.params.userid);
 });

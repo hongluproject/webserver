@@ -10,6 +10,8 @@ var qiniu = require('qiniu');
 qiniu.conf.ACCESS_KEY = 'bGJ2PX1QjaSuy4Y9AaX-WgcKoGzIIFHXmVBqWHMt';
 qiniu.conf.SECRET_KEY = '7PHdOXp912l54TYzG2P7Mmqw-AALLZ3Kaamv4885';
 
+var qiniuExpireTimeSecond = 7*24*3600;    //七牛过期时间，以秒为单位
+
 // App全局配置
 //设置模板目录
 if(__production)
@@ -47,7 +49,6 @@ AV.Query.doCloudQuery('select id0=row_number() over (partition by tag order by u
 });
 */
 
-/*
 app.get('/qiniutoken', function(req,res) {
     function uptoken(bucketname) {
         var putPolicy = new qiniu.rs.PutPolicy(bucketname);
@@ -56,20 +57,19 @@ app.get('/qiniutoken', function(req,res) {
         //putPolicy.returnUrl = returnUrl;
         //putPolicy.returnBody = returnBody;
         //putPolicy.asyncOps = asyncOps;
-        putPolicy.expires = common.qiniuExpireTimeSecond;  //7天过期
+        putPolicy.expires = qiniuExpireTimeSecond;  //7天过期
         return putPolicy.token();
     }
 
     var retObj = {
         status:"success",
-        expire: common.qiniuExpireTimeSecond,
+        expire: qiniuExpireTimeSecond,
         token:uptoken('hoopeng')
     }
 
     res.json(retObj);
     res.end();
 });
-*/
 
 //列表页
 app.get('/articleList', function(req, res) {
