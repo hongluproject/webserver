@@ -55,13 +55,13 @@ app.get('/qiniutoken', function(req,res) {
         //putPolicy.returnUrl = returnUrl;
         //putPolicy.returnBody = returnBody;
         //putPolicy.asyncOps = asyncOps;
-        putPolicy.expires = qiniuExpireTimeSecond;  //7天过期
+        putPolicy.expires = common.qiniuExpireTimeSecond;  //7天过期
         return putPolicy.token();
     }
 
     var retObj = {
         status:"success",
-        expire: qiniuExpireTimeSecond,
+        expire: common.qiniuExpireTimeSecond,
         token:uptoken('hoopeng')
     }
 
