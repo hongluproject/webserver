@@ -1,7 +1,7 @@
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 var name = require('cloud/name.js');
-require('cloud/app.js');
+require('cloud/app.js')
 //var myutils = require('cloud/utils.js');
 //var common = require('cloud/common.js');
 
