@@ -2,8 +2,8 @@
 // For example:
 var name = require('cloud/name.js');
 require('cloud/app.js');
-var myutils = require('cloud/utils.js');
-var common = require('cloud/common.js');
+//var myutils = require('cloud/utils.js');
+//var common = require('cloud/common.js');
 
 AV.Cloud.define("hello", function(request, response) {
 	var dumpOutput = myutils.dumpObj(request,'request','1', 3);
