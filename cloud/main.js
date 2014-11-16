@@ -6,8 +6,6 @@ require('cloud/app.js');
 //var common = require('cloud/common.js');
 
 AV.Cloud.define("hello", function(request, response) {
-	var dumpOutput = myutils.dumpObj(request,'request','1', 3);
-	console.log(dumpOutput);
 	response.success("Hello world," + request.params.userid);
 });
 
