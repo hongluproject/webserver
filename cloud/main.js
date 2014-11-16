@@ -15,6 +15,7 @@ AV.Cloud.define("hello", function(request, response) {
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求
  */
+/*
 AV.Cloud.define('getimtoken', function(req, res){
 	var ret = {
 		status:"success"
@@ -24,6 +25,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 	var dumpOutput = myutils.dumpObj(req,'request','1', 3);
 	console.log(dumpOutput);
 
+	//获取用户id
 	var userobjid = req.params.userid;
 	if (userobjid ==  undefined) {
 		res.error('userid is expected!');
@@ -90,7 +92,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 		}
 	});
 });
-
+*/
 AV.Cloud.beforeSave("TestReview", function(request, response){
 	if (request.object.get("stars") < 1) {
 		response.error("you cannot give less than one star");
