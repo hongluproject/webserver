@@ -21,10 +21,6 @@ AV.Cloud.define('getimtoken', function(req, res){
 		status:"success"
 	};
 
-	myutils.printObject();
-	var dumpOutput = myutils.dumpObj(req,'request','1', 3);
-	console.log(dumpOutput);
-
 	var userobjid = req.params.userid;
 	if (userobjid ==  undefined) {
 		res.error('userid is expected!');
@@ -68,7 +64,6 @@ AV.Cloud.define('getimtoken', function(req, res){
 					portraitUri:icon
 				},
 				success: function(httpResponse) {
-					console.log(myutils.dumpObj(httpResponse, 'httpresponse', 'mark', 5));
 					console.log(httpResponse.text);
 
 					res.success(httpResponse.data);
