@@ -66,6 +66,7 @@ AV.Cloud.define('getimtoken', function(req, res){
 				success: function(httpResponse) {
 					console.log(httpResponse.text);
 
+					delete httpResponse.data.code;
 					res.success(httpResponse.data);
 				},
 				error: function(httpResponse) {
