@@ -218,3 +218,25 @@ exports.SHA1 =  function (msg) {
     return temp.toLowerCase();
 
 }
+
+exports.getRongCloudParam = function() {
+    //融云appkey & secret
+    var rongCloudAppKey = '25wehl3uw655w';
+    var rongCloudAppSecret = 'XC8BtPoSdBHu';
+
+    //融云校验信息
+    var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
+    var nonce = Math.floor(Math.random()*100000); // 获取随机数。
+    var nowTime = new Date();
+    var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
+
+    var sourcedata = appSecret + nonce.toString() + timestamp.toString();
+    var signature = exports.SHA1(sourcedata); //生成签名
+
+    return {
+        appKey:rongCloudAppKey,
+        nonce:nonce,
+        timestamp:timestamp,
+        signature:signature
+    };
+}
