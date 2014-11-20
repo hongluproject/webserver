@@ -267,17 +267,11 @@ AV.Cloud.define('imDismissGroup', function(request, response){
 /**	在用户注册成功后，做一些处理
  *
  */
-AV.Cloud.beforeSave('_User', function(request, response){
+AV.Cloud.afterSave('_User', function(request){
 	var nickname = request.object.get('nickname');
 	var invite_id = request.object.get('invite_id');
 	console.info('_User beforeSave:id:%s nickname:%s invite_id:%d', request.object.id, nickname, invite_id);
 	if (nickname==undefined || nickname=='') {	//注册的时候没有带nickname，则需要为其补充一个
-		if (invite_id > 0) {
-			nickname = '行者' + invite_id;
-			request.object.set('nickname') = nickname;
-		} else {
-
-		}
 	}
 
 	response.success();
