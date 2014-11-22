@@ -4,8 +4,58 @@ var name = require('cloud/name.js');
 require('cloud/app.js');
 var myutils = require('cloud/utils.js');
 
+/** 测试返回多个class数据
+ *
+ */
 AV.Cloud.define("hello", function(request, response) {
-	response.success("Hello world," + request.params.userid);
+	var ret = {
+		recommendUser:{},
+		systemPost:{},
+		friendPost:{}
+	};
+
+	var step3 = function() {
+		response.success(ret);
+	};
+
+	//查找推荐
+	var step2 = function() {
+		var News = AV.Object.extend("News");
+		var query = new AV.Query(News);
+		query.limit = 10;
+		query.find({
+			success:function(results){
+				console.info("user result count:%d", results.length);
+				ret.systemPost = results;
+
+				step3();
+			},
+			error:function(error){
+				step3();
+			}
+		});
+	};
+
+	//查找推荐的用户
+	var step1 = function() {
+		var user1 = AV.Object.extend("_User");
+		var query = new AV.Query(user1);
+		query.limit = 5;
+		query.find({
+			success:function(results){
+				console.info("user result count:%d", results.length);
+				ret.recommendUser = results;
+
+				step2();
+			},
+			error:function(error){
+				step2();
+			}
+		});
+	};
+
+	step1();
+
 });
 
 /**
@@ -264,18 +314,56 @@ AV.Cloud.define('imDismissGroup', function(request, response){
 
 });
 
+/*
 /**	在用户注册成功后，做一些处理
  *
  */
 AV.Cloud.afterSave('_User', function(request){
 	var nickname = request.object.get('nickname');
 	var invite_id = request.object.get('invite_id');
-	console.info('_User beforeSave:id:%s nickname:%s invite_id:%d', request.object.id, nickname, invite_id);
+	console.info('_User afterSave:id:%s nickname:%s invite_id:%d', request.object.id, nickname, invite_id);
 	if (nickname==undefined || nickname=='') {	//注册的时候没有带nickname，则需要为其补充一个
 	}
-
-	response.success();
 });
+
+AV.Cloud.afterDelete('_User', function(request){
+	console.info("enter afterDelete");
+});
+
+/** 如果有新增的资讯评论，资讯表里面的评论数加1
+ *
+ */
+/*
+AV.Cloud.afterSave('NewsComment', function(request, response){
+	var query = new AV.Query("News");
+	query.get(request.object.get("newsid").id, {
+		success: function(news) {
+			console.info("NewsComment afterSave comment_count increment");
+			news.increment("comment_count");
+			news.save();
+		},
+		error: function(error) {
+			console.error( "NewsComment afterSave:Got an error " + error.code + " : " + error.message);
+		}
+	});
+});
+
+AV.Cloud.afterDelete('NewsComment', function(request){
+	var query = new AV.Query("News");
+	query.get(request.object.get("newsid").id, {
+		success: function(news) {
+			console.info("NewsComment afterSave comment_count increment");
+			if (news.get("comment_count") > 0) {	//评论次数大于0，才能做递减操作
+				news.increment("comment_count");
+				news.save();
+			}
+		},
+		error: function(error) {
+			console.error( "NewsComment afterDelete:Got an error " + error.code + " : " + error.message);
+		}
+	});
+});
+*/
 
 AV.Cloud.beforeSave("TestReview", function(request, response){
 	if (request.object.get("stars") < 1) {
