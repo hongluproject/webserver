@@ -221,8 +221,8 @@ exports.SHA1 =  function (msg) {
 
 exports.getRongCloudParam = function() {
     //融云appkey & secret
-    var rongCloudAppKey = '25wehl3uw655w';
-    var rongCloudAppSecret = 'XC8BtPoSdBHu';
+    var rongCloudAppKey = 'pwe86ga5er6m6';
+    var rongCloudAppSecret = 'ScUoRd65VLv';
 
     //融云校验信息
     var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
