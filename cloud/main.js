@@ -8,6 +8,46 @@ AV.Cloud.define("hello", function(request, response) {
 	response.success("Hello world," + request.params.userid);
 });
 
+
+AV.Cloud.define("GetClanUser",function(req, res){
+    var clan_id = req.params.clan_id;
+    var Clan = AV.Object.extend("Clan");
+    var ClanUser = AV.Object.extend("ClanUser");
+    var query = new AV.Query(ClanUser);
+    var clan_user = [];
+    var myClan = new Clan();
+    myClan.set("objectId", clan_id);
+    query.equalTo("clan_id", myClan);
+    query.include("user_id");
+    query.include("clan_id");
+    query.find({
+        success: function(result) {
+            var finalResult = [];
+            for (var i = 0; i < result.length; i++) {
+                var outChannel = {};
+                var user =  result[i].get("user_id");
+                var clan =  result[i].get("clan_id");
+                //this level belong to table ClanUser
+                outChannel.userIcon     =  user.get("icon");
+                outChannel.userNickname =  user.get("nickname")
+                outChannel.userObjectId =  user.id;
+                outChannel.ClanName =  clan.get("title");
+                outChannel.Clanicon =  clan.get("icon");
+                finalResult.push(outChannel);
+            }
+            res.success(finalResult);
+            },
+        error: function(error) {
+            alert("Error: " + error.code + " " + error.message);
+        }
+
+    });
+
+});
+
+
+
+
 /**
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求
