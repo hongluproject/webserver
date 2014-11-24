@@ -59,7 +59,7 @@ AV.Cloud.define("hello", function(request, response) {
 });
 
 
-AV.Cloud.define("GetClanUser",function(req, res){
+AV.Cloud.define("getClanUser",function(req, res){
     var clan_id = req.params.clan_id;
     var Clan = AV.Object.extend("Clan");
     var ClanUser = AV.Object.extend("ClanUser");
@@ -81,8 +81,8 @@ AV.Cloud.define("GetClanUser",function(req, res){
                 outChannel.userIcon     =  user.get("icon");
                 outChannel.userNickname =  user.get("nickname")
                 outChannel.userObjectId =  user.id;
-                outChannel.ClanName =  clan.get("title");
-                outChannel.Clanicon =  clan.get("icon");
+                outChannel.clanName =  clan.get("title");
+                outChannel.clanIcon =  clan.get("icon");
                 finalResult.push(outChannel);
             }
             res.success(finalResult);
@@ -102,8 +102,7 @@ AV.Cloud.define("GetClanUser",function(req, res){
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求
  */
-AV.Cloud.define('getimtoken', function(req, res){
-
+AV.Cloud.define('getImToken', function(req, res){
 	//请求参数检查
 	var userobjid = req.params.userid;
 	if (userobjid ==  undefined) {
