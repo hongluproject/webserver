@@ -78,9 +78,9 @@ AV.Cloud.define("GetClanUser",function(req, res){
                 var user =  result[i].get("user_id");
                 var clan =  result[i].get("clan_id");
                 //this level belong to table ClanUser
-                outChannel.userIcon     =  user.get("icon");
-                outChannel.userNickname =  user.get("nickname")
-                outChannel.userObjectId =  user.id;
+                outChannel.UserIcon     =  user.get("icon");
+                outChannel.UserNickname =  user.get("nickname")
+                outChannel.UserObjectId =  user.id;
                 outChannel.ClanName =  clan.get("title");
                 outChannel.Clanicon =  clan.get("icon");
                 finalResult.push(outChannel);
