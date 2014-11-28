@@ -200,13 +200,16 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                         clanResult.push(outChannel);
                     }
                     ret.recommendClan = clanResult;
-                    getRecommendDynamic(userObj);
+                    getRecommendDynamic();
                 },
                 error:function(userObj,error) {
                     ret.recommendClan = [];
-                    getRecommendDynamic(userObj);
+                    getRecommendDynamic();
                 }
             });
+        }else{
+            ret.recommendClan = [];
+            getRecommendDynamic();
         }
     }
 
@@ -241,6 +244,9 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                     getRecommendClan(userObj);
                 }
             });
+        }else{
+            ret.recommendUser = [];
+            getRecommendClan();
         }
     }
     getRecommendUser();
