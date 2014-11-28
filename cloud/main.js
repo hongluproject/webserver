@@ -98,6 +98,156 @@ AV.Cloud.define("imGetClanUser",function(req, res){
 
 
 
+//todo  优化获取的字段，优化在没有人物ID时的需求
+AV.Cloud.define("imGetRecommend",function(req, res){
+    //共用
+    var tags = req.params.tags;
+    var userid = req.params.userid;
+    var User = AV.Object.extend("_User");
+    var Clan = AV.Object.extend("Clan");
+    var Dynamic = AV.Object.extend("DynamicNews");
+    var ret = {
+        recommendUser:{},
+        recommendClan:{},
+        recommendDynamic:{},
+        recommendAsk:{}
+    };
+    var getRecommendAsk = function(){
+        var index = Math.floor((Math.random()*tags.length));
+        var query = new AV.Query(Dynamic);
+        query.equalTo("tags", tags[index]);
+        query.equalTo("type", 1);
+        query.limit(2);
+        query.find({
+            success:function(result){
+                var askResult = [];
+                for (var i = 0; i < result.length; i++) {
+                    var user =  result[i].get("user_id");
+                    var outChannel = {};
+                    outChannel.content       = result[i].get("content");
+                    outChannel.userIcon       = user.get("icon");
+                    outChannel.userNickName       = user.get("nickname");
+                    outChannel.type          = result[i].get("type");
+                    outChannel.thumbs          = result[i].get("thumbs");
+                    outChannel.upCount          = result[i].get("up_count");
+                    outChannel.commentCount          = result[i].get("comment_count");
+                    outChannel.dynamicObjectId  =  result[i].id;
+                    outChannel.createdAt  =  result[i].createdAt;
+                    askResult.push(outChannel);
+                }
+                ret.recommendAsk = askResult;
+                res.success(ret);
+            },
+            error:function(){
+                ret.recommendAsk = [];
+                res.success(ret);
+            }
+        })
+    }
+
+
+    var getRecommendDynamic = function(){
+        var index = Math.floor((Math.random()*tags.length));
+        var query = new AV.Query(Dynamic);
+        query.equalTo("tags", tags[index]);
+        query.equalTo("type", 2);
+        query.limit(2);
+        query.include('user_id');
+        query.find({
+            success:function(result){
+                var dynamicResult = [];
+                for (var i = 0; i < result.length; i++) {
+                    var user =  result[i].get("user_id");
+                    var outChannel = {};
+                    outChannel.content       = result[i].get("content");
+                    outChannel.userIcon       = user.get("icon");
+                    outChannel.userNickName       = user.get("nickname");
+                    outChannel.type          = result[i].get("type");
+                    outChannel.thumbs          = result[i].get("thumbs");
+                    outChannel.upCount          = result[i].get("up_count");
+                    outChannel.commentCount          = result[i].get("comment_count");
+                    outChannel.dynamicObjectId  =  result[i].id;
+                    outChannel.createdAt  =  result[i].createdAt;
+                    dynamicResult.push(outChannel);
+                }
+                ret.recommendDynamic = dynamicResult;
+                getRecommendAsk();
+            },
+            error:function(){
+                ret.recommendDynamic = [];
+                getRecommendAsk();
+            }
+        })
+    }
+
+    var getRecommendClan = function(userObj){
+        if(userObj){
+            var userObjects = new User();
+            var userGeoPoint = userObj.get("actual_position");
+            var query = new AV.Query(Clan);
+            query.near("position", userGeoPoint);
+            query.limit(2);
+            query.find({
+                success: function(result) {
+                    var clanResult = [];
+                    for (var i = 0; i < result.length; i++) {
+                        var outChannel = {};
+                        outChannel.clanIcon      =  result[i].get("icon");
+                        outChannel.clanTitle  =  result[i].get("title")
+                        outChannel.clanPosition = result[i].get("position");
+                        outChannel.userTags       = result[i].get("tags");
+                        outChannel.clanObjectId  =  result[i].id;
+                        clanResult.push(outChannel);
+                    }
+                    ret.recommendClan = clanResult;
+                    getRecommendDynamic(userObj);
+                },
+                error:function(userObj,error) {
+                    ret.recommendClan = [];
+                    getRecommendDynamic(userObj);
+                }
+            });
+        }
+    }
+
+    var  getRecommendUser = function(){
+        if(userid){
+            var query = new AV.Query(User);
+            query.get(userid, {
+                success:function(userObj) {
+                    var userGeoPoint = userObj.get("actual_position");
+                    var query = new AV.Query(User);
+                    query.near("actual_position", userGeoPoint);
+                    query.limit(2);
+                    query.find({
+                        success: function(result) {
+                            var userResult = [];
+                            for (var i = 0; i < result.length; i++) {
+                                var outChannel = {};
+                                outChannel.userIcon      =  result[i].get("icon");
+                                outChannel.userNickName  =  result[i].get("nickname")
+                                outChannel.userActualPosition = result[i].get("actual_position");
+                                outChannel.userObjectId  =  result[i].id;
+                                outChannel.userTags       = result[i].get("tags");
+                                userResult.push(outChannel);
+                            }
+                            ret.recommendUser = userResult;
+                            getRecommendClan(userObj);
+                        }
+                    });
+                },
+                error:function(userObj,error) {
+                    ret.recommendUser = [];
+                    getRecommendClan(userObj);
+                }
+            });
+        }
+    }
+    getRecommendUser();
+});
+
+
+
 /**
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求
