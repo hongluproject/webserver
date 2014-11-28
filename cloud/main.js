@@ -3,6 +3,7 @@
 var name = require('cloud/name.js');
 require('cloud/app.js');
 var myutils = require('cloud/utils.js');
+var qiniu = require('qiniu');
 
 /** 测试返回多个class数据
  *
@@ -56,6 +57,41 @@ AV.Cloud.define("hello", function(request, response) {
 
 	step1();
 
+});
+
+/**  获取七牛云存储token
+ *  云函数名：getQiniuToken
+ *  参数：'bucketName',空间名，若没传，则默认为 'hoopeng'
+ */
+AV.Cloud.define('getQiniuToken', function(req, res){
+	var bucketName = req.params.bucketName;
+	console.log("bucketName param is %s", bucketName);
+	if (!bucketName) {
+		bucketName = "hoopeng";
+	}
+
+	//七牛的AK和SK
+	qiniu.conf.ACCESS_KEY = 'bGJ2PX1QjaSuy4Y9AaX-WgcKoGzIIFHXmVBqWHMt';
+	qiniu.conf.SECRET_KEY = '7PHdOXp912l54TYzG2P7Mmqw-AALLZ3Kaamv4885';
+	var qiniuExpireTimeSecond = 7*24*3600;    //七牛过期时间，以秒为单位
+
+	function uptoken(bucketname) {
+		var putPolicy = new qiniu.rs.PutPolicy(bucketname);
+		//putPolicy.callbackUrl = callbackUrl;
+		//putPolicy.callbackBody = callbackBody;
+		//putPolicy.returnUrl = returnUrl;
+		//putPolicy.returnBody = returnBody;
+		//putPolicy.asyncOps = asyncOps;
+		putPolicy.expires = qiniuExpireTimeSecond;  //7天过期
+		return putPolicy.token();
+	}
+
+	var retObj = {
+		expire: qiniuExpireTimeSecond,
+		token:uptoken(bucketName)
+	}
+
+	res.success(retObj);
 });
 
 

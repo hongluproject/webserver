@@ -4,13 +4,6 @@ var app = express();
 var name = require('cloud/name.js');
 var common = require('cloud/common.js');
 var avosExpressHttpsRedirect = require('avos-express-https-redirect');
-var qiniu = require('qiniu');
-
-//七牛的AK和SK
-qiniu.conf.ACCESS_KEY = 'bGJ2PX1QjaSuy4Y9AaX-WgcKoGzIIFHXmVBqWHMt';
-qiniu.conf.SECRET_KEY = '7PHdOXp912l54TYzG2P7Mmqw-AALLZ3Kaamv4885';
-
-var qiniuExpireTimeSecond = 7*24*3600;    //七牛过期时间，以秒为单位
 
 // App全局配置
 //设置模板目录
