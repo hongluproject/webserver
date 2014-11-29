@@ -261,11 +261,11 @@ AV.Cloud.define("imGetRecommend",function(req, res){
     var  getRecommendUser = function(){
         if(userid){
             var query = new AV.Query(User);
-            query.select("icon", "nickname","actual_position","tags","clanids");
             query.get(userid, {
                 success:function(userObj) {
                     var userGeoPoint = userObj.get("actual_position");
                     var query = new AV.Query(User);
+                    query.select("icon", "nickname","actual_position","tags","clanids");
                     query.near("actual_position", userGeoPoint);
                     query.notEqualTo("objectId", userid);
                     query.equalTo("tags", tags[index]);
@@ -283,6 +283,8 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                                 userResult.push(outChannel);
                             }
                             ret.recommendUser = userResult;
+
+
                             getRecommendClan(userObj);
                             return;
                         }
