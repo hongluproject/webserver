@@ -134,7 +134,6 @@ AV.Cloud.define("imGetClanUser",function(req, res){
 
 
 
-//todo  优化获取的字段，优化在没有人物ID时的需求
 AV.Cloud.define("imGetRecommend",function(req, res){
     //共用
     var tags = req.params.tags;
@@ -151,9 +150,11 @@ AV.Cloud.define("imGetRecommend",function(req, res){
     };
     var getRecommendAsk = function(){
         var query = new AV.Query(Dynamic);
+        query.select("user_id","content", "type","thumbs","up_count","comment_count");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 1);
         query.limit(2);
+        query.include('user_id');
         query.find({
             success:function(result){
                 var askResult = [];
@@ -184,6 +185,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
 
     var getRecommendDynamic = function(){
         var query = new AV.Query(Dynamic);
+        query.select("user_id","content", "type","thumbs","up_count","comment_count");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 2);
         query.limit(2);
@@ -223,6 +225,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
             if(clanids!=undefined){
                 query.notContainedIn("objectId", clanids);
             }
+            query.select("icon", "title","position","tags");
             query.equalTo("tags", tags[index]);
             query.near("position", userGeoPoint);
             query.limit(2);
@@ -240,21 +243,25 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                     }
                     ret.recommendClan = clanResult;
                     getRecommendDynamic();
+                    return;
                 },
                 error:function(userObj,error) {
                     ret.recommendClan = [];
                     getRecommendDynamic();
+                    return;
                 }
             });
         }else{
             ret.recommendClan = [];
             getRecommendDynamic();
+            return;
         }
     }
 
     var  getRecommendUser = function(){
         if(userid){
             var query = new AV.Query(User);
+            query.select("icon", "nickname","actual_position","tags","clanids");
             query.get(userid, {
                 success:function(userObj) {
                     var userGeoPoint = userObj.get("actual_position");
