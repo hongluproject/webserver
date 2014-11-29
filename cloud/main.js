@@ -389,21 +389,67 @@ AV.Cloud.define('imDismissGroup', function(request, response){
 
 });
 
-/*
-/**	在用户注册成功后，做一些处理
+/** 发布动态后，通知到所有关注我的人
  *
  */
-AV.Cloud.afterSave('_User', function(request){
-	var nickname = request.object.get('nickname');
-	var invite_id = request.object.get('invite_id');
-	console.info('_User afterSave:id:%s nickname:%s invite_id:%d', request.object.id, nickname, invite_id);
-	if (nickname==undefined || nickname=='') {	//注册的时候没有带nickname，则需要为其补充一个
+AV.Cloud.afterSave('DynamicNews', function(request){
+	var postUser = request.object.get('user_id')._toPointer();
+	if (!postUser) {
+		console.info("DynamicNews afterSave:user is null!");
+		return;
 	}
+	console.dir(postUser);
+
+	var status = new AV.Status(null, '发布了动态！');
+	status.data.source = postUser;
+	status.set('messageType', 'newPost');
+	status.set('dynamicNews', request.object._toPointer());
+	//先将此消息也发一份给自己，便于首页动态里面，可以看到自己
+	var user = AV.Object.extend('_User');
+	var query = new AV.Query(user);
+	query.equalTo('objectId', postUser.objectId);
+	status.query = query;
+	status.send().then(function(status){
+		//发送成功
+		console.info("%s 发布动态给自己成功!", postUser.objectId);
+		console.dir(status);
+	}, function(err){
+		//发送失败
+		console.info("%s 发布动态给自己失败!", postUser.objectId);
+		console.dir(err);
+	});
+
+	//再将此消息发送给所有我的关注者（粉丝），让他们可以看到我的动态
+	AV.Status.sendStatusToFollowers(status).then(function(status){
+		//发布状态成功，返回状态信息
+		console.info("%s 发布动态给粉丝成功!", postUser.objectId);
+		console.dir(status);
+	}, function(err){
+		//发布失败
+		console.error("%s 发布动态给粉丝失败!", postUser.objectId);
+		console.dir(err);
+	});
+
 });
 
+
+/*
+ /**	在用户注册成功后，做一些处理
+ *
+ AV.Cloud.afterSave('_User', function(request){
+ var nickname = request.object.get('nickname');
+ var invite_id = request.object.get('invite_id');
+ console.info('_User afterSave:id:%s nickname:%s invite_id:%d', request.object.id, nickname, invite_id);
+ if (nickname==undefined || nickname=='') {	//注册的时候没有带nickname，则需要为其补充一个
+ }
+ });
+ */
+
+/*
 AV.Cloud.afterDelete('_User', function(request){
 	console.info("enter afterDelete");
 });
+*/
 
 /** 如果有新增的资讯评论，资讯表里面的评论数加1
  *
@@ -440,6 +486,7 @@ AV.Cloud.afterDelete('NewsComment', function(request){
 });
 */
 
+/*
 AV.Cloud.beforeSave("TestReview", function(request, response){
 	if (request.object.get("stars") < 1) {
 		response.error("you cannot give less than one star");
@@ -481,3 +528,4 @@ AV.Cloud.afterSave("News", function(request) {
 		}
 	});
 });
+*/
