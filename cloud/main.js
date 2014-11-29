@@ -138,6 +138,7 @@ AV.Cloud.define("imGetClanUser",function(req, res){
 AV.Cloud.define("imGetRecommend",function(req, res){
     //共用
     var tags = req.params.tags;
+    var index = Math.floor((Math.random()*tags.length));
     var userid = req.params.userid;
     var User = AV.Object.extend("_User");
     var Clan = AV.Object.extend("Clan");
@@ -149,7 +150,6 @@ AV.Cloud.define("imGetRecommend",function(req, res){
         recommendAsk:{}
     };
     var getRecommendAsk = function(){
-        var index = Math.floor((Math.random()*tags.length));
         var query = new AV.Query(Dynamic);
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 1);
@@ -183,7 +183,6 @@ AV.Cloud.define("imGetRecommend",function(req, res){
 
 
     var getRecommendDynamic = function(){
-        var index = Math.floor((Math.random()*tags.length));
         var query = new AV.Query(Dynamic);
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 2);
@@ -218,9 +217,13 @@ AV.Cloud.define("imGetRecommend",function(req, res){
 
     var getRecommendClan = function(userObj){
         if(userObj){
-            var userObjects = new User();
             var userGeoPoint = userObj.get("actual_position");
+            var clanids        = userObj.get("clanids");
             var query = new AV.Query(Clan);
+            if(clanids!=undefined){
+                query.notContainedIn("objectId", clanids);
+            }
+            query.equalTo("tags", tags[index]);
             query.near("position", userGeoPoint);
             query.limit(2);
             query.find({
@@ -257,6 +260,8 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                     var userGeoPoint = userObj.get("actual_position");
                     var query = new AV.Query(User);
                     query.near("actual_position", userGeoPoint);
+                    query.notEqualTo("objectId", userid);
+                    query.equalTo("tags", tags[index]);
                     query.limit(2);
                     query.find({
                         success: function(result) {
@@ -272,17 +277,20 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                             }
                             ret.recommendUser = userResult;
                             getRecommendClan(userObj);
+                            return;
                         }
                     });
                 },
                 error:function(userObj,error) {
                     ret.recommendUser = [];
                     getRecommendClan(userObj);
+                    return;
                 }
             });
         }else{
             ret.recommendUser = [];
             getRecommendClan();
+            return;
         }
     }
     getRecommendUser();
