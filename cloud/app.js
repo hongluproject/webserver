@@ -83,26 +83,58 @@ app.get('/articleList', function(req, res) {
     });
 });
 
-//详情页
-app.get('/article/:objid', function(req, res) {
-    var articleid = req.param("objid");
-    console.log(articleid);
-    var interestList = AV.Object.extend("interestList");
-    var query = new AV.Query(interestList);
-    query.get(articleid, {
-        success: function(obj) {
-                console.log(" id:" + obj.id);
-                var myContent = obj.get("content");
-                myContent = myContent.replace("<html>", "").replace("</html>", "").replace("<head>", "").replace("</head>", "");
-                res.render('article',{ content: myContent});
-        },
-        error: function(object, error) {
-            console.log("Error: " + error.code + " " + error.message);
-            res.send("404 file not foud!");
-            res.end();
+/** 访问资讯详情页
+ *  @param: objid  资讯objectId
+ */
+app.get('/news/:objId', function(req, res) {
+    var renderObj = {};
+    var articleId = req.param("objId");
+    console.info("view news:%s",articleId);
+    var query = new AV.Query('News');
+    query.equalTo('objectId', articleId);
+    query.find().then(function(results){
+        //根据传进来的articleId，找到对应的资讯记录
+        if (!results || results.length<=0)
+            return AV.Promise.error("news not found!");
+        var tagIds = [];
+        for(var i in results) {
+            var obj = results[i];
+            console.dir(obj);
+            console.info(" id:" + obj.id);
+            renderObj.title = obj.get('title');
+            renderObj.publicDate = obj.get('publicAt');
+            renderObj.newsContent = obj.get('contents');
+            renderObj.fromWhere = obj.get('source'),
+            tagIds = obj.get('tags');
+            break;
         }
+
+        //根据提供的tagid，查询到tag详细信息
+        var queryTag = new AV.Query('Tag');
+        queryTag.containedIn('objectId', tagIds);
+        return queryTag.find();
+    }).then(function(results){
+        //根据资讯所属标签ID，找到对应的标签名称
+        renderObj.tagList = new Array();
+        console.info("print tagList");
+        for(var i in results) {
+            var obj = results[i];
+            console.dir(obj);
+            renderObj.tagList.push({
+                tagId:obj.id,
+                tagName:obj.get('tag_name')
+            });
+        }
+        console.info('renderobject:');
+        console.dir(renderObj);
+        res.render('article', renderObj);
+    },function(err){
+        console.dir(err);
+        res.writeHead(404);
+        res.end();
     });
 });
+
 
 /**
  *      测试返回json
@@ -134,19 +166,10 @@ function renderIndex(res, name){
 }
 
 app.get('/', function(req, res){
-//    var redirectfile = __dirname + '/../public/index.html';
-//    filesLoad(redirectfile, "html", req, res);
-//    res.redirect("/index.html");
-    /*
-    var myContent = '<html><head><meta property=\"wb:webmaster\" content=\"3cfad08e6e2c794b\" /></head><body>this is a test</body></html>';
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.write(myContent);
-    res.end();
-    */
+//    res.redirect('http://honglu.qiniudn.com/index.html');
+//    res.sendfile('http://honglu.qiniudn.com/index.html');
     res.sendfile('./public/index.html');
-
 });
-
 
 /**
  *
