@@ -127,6 +127,7 @@ app.get('/news/:objId', function(req, res) {
         }
         console.info('renderobject:');
         console.dir(renderObj);
+        res.setHeader('cache-control','public, max-age=1800');
         res.render('article', renderObj);
     },function(err){
         console.dir(err);
@@ -194,7 +195,7 @@ var name = req.body.name;
 });
 
 // This line is required to make Express respond to http requests.
-app.listen();
+app.listen({status:{maxAge:604800000}});
 
 
 /*
