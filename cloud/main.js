@@ -636,14 +636,13 @@ AV.Cloud.afterDelete('_User', function(request){
 /** 如果有新增的资讯评论，资讯表里面的评论数加1
  *
  */
-/*
-AV.Cloud.afterSave('NewsComment', function(request, response){
+AV.Cloud.afterSave('NewsComment', function(request){
 	var query = new AV.Query("News");
 	query.get(request.object.get("newsid").id, {
-		success: function(news) {
-			console.info("NewsComment afterSave comment_count increment");
-			news.increment("comment_count");
-			news.save();
+		success: function(result) {
+			console.info("NewsComment afterSave comment_count increment,current comment_count is %d", result.get('comment_count'));
+			result.increment('comment_count');
+			result.save();
 		},
 		error: function(error) {
 			console.error( "NewsComment afterSave:Got an error " + error.code + " : " + error.message);
@@ -651,22 +650,99 @@ AV.Cloud.afterSave('NewsComment', function(request, response){
 	});
 });
 
+/** 有评论被删除时，对应资讯的评论数也相应减少
+ *
+ */
 AV.Cloud.afterDelete('NewsComment', function(request){
 	var query = new AV.Query("News");
 	query.get(request.object.get("newsid").id, {
-		success: function(news) {
-			console.info("NewsComment afterSave comment_count increment");
-			if (news.get("comment_count") > 0) {	//评论次数大于0，才能做递减操作
-				news.increment("comment_count");
-				news.save();
+		success: function(result) {
+			console.info("NewsComment afterDelete comment_count decrement,current comment_count is %d",result.get('comment_count'));
+			if (result.get('comment_count') > 0) {
+				result.increment('comment_count', -1);
+				result.save();
+			} else {
+				console.error('comment_count is less than zero');
 			}
 		},
 		error: function(error) {
-			console.error( "NewsComment afterDelete:Got an error " + error.code + " : " + error.message);
+			console.error( "NewsComment afterSave:Got an error " + error.code + " : " + error.message);
 		}
 	});
+
 });
-*/
+
+/** 添加点赞时，对应的文章源点赞数动态调整
+ *
+ */
+AV.Cloud.afterSave('Like', function(request){
+	var likeType = request.object.get('like_type');
+	if (likeType == 1) {	//资讯点赞
+		var query = new AV.Query('News');
+		query.get(request.object.get('newsid').id, {
+			success: function(result) {
+				console.info("Like afterSave up_count increment for News,current up_count is %d", result.get('up_count'));
+				result.increment("up_count");
+				result.save();
+			},
+			error: function(error) {
+				console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
+			}
+		});
+	} else if (likeType == 2) {	//动态点赞
+		var query = new AV.Query('DynamicNews');
+		query.get(request.object.get('newsid').id, {
+			success: function(result) {
+				console.info("Like afterSave up_count increment for DynamicNews,current up_count is %d", result.get('up_count'));
+				result.increment('up_count');
+				result.save();
+			},
+			error: function(error) {
+				console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
+			}
+		});
+	}
+});
+
+/** 取消点赞时，对应的文章源点赞数相应减少
+ *
+ */
+AV.Cloud.afterDelete('Like', function(request) {
+	var likeType = request.object.get('like_type');
+	if (likeType == 1) {	//资讯点赞
+		var query = new AV.Query('News');
+		query.get(request.object.get('newsid').id, {
+			success: function(result) {
+				console.info("Like afterSave up_count increment for news,current up_count is %d", result.get('up_count'));
+				if (result.get('up_count') > 0) {
+					result.increment("up_count", -1);
+					result.save();
+				} else {
+					console.info('up_count is less than zero');
+				}
+			},
+			error: function(error) {
+				console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
+			}
+		});
+	} else if (likeType == 2) {	//动态点赞
+		var query = new AV.Query('DynamicNews');
+		query.get(request.object.get('newsid').id, {
+			success: function(result) {
+				console.info("Like afterSave up_count increment for DynamicNews,current up_count is %d", result.get('up_count'));
+				if (result.get('up_count') > 0) {
+					result.increment('up_count', -1);
+					result.save();
+				} else {
+					console.info('up_count is less than zero');
+				}
+			},
+			error: function(error) {
+				console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
+			}
+		});
+	}
+});
 
 /*
 AV.Cloud.beforeSave("TestReview", function(request, response){
