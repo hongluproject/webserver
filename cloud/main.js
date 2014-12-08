@@ -161,7 +161,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                 for (var i = 0; i < result.length; i++) {
                     var user =  result[i].get("user_id");
                     var outChannel = {};
-                    outChannel.result       = result[i];
+                    outChannel       = result[i];
                     askResult.push(outChannel);
                 }
                 ret.recommendAsk = askResult;
@@ -187,7 +187,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                 var dynamicResult = [];
                 for (var i = 0; i < result.length; i++) {
                     var outChannel = {};
-                    outChannel.result       = result[i];
+                    outChannel       = result[i];
                     dynamicResult.push(outChannel);
                 }
                 ret.recommendDynamic = dynamicResult;
@@ -217,7 +217,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                     var clanResult = [];
                     for (var i = 0; i < result.length; i++) {
                         var outChannel = {};
-                        outChannel.result       = result[i];
+                        outChannel       = result[i];
                         clanResult.push(outChannel);
                     }
                     ret.recommendClan = clanResult;
@@ -254,7 +254,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                             var userResult = [];
                             for (var i = 0; i < result.length; i++) {
                                 var outChannel = {};
-                                outChannel.result       = result[i];
+                                outChannel       = result[i];
                                 userResult.push(outChannel);
                             }
                             ret.recommendUser = userResult;
