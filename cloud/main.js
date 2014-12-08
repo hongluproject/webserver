@@ -582,6 +582,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
 	var query = new AV.Query(user);
 	query.equalTo('objectId', postUser.objectId);
 	status.query = query;
+	/*  不需要发送给自己，否则会看到两个相同的动态。
 	status.send().then(function(status){
 		//发送成功
 		console.info("%s 发布动态给自己成功!", postUser.objectId);
@@ -591,6 +592,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
 		console.info("%s 发布动态给自己失败!", postUser.objectId);
 		console.dir(err);
 	});
+	*/
 
 	//再将此消息发送给所有我的关注者（粉丝），让他们可以看到我的动态
 	AV.Status.sendStatusToFollowers(status).then(function(status){
