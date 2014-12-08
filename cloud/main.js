@@ -150,7 +150,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
     };
     var getRecommendAsk = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count");
+        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 1);
         query.limit(2);
@@ -161,15 +161,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                 for (var i = 0; i < result.length; i++) {
                     var user =  result[i].get("user_id");
                     var outChannel = {};
-                    outChannel.content       = result[i].get("content");
-                    outChannel.userIcon       = user.get("icon");
-                    outChannel.userNickName       = user.get("nickname");
-                    outChannel.type          = result[i].get("type");
-                    outChannel.thumbs          = result[i].get("thumbs");
-                    outChannel.upCount          = result[i].get("up_count");
-                    outChannel.commentCount          = result[i].get("comment_count");
-                    outChannel.dynamicObjectId  =  result[i].id;
-                    outChannel.createdAt  =  result[i].createdAt;
+                    outChannel.result       = result[i];
                     askResult.push(outChannel);
                 }
                 ret.recommendAsk = askResult;
@@ -185,7 +177,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
 
     var getRecommendDynamic = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count");
+        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 2);
         query.limit(2);
@@ -194,17 +186,8 @@ AV.Cloud.define("imGetRecommend",function(req, res){
             success:function(result){
                 var dynamicResult = [];
                 for (var i = 0; i < result.length; i++) {
-                    var user =  result[i].get("user_id");
                     var outChannel = {};
-                    outChannel.content       = result[i].get("content");
-                    outChannel.userIcon       = user.get("icon");
-                    outChannel.userNickName       = user.get("nickname");
-                    outChannel.type          = result[i].get("type");
-                    outChannel.thumbs          = result[i].get("thumbs");
-                    outChannel.upCount          = result[i].get("up_count");
-                    outChannel.commentCount          = result[i].get("comment_count");
-                    outChannel.dynamicObjectId  =  result[i].id;
-                    outChannel.createdAt  =  result[i].createdAt;
+                    outChannel.result       = result[i];
                     dynamicResult.push(outChannel);
                 }
                 ret.recommendDynamic = dynamicResult;
