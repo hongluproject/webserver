@@ -225,7 +225,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
             if(clanids!=undefined){
                 query.notContainedIn("objectId", clanids);
             }
-            query.select("icon", "title","position","tags");
+            query.select("icon", "title","position","tags","objectId");
             query.equalTo("tags", tags[index]);
             query.near("position", userGeoPoint);
             query.limit(2);
@@ -234,11 +234,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                     var clanResult = [];
                     for (var i = 0; i < result.length; i++) {
                         var outChannel = {};
-                        outChannel.clanIcon      =  result[i].get("icon");
-                        outChannel.clanTitle  =  result[i].get("title")
-                        outChannel.clanPosition = result[i].get("position");
-                        outChannel.userTags       = result[i].get("tags");
-                        outChannel.clanObjectId  =  result[i].id;
+                        outChannel.result       = result[i];
                         clanResult.push(outChannel);
                     }
                     ret.recommendClan = clanResult;
@@ -265,7 +261,7 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                 success:function(userObj) {
                     var userGeoPoint = userObj.get("actual_position");
                     var query = new AV.Query(User);
-                    query.select("icon", "nickname","actual_position","tags","clanids");
+                    query.select("icon", "nickname","actual_position","tags","clanids","objectId");
                     query.near("actual_position", userGeoPoint);
                     query.notEqualTo("objectId", userid);
                     query.equalTo("tags", tags[index]);
@@ -275,16 +271,10 @@ AV.Cloud.define("imGetRecommend",function(req, res){
                             var userResult = [];
                             for (var i = 0; i < result.length; i++) {
                                 var outChannel = {};
-                                outChannel.userIcon      =  result[i].get("icon");
-                                outChannel.userNickName  =  result[i].get("nickname")
-                                outChannel.userActualPosition = result[i].get("actual_position");
-                                outChannel.userObjectId  =  result[i].id;
-                                outChannel.userTags       = result[i].get("tags");
+                                outChannel.result       = result[i];
                                 userResult.push(outChannel);
                             }
                             ret.recommendUser = userResult;
-
-
                             getRecommendClan(userObj);
                             return;
                         }
@@ -319,7 +309,6 @@ AV.Cloud.define('imGetToken', function(req, res){
 		res.error('userid is expected!');
 		return;
 	}
-
 	console.info("getimtoken:userid:%s", userobjid);
 
 	//根据id查询用户表
