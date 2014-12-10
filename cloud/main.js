@@ -278,7 +278,94 @@ AV.Cloud.define("imGetRecommend",function(req, res){
     getRecommendUser();
 });
 
+/**
+ *  获取动态
+ */
+AV.Cloud.define('getDynamic', function(req,res){
+	var dynamicType = req.params.dynamicType || 'followeDynamic';	//获取的动态类型
+	switch (dynamicType) {
+		case "followeDynamic":	//查询我关注的动态，需要通过事件流查询
+			/**	request param
+			  {
+			  	dynamicType:followeDynamic,
+			  	limit:N default is 20,
+			  	maxId:N default is zero
+			  }
+			 */
+			var userId = req.params.userId;
+			if (!userId) {
+				res.error('缺少用户信息！');
+				return;
+			}
+			var limit = req.params.limit || 20;
+			var maxId = req.params.maxId || 0;
+			var statusesReturn = [];	//保存第一次查询返回的status
+			var likeTarget = {};	//记录该用户点过赞的id
+			var returnUserItem = {	//动态中发布者信息，可以保留返回的字段
+				objectId:1,
+				username:1,
+				nickname:1,
+				className:1,
+				icon:1,
+				__type:1
+			};
 
+			//查询事件流，获取用户关注的所有动态
+			var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User',userId));
+			query.include('dynamicNews');
+			query.include('source');
+			query.include('dynamicNews.user_id');
+			query.equalTo('messageType', 'newPost');
+			query.limit(limit);
+			query.maxId(maxId);
+			query.find().then(function(statuses){
+				statusesReturn = statuses;
+				//获取所有动态objectId，再查询该用户对这些动态是否点过赞
+				var dynamicIdArray = [];
+				for (var i in statuses) {
+					dynamicIdArray.push(statuses[i].data.dynamicNews.objectId);
+				}
+
+				//查询点赞表
+				var likeClass = AV.Object.extend("Like");
+				var likeQuery = new AV.Query(likeClass);
+				likeQuery.containedIn('external_id', dynamicIdArray);
+				likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+				likeQuery.find();
+			}, function(err){
+				//查询失败
+				console.dir(err);
+				res.error('查询关注动态信息失败！');
+			}).then(function(likes){
+				for (var i in likes) {
+					likeTarget[likes[i].external_id] = true;
+				}
+				console.dir(likeTarget);
+
+				//将所有动态返回，添加isLike，记录点赞状态
+				for (var i in statusesReturn) {
+					var currDynamic = statusesReturn[i].data.dynamicNews;
+					if (likeTarget[currDynamic.objectId] == true)	//添加点赞状态字段
+						currDynamic.isLike = true;
+					else
+						currDynamic.isLike = false;
+
+					//遍历user_id，去掉不需要返回的字段，减少网络传输
+					for (var k in currDynamic.user_id) {
+						if (returnUserItem[k] != 1) {
+							delete currDynamic.user_id[k];
+						}
+					}
+				}
+
+				res.success(statusesReturn);
+			}, function(error){
+				res.error('查询点赞状态失败');
+			});
+
+			break;
+	}
+});
 
 /**
  * 获取融云token接口
@@ -683,6 +770,7 @@ AV.Cloud.afterSave('Like', function(request){
  */
 AV.Cloud.afterDelete('Like', function(request) {
 	var likeType = request.object.get('like_type');
+	var likeUserObjId = request.object.get('user_id').id;
 	if (likeType == 1) {	//资讯点赞
 		var query = new AV.Query('News');
 		query.get(request.object.get('newsid').id, {
@@ -704,12 +792,15 @@ AV.Cloud.afterDelete('Like', function(request) {
 		query.get(request.object.get('newsid').id, {
 			success: function(result) {
 				console.info("Like afterSave up_count increment for DynamicNews,current up_count is %d", result.get('up_count'));
+				//点赞次数累加
 				if (result.get('up_count') > 0) {
 					result.increment('up_count', -1);
 					result.save();
 				} else {
 					console.info('up_count is less than zero');
 				}
+
+				//发送消息流给动态发布者
 			},
 			error: function(error) {
 				console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
