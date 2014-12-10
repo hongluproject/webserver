@@ -318,12 +318,15 @@ AV.Cloud.define('getDynamic', function(req,res){
 			query.equalTo('messageType', 'newPost');
 			query.limit(limit);
 			query.maxId(maxId);
+			query.exists('dynamicNews');
 			query.find().then(function(statuses){
-				statusesReturn = statuses;
 				//获取所有动态objectId，再查询该用户对这些动态是否点过赞
 				var dynamicIdArray = [];
 				for (var i in statuses) {
-					dynamicIdArray.push(statuses[i].data.dynamicNews.objectId);
+					if (statuses[i].data.dynamicNews) {
+						dynamicIdArray.push(statuses[i].data.dynamicNews.objectId);
+						statusesReturn.push(statuses[i]);
+					}
 				}
 
 				//查询点赞表
@@ -340,7 +343,6 @@ AV.Cloud.define('getDynamic', function(req,res){
 				for (var i in likes) {
 					likeTarget[likes[i].external_id] = true;
 				}
-				console.dir(likeTarget);
 
 				//将所有动态返回，添加isLike，记录点赞状态
 				for (var i in statusesReturn) {
@@ -723,7 +725,7 @@ AV.Cloud.afterDelete('NewsComment', function(request){
 				result.increment('comment_count', -1);
 				result.save();
 			} else {
-				console.error('comment_count is less than zero');
+				console.error('NewsComment afterDelete:comment_count is less than zero');
 			}
 		},
 		error: function(error) {
@@ -731,6 +733,46 @@ AV.Cloud.afterDelete('NewsComment', function(request){
 		}
 	});
 
+});
+
+/** 如果有新增的动态评论，动态表里面的评论数加1
+ *
+ */
+AV.Cloud.afterSave('DynamicComment', function(request){
+	var query = new AV.Query('DynamicNews');
+	query.get(request.object.get('dynamic_id').id, {
+		success:function(result) {
+			console.info("DynamicComment afterSave comment_count increment,current comment_count is %d", result.get('comment_count'));
+			result.increment('comment_count');
+			result.save();
+
+		},
+		error:function(error) {
+			console.error( "DynamicComment afterSave:Got an error " + error.code + " : " + error.message);
+		}
+	});
+});
+
+/** 有动态评论删除时，动态表里面的评论数减1
+ *
+ */
+AV.Cloud.afterDelete('DynamicComment', function(request){
+	var query = new AV.Query('DynamicNews');
+	query.get(request.object.get('dynamic_id').id, {
+		success:function(result) {
+			console.info("DynamicComment afterDelete comment_count decrement,current comment_count is %d", result.get('comment_count'));
+			if (result.get('comment_count') > 0) {
+				result.increment('comment_count', -1);
+				result.save();
+			} else {
+				console.error('DynamicComment afterDelete:comment_count is less than zero');
+			}
+
+		},
+		error:function(error) {
+			console.error( "DynamicComment afterSave:Got an error " + error.code + " : " + error.message);
+		}
+	});
 });
 
 /** 添加点赞时，对应的文章源点赞数动态调整
