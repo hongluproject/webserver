@@ -13,6 +13,7 @@ require('cloud/hook/News.js');
 require('cloud/hook/NewsComment.js');
 require('cloud/hook/DynamicNews.js');
 require('cloud/hook/DynamicComment.js');
+require('cloud/hook/ClanUser.js');
 require('cloud/function/imInterface.js');
 
 /** 测试返回多个class数据

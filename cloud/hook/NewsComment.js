@@ -8,6 +8,7 @@
  */
 AV.Cloud.afterSave('NewsComment', function(request){
     var newsObj = request.object.get('newsid');
+    console.dir(newsObj);
     newsObj.increment('comment_count');
     newsObj.save();
 });
@@ -17,10 +18,6 @@ AV.Cloud.afterSave('NewsComment', function(request){
  */
 AV.Cloud.afterDelete('NewsComment', function(request){
     var newsObj = request.object.get('newsid');
-    if (newsObj.get('comment_count') > 0) {
-        newsObj.increment('comment_count', -1);
-        newsObj.save();
-    } else {
-        console.warn('afterDelete for NewsComment:comment count is less than zero');
-    }
+    newsObj.increment('comment_count', -1);
+    newsObj.save();
 });

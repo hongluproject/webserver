@@ -7,6 +7,7 @@
  */
 AV.Cloud.afterSave('DynamicComment', function(request){
     var dynamicObj = request.object.get('dynamic_id');
+    console.dir(dynamicObj);
     dynamicObj.increment('comment_count');
     dynamicObj.save();
 });
@@ -16,10 +17,6 @@ AV.Cloud.afterSave('DynamicComment', function(request){
  */
 AV.Cloud.afterDelete('DynamicComment', function(request){
     var dynamicObj = request.object.get('dynamic_id');
-    if (dynamicObj.get('comment_count') > 0) {
-        dynamicObj.increment('comment_count', -1);
-        dynamicObj.save();
-    } else {
-        console.warn('afterDelete for DynamicComment:comment count is less than zero');
-    }
+    dynamicObj.increment('comment_count', -1);
+    dynamicObj.save();
 });
