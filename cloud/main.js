@@ -152,12 +152,13 @@ AV.Cloud.define("imGetSearch",function(req,res){
     var User = AV.Object.extend("_User");
     var News = AV.Object.extend("News");
 
-    //type  1 资讯 ,2 动态,3 问答,4 部落,5 人
+    //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
     var  type = req.params.type;
     var  kw  = req.params.kw;
-    var  objectId = req.params.objectId;
+    var  tagId = req.params.tagId;
 
 
+    //资讯
     var getNews =function(){
         var query = new AV.Query(News);
         query.select("title", "content_url","tags","objectId");
@@ -171,6 +172,7 @@ AV.Cloud.define("imGetSearch",function(req,res){
         });
     }
 
+    //问答
     var getAsk = function(){
         var query = new AV.Query(Dynamic);
         query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
@@ -187,21 +189,24 @@ AV.Cloud.define("imGetSearch",function(req,res){
         })
     }
 
+    //动态
     var getDynamic = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id");
+        query.skip(2); // skip the first 10 results
         query.equalTo("type", 2);
         query.limit(2);
         query.include('user_id');
-        query.find({
+        query.collection({
             success:function(result){
                 res.success(result);
-            },
+             },
             error:function(){
             }
         })
     };
 
+    //部落
     var getClan = function(){
         var query = new AV.Query(Clan);
         query.select("icon", "title","position","tags","objectId");
@@ -215,6 +220,7 @@ AV.Cloud.define("imGetSearch",function(req,res){
         });
     };
 
+    //用户
     var getUser = function(){
         var query = new AV.Query(User);
         query.select("icon", "nickname","actual_position","tags","clanids","objectId");
@@ -227,21 +233,24 @@ AV.Cloud.define("imGetSearch",function(req,res){
             }
         });
     };
-
+    //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
     switch(type)
     {
-        case "1":
+        case "3":
             getNews();
+            break;
+        case "1":
+            getDynamic();
+            break;
         case "2":
             getAsk();
-             break;
-        case "3":
-            getDynamic();
+            break;
         case "4":
             getClan();
             break;
         case "5":
             getUser();
+            break;
     }
 
 })
