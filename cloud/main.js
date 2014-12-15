@@ -2,8 +2,10 @@
 // For example:
 var name = require('cloud/name.js');
 require('cloud/app.js');
-var myutils = require('cloud/utils.js');
 var qiniu = require('qiniu');
+
+//初始化avos相关参数
+require('cloud/function/avosInitialize.js');
 
 /*
 	require hook & function files
@@ -18,7 +20,6 @@ require('cloud/function/imInterface.js');
 require('cloud/function/dynamicWrapper.js');
 require('cloud/function/newsWrapper.js');
 require('cloud/function/recommend.js');
-require('cloud/function/avosInitialize.js');
 require('cloud/function/search.js');
 
 /** 测试返回多个class数据

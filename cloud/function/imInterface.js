@@ -2,8 +2,6 @@
  * Created by fugang on 14/12/11.
  */
 
-var myutils = require('cloud/utils.js');
-
 /**
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求

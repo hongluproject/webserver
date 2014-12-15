@@ -39,8 +39,10 @@
                 }
             });
         });
+
     }
 
+    global.myutils = require('cloud/utils.js');
     global.HPGlobalParam = {};
     avosInitialize(global.HPGlobalParam);
 })();
