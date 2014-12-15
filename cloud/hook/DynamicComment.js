@@ -17,6 +17,14 @@ AV.Cloud.afterSave('DynamicComment', function(request){
  */
 AV.Cloud.afterDelete('DynamicComment', function(request){
     var dynamicObj = request.object.get('dynamic_id');
-    dynamicObj.increment('comment_count', -1);
-    dynamicObj.save();
+    var dynamicQuery = AV.Query('DynamicNews');
+    dynamicQuery.get(dynamicObj.id, {
+        success:function(dynamicResult) {
+            //评论数量必须大于0，才允许减1
+            if (dynamicResult && dynamicResult.get('comment_count')>0) {
+                dynamicObj.increment('comment_count', -1);
+                dynamicObj.save();
+            }
+        }
+    });
 });
