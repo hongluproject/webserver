@@ -17,6 +17,8 @@ require('cloud/hook/NewsComment.js');
 require('cloud/hook/DynamicNews.js');
 require('cloud/hook/DynamicComment.js');
 require('cloud/hook/ClanUser.js');
+require('cloud/hook/Clan.js')
+
 require('cloud/function/imInterface.js');
 require('cloud/function/dynamicWrapper.js');
 require('cloud/function/newsWrapper.js');

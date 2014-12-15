@@ -17,7 +17,10 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
     res.success();
 });
 
-/** 部落用户增加时，部落表里面的人数加1，用户表里面添加到所归属的部落
+/** 部落用户增加时:
+ * 1、部落表里面的人数加
+ * 2、用户表里面添加到所归属的部落
+ * 3、用户添加到对应的融云群组
  *
  */
 AV.Cloud.afterSave('ClanUser', function(req){
@@ -53,9 +56,20 @@ AV.Cloud.afterSave('ClanUser', function(req){
         }
     });
 
+    //加入融云组群
+    AV.Cloud.run('imAddToGroup',{
+        userid:userObj.id,
+        groupid:clanObj.id,
+        groupname:'hoopengGroup'
+    });
+
+
 });
 
-/** 用户从部落退出时，部落表里面的人数减1，从用户表里面所归属的部落去除
+/** 用户从部落退出时：
+ * 1、部落表里面的人数减1
+ * 2、从用户表里面所归属的部落去除
+ * 3、该用户冲对应的融云群组退出
  *
  */
 AV.Cloud.afterDelete('ClanUser', function(req){
@@ -86,5 +100,11 @@ AV.Cloud.afterDelete('ClanUser', function(req){
                 result.save();
             }
         }
+    });
+
+    //从融云群组里面退出
+    AV.Cloud.run('imQuitGroup',{
+        userid:userObj.id,
+        groupid:clanObj.id
     });
 });
