@@ -13,7 +13,7 @@ AV.Cloud.define("getSearch",function(req,res){
     var  type = req.params.type;
     var  kw  = req.params.kw;
     var  tagId = req.params.tagId;
-    var  skip = req.params.skip || 1;
+    var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
 
 
