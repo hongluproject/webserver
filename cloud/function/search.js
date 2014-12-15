@@ -27,7 +27,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.first({
             success: function(result) {
                 if(result){
-                    tagId = result.objectId;
+                    tagId = result.id;
                 }
                 switchTab(type);
             },
