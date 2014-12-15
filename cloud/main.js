@@ -5,7 +5,8 @@ require('cloud/app.js');
 var qiniu = require('qiniu');
 
 //初始化avos相关参数
-require('cloud/function/avosInitialize.js');
+var globalParam = require('cloud/function/avosInitialize.js');
+globalParam.initializeAvosData();
 
 /*
 	require hook & function files

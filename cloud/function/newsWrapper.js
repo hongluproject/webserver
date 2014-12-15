@@ -13,6 +13,7 @@
  cateid: 筛选指定cate
  */
 AV.Cloud.define('getNews', function(req, res){
+    var HPGlobalParam = AV.HPGlobalParam || {};
     var userId = req.params.userId;
     var limit = req.params.limit || 20;
     var skip = req.params.skip || 0;
@@ -42,8 +43,6 @@ AV.Cloud.define('getNews', function(req, res){
         for (var i in results) {
             newsIds.push(results[i].id);
 
-            console.dir(results[i]);
-
             //返回cate名称
             var arrayCateName = [];
             var arrayCate = results[i].get('cateids');
@@ -55,7 +54,7 @@ AV.Cloud.define('getNews', function(req, res){
                 arrayCateName.push(name);
             }
             if (arrayCateName.length) {
-                results[k].set('catesName', arrayCateName);
+                results[i].set('catesName', arrayCateName);
             }
 
             //返回area名称
@@ -69,7 +68,7 @@ AV.Cloud.define('getNews', function(req, res){
                 arrayAreaName.push(name);
             }
             if (arrayAreaName.length) {
-                results[k].set('areasName', arrayAreaName);
+                results[i].set('areasName', arrayAreaName);
             }
 
             //返回tags名称
@@ -83,8 +82,9 @@ AV.Cloud.define('getNews', function(req, res){
                 arrayTagName.push(name);
             }
             if (arrayTagName.length) {
-                results[k].set('tagsName', arrayTagName);
+                results[i].set('tagsName', arrayTagName);
             }
+
         }
 
         if (userId && results && results.length) {
@@ -102,13 +102,9 @@ AV.Cloud.define('getNews', function(req, res){
 
                     //将所有动态返回，添加isLike，记录点赞状态
                     for (var k in results) {
-                        console.info(results[k]);
                         var currNew = results[k];
-                        if (likeTarget[currNew.objectId] == true)	//添加点赞状态字段
+                        if (likeTarget[currNew.id] == true)	//添加点赞状态字段
                             currNew.set('isLike', true);
-                        else
-                            currNew.set('isLike', false);
-                        console.info(results[k]);
                     }
 
                     res.success(results);

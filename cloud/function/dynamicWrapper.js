@@ -58,15 +58,16 @@ AV.Cloud.define('getDynamic', function(req,res){
                 var likeQuery = new AV.Query(likeClass);
                 likeQuery.containedIn('external_id', dynamicIdArray);
                 likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
-                likeQuery.find();
+                return likeQuery.find();
             }, function(err){
                 //查询失败
                 console.dir(err);
                 res.error('查询关注动态信息失败！');
             }).then(function(likes){
                 for (var i in likes) {
-                    likeTarget[likes[i].external_id] = true;
+                    likeTarget[likes[i].get('external_id')] = true;
                 }
+
 
                 //将所有动态返回，添加isLike，记录点赞状态
                 for (var i in statusesReturn) {
@@ -76,14 +77,12 @@ AV.Cloud.define('getDynamic', function(req,res){
                     else
                         currDynamic.isLike = false;
 
-                    console.dir(currDynamic);
                     //遍历user_id，去掉不需要返回的字段，减少网络传输
                     for (var k in currDynamic.user_id) {
                         if (returnUserItem[k] != 1) {
                             delete currDynamic.user_id[k];
                         }
                     }
-
                 }
 
                 res.success(statusesReturn);

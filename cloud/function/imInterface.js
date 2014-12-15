@@ -2,6 +2,8 @@
  * Created by fugang on 14/12/11.
  */
 
+var myutils = require('cloud/utils.js');
+
 /**
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求
@@ -92,6 +94,8 @@ AV.Cloud.define("imGetClanUser",function(req, res){
                 outChannel.userObjectId =  user.id;
                 outChannel.clanName =  clan.get("title");
                 outChannel.clanIcon =  clan.get("icon");
+                outChannel.clanUserObjectId = result[i].id;
+                outChannel.userLevel = result[i].get('user_level');
                 finalResult.push(outChannel);
             }
             res.success(finalResult);

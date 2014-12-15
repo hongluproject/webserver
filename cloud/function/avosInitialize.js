@@ -2,8 +2,9 @@
  * Created by fugang on 14/12/13.
  */
 
-(function() {
-    function avosInitialize(globalObj) {
+exports.initializeAvosData = function() {
+        AV.HPGlobalParam = {};
+        var globalObj = AV.HPGlobalParam;
         globalObj.hpTags = {};
         globalObj.hpAreas = {};
         globalObj.hpCates = {};
@@ -40,9 +41,4 @@
             });
         });
 
-    }
-
-    global.myutils = require('cloud/utils.js');
-    global.HPGlobalParam = {};
-    avosInitialize(global.HPGlobalParam);
-})();
+}
