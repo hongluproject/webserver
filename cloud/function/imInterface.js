@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/11.
  */
 
+var myutils = require('cloud/utils.js');
 
 /**
  * 获取融云token接口
@@ -66,6 +67,43 @@ AV.Cloud.define('imGetToken', function(req, res){
             res.error(errmsg);
         }
     });
+});
+
+
+AV.Cloud.define("imGetClanUser",function(req, res){
+    var clan_id = req.params.clan_id;
+    var Clan = AV.Object.extend("Clan");
+    var ClanUser = AV.Object.extend("ClanUser");
+    var query = new AV.Query(ClanUser);
+    var clan_user = [];
+    var myClan = new Clan();
+    myClan.set("objectId", clan_id);
+    query.equalTo("clan_id", myClan);
+    query.include("user_id");
+    query.include("clan_id");
+    query.find({
+        success: function(result) {
+            var finalResult = [];
+            for (var i = 0; i < result.length; i++) {
+                var outChannel = {};
+                var user =  result[i].get("user_id");
+                var clan =  result[i].get("clan_id");
+                //this level belong to table ClanUser
+                outChannel.userIcon     =  user.get("icon");
+                outChannel.userNickName =  user.get("nickname");
+                outChannel.userObjectId =  user.id;
+                outChannel.clanName =  clan.get("title");
+                outChannel.clanIcon =  clan.get("icon");
+                finalResult.push(outChannel);
+            }
+            res.success(finalResult);
+        },
+        error: function(error) {
+            alert("Error: " + error.code + " " + error.message);
+        }
+
+    });
+
 });
 
 /**  加入聊天群组，具体使用场景：
