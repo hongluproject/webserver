@@ -19,6 +19,7 @@ require('cloud/function/dynamicWrapper.js');
 require('cloud/function/newsWrapper.js');
 require('cloud/function/recommend.js');
 require('cloud/function/avosInitialize.js');
+require('cloud/function/search.js');
 
 /** 测试返回多个class数据
  *
@@ -108,12 +109,6 @@ AV.Cloud.define('getQiniuToken', function(req, res){
 
 	res.success(retObj);
 });
-
-
-
-
-
-
 
 /*
  /**	在用户注册成功后，做一些处理

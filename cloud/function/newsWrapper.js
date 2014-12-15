@@ -14,8 +14,8 @@
  */
 AV.Cloud.define('getNews', function(req, res){
     var userId = req.params.userId;
-    var limit = req.params.limit;
-    var skip = req.params.skip;
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
     var area = req.params.area;
     var tag = req.params.tag;
     var cateid = req.params.cateid;
@@ -25,12 +25,8 @@ AV.Cloud.define('getNews', function(req, res){
     var queryNews = new AV.Query(newsClass);
     queryNews.select(["comment_count","cateids","title","up_count","list_pic",
         "allow_comment","areas","contents_url","allow_forward","tags","rank"]);
-    if (limit) {
-        queryNews.limit(limit);
-    }
-    if (skip) {
-        queryNews.skip(skip);
-    }
+    queryNews.limit(limit);
+    queryNews.skip(skip);
     if (area) {
         queryNews.equalTo('areas', area);
     }

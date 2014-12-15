@@ -3,7 +3,7 @@
  */
 
 
-AV.Cloud.define("imGetRecommend",function(req, res){
+AV.Cloud.define("getRecommend",function(req, res){
     //共用
     var tags = req.params.tags;
     var index = Math.floor((Math.random()*tags.length));
