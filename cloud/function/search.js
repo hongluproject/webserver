@@ -34,6 +34,8 @@ AV.Cloud.define("getSearch",function(req,res){
             error:function(userObj,error) {
             }
         });
+    }else {
+        res.success([]);
     }
 
     //资讯
@@ -50,8 +52,6 @@ AV.Cloud.define("getSearch",function(req,res){
         query.find({
             success: function(result) {
                 res.success(result);
-            },
-            error:function(userObj,error) {
             }
         });
     }
@@ -73,8 +73,6 @@ AV.Cloud.define("getSearch",function(req,res){
         query.find({
             success:function(result){
                 res.success(result);
-            },
-            error:function(){
             }
         })
     }
@@ -95,8 +93,6 @@ AV.Cloud.define("getSearch",function(req,res){
         query.find({
             success:function(result){
                 res.success(result);
-            },
-            error:function(){
             }
         })
     };
@@ -115,8 +111,6 @@ AV.Cloud.define("getSearch",function(req,res){
         query.find({
             success: function(result) {
                 res.success(result);
-            },
-            error:function(userObj,error) {
             }
         });
     };
@@ -135,8 +129,6 @@ AV.Cloud.define("getSearch",function(req,res){
         query.find({
             success: function(result) {
                 res.success(result);
-            },
-            error:function(userObj,error) {
             }
         });
     };
