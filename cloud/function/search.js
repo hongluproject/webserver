@@ -8,6 +8,8 @@ AV.Cloud.define("getSearch",function(req,res){
     var Clan = AV.Object.extend("Clan");
     var User = AV.Object.extend("_User");
     var News = AV.Object.extend("News");
+    var Tag = AV.Object.extend("Tag");
+
 
     //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
     var  type = req.params.type;
@@ -16,6 +18,23 @@ AV.Cloud.define("getSearch",function(req,res){
     var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
 
+    if(tagId){
+        switchTab(type);
+    }else if(kw){
+        var query = new AV.Query(Tag);
+        query.select("objectId","tag_name");
+        query.equalTo("tag_name", kw);
+        query.first({
+            success: function(result) {
+                if(result){
+                    tagId = result.objectId;
+                }
+                switchTab(type);
+            },
+            error:function(userObj,error) {
+            }
+        });
+    }
 
     //资讯
     var getNews =function(){
@@ -23,6 +42,11 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("title", "content_url","tags","objectId");
         query.limit(limit);
         query.skip(skip);
+        if(tagId){
+            query.equalTo("tags", tagId);
+        }else {
+            query.contains("title", kw);
+        }
         query.find({
             success: function(result) {
                 res.success(result);
@@ -38,6 +62,11 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("type", 1);
         query.include('user_id');
+        if(tagId){
+            query.equalTo("tags", tagId);
+        }else {
+            query.contains("content", kw);
+        }
         query.limit(limit);
         query.skip(skip);
         query.include('user_id');
@@ -56,6 +85,11 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("type", 2);
         query.limit(limit);
+        if(tagId){
+            query.equalTo("tags", tagId);
+        }else {
+            query.contains("content", kw);
+        }
         query.skip(skip);
         query.include('user_id');
         query.find({
@@ -73,6 +107,11 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("icon", "title","position","tags","objectId");
         query.limit(limit);
         query.skip(skip);
+        if(tagId){
+            query.equalTo("tags", tagId);
+        }else {
+            query.contains("title", kw);
+        }
         query.find({
             success: function(result) {
                 res.success(result);
@@ -88,6 +127,11 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("icon", "nickname","actual_position","tags","clanids","objectId");
         query.limit(limit);
         query.skip(skip);
+        if(tagId){
+            query.equalTo("tags", tagId);
+        }else {
+            query.contains("nickname", kw);
+        }
         query.find({
             success: function(result) {
                 res.success(result);
@@ -96,24 +140,29 @@ AV.Cloud.define("getSearch",function(req,res){
             }
         });
     };
-    //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
-    switch(type)
-    {
-        case "3":
-            getNews();
-            break;
-        case "1":
-            getDynamic();
-            break;
-        case "2":
-            getAsk();
-            break;
-        case "4":
-            getClan();
-            break;
-        case "5":
-            getUser();
-            break;
-    }
+
+
+    var switchTab  = function(type){
+        //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
+        switch(type)
+        {
+            case "3":
+                getNews();
+                break;
+            case "1":
+                getDynamic();
+                break;
+            case "2":
+                getAsk();
+                break;
+            case "4":
+                getClan();
+                break;
+            case "5":
+                getUser();
+                break;
+        }
+
+    };
 
 });
