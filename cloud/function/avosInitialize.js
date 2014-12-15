@@ -21,7 +21,7 @@ exports.initializeAvosData = function() {
             //拉取所有区域
             var queryAreas = new AV.Query('Area');
             queryAreas.limit = 1000;
-            queryAreas.find();
+            return queryAreas.find();
         }).then(function(areaResults) {
             for (var i in areaResults) {
                 var areaItem = areaResults[i];
@@ -31,14 +31,12 @@ exports.initializeAvosData = function() {
             //拉取所有Cate
             var queryCate = new AV.Query('Cate');
             queryCate.limit = 1000;
-            queryCate.find({
-                success:function(cateResults) {
-                    for (var i in cateResults) {
-                        var cateItem = cateResults[i];
-                        globalObj.hpCates[cateItem.id] = cateItem;
-                    }
-                }
-            });
+            return queryCate.find();
+        }).then(function(cateResults) {
+            for (var i in cateResults) {
+                var cateItem = cateResults[i];
+                globalObj.hpCates[cateItem.id] = cateItem;
+            }
         });
 
 }
