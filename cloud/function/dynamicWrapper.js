@@ -56,8 +56,8 @@ AV.Cloud.define('getDynamic', function(req,res){
                 //查询点赞表
                 var likeClass = AV.Object.extend("Like");
                 var likeQuery = new AV.Query(likeClass);
-                likeQuery.containedIn('external_id', dynamicIdArray);
                 likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+                likeQuery.containedIn('external_id', dynamicIdArray);
                 return likeQuery.find();
             }, function(err){
                 //查询失败

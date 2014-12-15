@@ -39,7 +39,7 @@ AV.Cloud.define('getNews', function(req, res){
     }
     queryNews.equalTo('status', 1);
     var newsIds = [];
-    queryNews.find(function(results) {
+    queryNews.find().then(function(results) {
         for (var i in results) {
             newsIds.push(results[i].id);
 
@@ -92,28 +92,23 @@ AV.Cloud.define('getNews', function(req, res){
             var likeClass = AV.Object.extend("Like");
             var queryLike = new AV.Query(likeClass);
             queryLike.equalTo('like_type', 1);
-            queryLike.containedIn('external_id', newsIds);
             queryLike.equalTo('user_id', AV.User.createWithoutData('_User', userId));
-            queryLike.find({
-                success:function(likes) {
-                    for (var k in likes) {
-                        likeTarget[likes[k].get('external_id')] = true;
-                    }
-
-                    //将所有动态返回，添加isLike，记录点赞状态
-                    for (var k in results) {
-                        var currNew = results[k];
-                        if (likeTarget[currNew.id] == true)	//添加点赞状态字段
-                            currNew.set('isLike', true);
-                    }
-
-                    res.success(results);
-                }
-            });
-
-        } else {
-            res.success(results);
+            queryLike.containedIn('external_id', newsIds);
+            return queryLike.find();
         }
+    }).then(function(likes){
+        for (var k in likes) {
+            likeTarget[likes[k].get('external_id')] = true;
+        }
+
+        //将所有动态返回，添加isLike，记录点赞状态
+        for (var k in results) {
+            var currNew = results[k];
+            if (likeTarget[currNew.id] == true)	//添加点赞状态字段
+                currNew.set('isLike', true);
+        }
+
+        res.success(results);
 
     });
 });
