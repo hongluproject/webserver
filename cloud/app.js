@@ -22,7 +22,6 @@ app.get('/hello', function(req, res) {
 	res.render('hello', { message: 'Congrats, you just set up your app!' });
 });
 
-
 /*
  //测试CQL
 AV.Query.doCloudQuery('select id0=row_number() over (partition by tag order by updateAt),* from interestList where id0<=3', {
