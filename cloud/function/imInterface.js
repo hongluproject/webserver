@@ -72,36 +72,39 @@ AV.Cloud.define('imGetToken', function(req, res){
 
 AV.Cloud.define("imGetClanUser",function(req, res){
     var clan_id = req.params.clan_id;
-    var Clan = AV.Object.extend("Clan");
-    var ClanUser = AV.Object.extend("ClanUser");
-    var query = new AV.Query(ClanUser);
-    var clan_user = [];
-    var myClan = new Clan();
-    myClan.set("objectId", clan_id);
-    query.equalTo("clan_id", myClan);
+    if (!clan_id) {
+        res.error('请输入部落信息');
+        return;
+    }
+
+    //根据部落ID查询ClanUser表
+    var query = new AV.Query('ClanUser');
+    query.equalTo("clan_id", AV.Object.createWithoutData('Clan', clan_id));
     query.include("user_id");
     query.include("clan_id");
     query.find({
-        success: function(result) {
+        success: function(results) {
             var finalResult = [];
-            for (var i = 0; i < result.length; i++) {
+            for (var i in results) {
                 var outChannel = {};
-                var user =  result[i].get("user_id");
-                var clan =  result[i].get("clan_id");
+                var user =  results[i].get("user_id");
+                var clan =  results[i].get("clan_id");
                 //this level belong to table ClanUser
-                outChannel.userIcon     =  user.get("icon");
-                outChannel.userNickName =  user.get("nickname");
-                outChannel.userObjectId =  user.id;
-                outChannel.clanName =  clan.get("title");
-                outChannel.clanIcon =  clan.get("icon");
-                outChannel.clanUserObjectId = result[i].id;
-                outChannel.userLevel = result[i].get('user_level');
-                finalResult.push(outChannel);
+                if (user && clan) {
+                    outChannel.userIcon     =  user.get("icon");
+                    outChannel.userNickName =  user.get("nickname");
+                    outChannel.userObjectId =  user.id;
+                    outChannel.clanName =  clan.get("title");
+                    outChannel.clanIcon =  clan.get("icon");
+                    outChannel.clanUserObjectId = results[i].id;
+                    outChannel.userLevel = results[i].get('user_level');
+                    finalResult.push(outChannel);
+                }
             }
             res.success(finalResult);
         },
         error: function(error) {
-            alert("Error: " + error.code + " " + error.message);
+            console.error("Error: " + error.code + " " + error.message);
         }
 
     });
@@ -136,6 +139,10 @@ AV.Cloud.define('imAddToGroup', function(request, response){
     var query = new AV.Query(hpUser);
     query.get(userid, {
         success:function(userObj) {
+            if (!userObj) {
+                response.error('imAddToGroup 用户不存在！');
+                return;
+            }
             var rcParam = myutils.getRongCloudParam();
 
             console.info('imAddToGroup:rong cloud param:%s', JSON.stringify(rcParam));
@@ -204,6 +211,10 @@ AV.Cloud.define('imQuitGroup', function(request, response){
     var query = new AV.Query(hpUser);
     query.get(userid, {
         success:function(userObj) {
+            if (!userObj) {
+                response.error('imQuitGroup 用户不存在！');
+                return;
+            }
             var rcParam = myutils.getRongCloudParam();
 
             console.info('imQuitGroup:rong cloud param:%s', JSON.stringify(rcParam));
