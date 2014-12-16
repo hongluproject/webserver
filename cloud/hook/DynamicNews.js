@@ -46,6 +46,17 @@ AV.Cloud.afterSave('DynamicNews', function(request){
         console.dir(err);
     });
 
+    //该用户发布动态数加1
+    var type = request.object.get('type');   //1:ask 2:dynamic
+    switch (type) {
+        case 1:
+            user.increment('questionCount');
+            break;
+        case 2:
+            user.increment('dynamicCount');
+            break;
+    }
+    user.save();
 });
 
 /** 动态删除后，将对应的status也清除掉，该动态对应的事件流也会相应消失
@@ -57,4 +68,18 @@ AV.Cloud.afterDelete('DynamicNews', function(request) {
     query.equalTo('messageType', 'newPost');
     query.equalTo('source', request.object.get('user_id')._toPointer());
     query.destroyAll();
+
+    //用户发布动态数减1
+    var type = request.object.get('type');   //1:ask 2:dynamic
+    var user = AV.Object.extend('_User');
+    user.id = request.object.get('user_id').id;
+    switch(type) {
+        case 1:
+            user.increment('questionCount', -1);
+            break;
+        case 2:
+            user.increment('dynamicCount', -1);
+            break;
+    }
+    user.save();
 });

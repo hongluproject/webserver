@@ -93,9 +93,11 @@ AV.Cloud.define('getDynamic', function(req,res){
                         for (var k in currDynamic.tags) {
                             arrayTagName.push(hpTags[currDynamic.tags[k]].get('tag_name') || '');
                         }
+                        /*
                         if (arrayTagName.length) {
                             currDynamic.tagNames = arrayTagName;
                         }
+                        */
                     }
 
                     //遍历user_id，去掉不需要返回的字段，减少网络传输

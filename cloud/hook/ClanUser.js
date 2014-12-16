@@ -31,11 +31,20 @@ AV.Cloud.afterSave('ClanUser', function(req){
     clanObj.increment('current_num');
     clanObj.save();
 
+    //该用户加入部落数加1
+    userObj.increment('clanCount');
+    userObj.save();
+
     //查找到对应的用户object
     var query = new AV.Query('_User');
     query.select('clanids');
     query.get(userObj.id, {
         success:function(result) {
+            if (!result) {
+                console.warn('ClanUser afterSave userid %s not found!', userObj.id);
+                return;
+            }
+
             var clanIds = result.get('clanids');
             //查找是否已经存在，若不存在，则添加后保存
             var currClanId = clanObj.id;
@@ -48,6 +57,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 }
             }
             if (!bExist) {
+                clanIds = clanIds || [];
                 clanIds.push(currClanId);
                 result.set('clanids', clanIds);
                 result.save();
@@ -76,8 +86,13 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
+    //部落成员数减1
     clanObj.increment('current_num', -1);
     clanObj.save();
+
+    //用户所在部落数减1
+    userObj.increment('clanCount', -1);
+    userObj.save();
 
     //从用户表的部落数组里面，删除当前的部落再保存。
     //查找到对应的用户object
@@ -85,6 +100,10 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     query.select('clanids');
     query.get(userObj.id, {
         success:function(result) {
+            if (!result) {
+                console.warn('ClanUser afterDelete user id %s not found!', userObj.id);
+                return;
+            }
             var currClanId = clanObj.id;
             var clanIds = result.get('clanids');
             var deleteIdx = -1;
