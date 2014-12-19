@@ -25,6 +25,7 @@ require('cloud/function/dynamicWrapper.js');
 require('cloud/function/newsWrapper.js');
 require('cloud/function/recommend.js');
 require('cloud/function/search.js');
+require('cloud/function/statusWrapper.js');
 
 /** 测试返回多个class数据
  *

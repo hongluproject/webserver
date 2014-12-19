@@ -39,30 +39,45 @@ AV.Cloud.afterSave('ClanUser', function(req){
     var query = new AV.Query('_User');
     query.select('clanids');
     query.get(userObj.id, {
-        success:function(result) {
-            if (!result) {
+        success:function(user) {
+            if (!user) {
                 console.warn('ClanUser afterSave userid %s not found!', userObj.id);
                 return;
             }
 
-            var clanIds = result.get('clanids');
-            //查找是否已经存在，若不存在，则添加后保存
-            var currClanId = clanObj.id;
-            console.info("current clan id:%s", currClanId);
-            var bExist = false;
-            for (var i in clanIds) {
-                if (currClanId == clanIds[i]) {
-                    bExist = true;
-                    break;
-                }
+            user.addUnique('clanids', clanObj.id);
+            user.save();
+        }
+    });
+
+    //找到该部落的founder
+    var queryClan = new AV.Query('Clan');
+    queryClan.select('founder_id');
+    queryClan.get(clanObj.id, {
+        success:function(clan) {
+            if (!clan) {
+                console.error('部落不存在:%s', clanObj.id);
+                return;
             }
-            if (!bExist) {
-                clanIds = clanIds || [];
-                clanIds.push(currClanId);
-                result.set('clanids', clanIds);
-                result.save();
-                console.dir(result);
+            var founderId = clan.get('founder_id').id;
+            if (!founderId) {
+                console.error('ClanUser afterSave,clan %s founder id do not exist!', founderId);
+                return;
             }
+
+            //向部落拥有者发送消息流，告知我已经加入该部落
+            var query = new AV.Query('_User');
+            query.equalTo('objectId', founderId);
+
+            var status = new AV.Status(null, '加入了你的部落！');
+            status.data.source = userObj._toPointer();
+            status.query = query;
+            status.set('messageType', 'addToClan');
+            status.send().then(function(status){
+                console.info('加入部落事件流发送成功！');
+            },function(error) {
+                console.error(error);
+            });
         }
     });
 
@@ -99,25 +114,44 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     var query = new AV.Query('_User');
     query.select('clanids');
     query.get(userObj.id, {
-        success:function(result) {
-            if (!result) {
+        success:function(user) {
+            if (!user) {
                 console.warn('ClanUser afterDelete user id %s not found!', userObj.id);
                 return;
             }
-            var currClanId = clanObj.id;
-            var clanIds = result.get('clanids');
-            var deleteIdx = -1;
-            for (var i in clanIds) {
-                if (currClanId == clanIds[i]) {
-                    deleteIdx = i;
-                    break;
-                }
+
+            user.remove('clanids', clanObj.id);
+            user.save();
+        }
+    });
+
+    //找到该部落的founder
+    var queryClan = new AV.Query('Clan');
+    queryClan.select('founder_id');
+    queryClan.get(clanObj.id, {
+        success:function(clan) {
+            if (!clan) {
+                console.warn('ClanUser afterDelete userid %s not found!', userObj.id);
+                return;
             }
-            if (deleteIdx >= 0) {
-                clanIds.splice(deleteIdx, 1);
-                result.set('clanids', clanIds);
-                result.save();
+            var founder = clan.get('founder_id');
+            if (!founder) {
+                console.error('ClanUser afterDelete,clan %d founder id do not exist!', clanObj.id);
+                return
             }
+            //告知该用户，他已经从该部落中移除
+            var query = new AV.Query('_User');
+            query.equalTo('objectId', userObj.id);
+
+            var status = new AV.Status(null, '从部落中移除！');
+            status.data.source = founder._toPointer();
+            status.query = query;
+            status.set('messageType', 'removeFromClan');
+            status.send().then(function(status){
+                console.info('部落移除事件流发送成功！');
+            },function(error) {
+                console.error(error);
+            });
         }
     });
 
