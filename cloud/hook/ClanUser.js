@@ -7,14 +7,49 @@
  */
 AV.Cloud.beforeSave('ClanUser', function(req,res){
     var clanObj = req.object.get('clan_id');
-    var maxClanNum = clanObj.get('max_num');
-    var currClanNum = clanObj.get('current_num');
-    if (currClanNum >= maxClanNum) {
-        res.error('超出部落最大用户数！');
-        return;
-    }
+    var userObj = req.object.get('user_id');
 
-    res.success();
+    //先检测用户是否已经加入该部落
+    var queryClan = new AV.Query('ClanUser');
+    queryClan.equalTo('clan_id', clanObj);
+    queryClan.equalTo('user_id', userObj);
+    queryClan.count({
+        success:function(count) {
+            if (count > 0) {
+                res.error('用户已经加入该部落！');
+                return;
+            }
+
+            //查询部落表，判断用户是否已经超过上限
+            var query = new AV.Query('Clan');
+            query.get(clanObj.id, {
+                success:function(clan) {
+                    if (!clan) {
+                        console.info('部落不存在:%s', clan.id);
+                        res.error('部落不存在！');
+                        return;
+                    }
+
+                    var maxClanNum = clan.get('max_num');
+                    var currClanNum = clan.get('current_num');
+                    if (currClanNum >= maxClanNum) {
+                        res.error('超出部落最大用户数！');
+                        return;
+                    }
+
+                    res.success();
+                },
+                error:function(error) {
+                    console.dir(error);
+                    res.error('部落不存在！');
+                }
+            })
+        },
+        error:function(error) {
+            res.success();
+        }
+    });
+
 });
 
 /** 部落用户增加时:
@@ -47,6 +82,8 @@ AV.Cloud.afterSave('ClanUser', function(req){
 
             user.addUnique('clanids', clanObj.id);
             user.save();
+
+            console.dir(user);
         }
     });
 
@@ -124,36 +161,41 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             user.save();
         }
     });
+    var currUser = req.user;
+    if (currUser && currUser.id==userObj.id) {  //自己从部落中移除，不用发消息流
+        console.info('用户%s从部落%s中移除', userObj.id, clanObj.id);
+    } else {
+        //找到该部落的founder
+        var queryClan = new AV.Query('Clan');
+        queryClan.select('founder_id');
+        queryClan.get(clanObj.id, {
+            success:function(clan) {
+                if (!clan) {
+                    console.warn('ClanUser afterDelete userid %s not found!', userObj.id);
+                    return;
+                }
+                var founder = clan.get('founder_id');
+                if (!founder) {
+                    console.error('ClanUser afterDelete,clan %d founder id do not exist!', clanObj.id);
+                    return;
+                }
 
-    //找到该部落的founder
-    var queryClan = new AV.Query('Clan');
-    queryClan.select('founder_id');
-    queryClan.get(clanObj.id, {
-        success:function(clan) {
-            if (!clan) {
-                console.warn('ClanUser afterDelete userid %s not found!', userObj.id);
-                return;
-            }
-            var founder = clan.get('founder_id');
-            if (!founder) {
-                console.error('ClanUser afterDelete,clan %d founder id do not exist!', clanObj.id);
-                return
-            }
-            //告知该用户，他已经从该部落中移除
-            var query = new AV.Query('_User');
-            query.equalTo('objectId', userObj.id);
+                //告知该用户，他已经从该部落中移除
+                var query = new AV.Query('_User');
+                query.equalTo('objectId', userObj.id);
 
-            var status = new AV.Status(null, '从部落中移除！');
-            status.data.source = founder._toPointer();
-            status.query = query;
-            status.set('messageType', 'removeFromClan');
-            status.send().then(function(status){
-                console.info('部落移除事件流发送成功！');
-            },function(error) {
-                console.error(error);
-            });
-        }
-    });
+                var status = new AV.Status(null, '从部落中移除！');
+                status.data.source = founder._toPointer();
+                status.query = query;
+                status.set('messageType', 'removeFromClan');
+                status.send().then(function(status){
+                    console.info('部落移除事件流发送成功！');
+                },function(error) {
+                    console.error(error);
+                });
+            }
+        });
+    }
 
     //从融云群组里面退出
     AV.Cloud.run('imQuitGroup',{

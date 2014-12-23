@@ -31,54 +31,16 @@ require('cloud/function/statusWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(request, response) {
-	var ret = {
-		recommendUser:{},
-		systemPost:{},
-		friendPost:{}
-	};
-
-	var step3 = function() {
-		response.success(ret);
-	};
-
-	//查找推荐
-	var step2 = function() {
-		var News = AV.Object.extend("News");
-		var query = new AV.Query(News);
-		query.limit = 10;
-		query.find({
-			success:function(results){
-				console.info("user result count:%d", results.length);
-				ret.systemPost = results;
-
-				step3();
-			},
-			error:function(error){
-				step3();
-			}
-		});
-	};
-
-	//查找推荐的用户
-	var step1 = function() {
-		var user1 = AV.Object.extend("_User");
-		var query = new AV.Query(user1);
-		query.limit = 5;
-		query.find({
-			success:function(results){
-				console.info("user result count:%d", results.length);
-				ret.recommendUser = results;
-
-				step2();
-			},
-			error:function(error){
-				step2();
-			}
-		});
-	};
-
-	step1();
-
+	var query = new AV.Query('ClanUser');
+	query.include('clan_id', 'user_id');
+	query.find().then(function(results) {
+		for (var i in results) {
+			var jValue = results[i].get('clan_id')._toFullJSON();
+			delete jValue.__type;
+			results[i].set('clan_id', jValue);
+		}
+		response.success(results);
+	});
 });
 
 /**  获取七牛云存储token

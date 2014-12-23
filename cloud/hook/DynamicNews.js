@@ -27,7 +27,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
     }
     postUser.save();
 
-    var queryUser = new AV.uery('_User');
+    var queryUser = new AV.Query('_User');
     queryUser.select("nickname");
     queryUser.get(postUser.id, {
         success:function(userObj) {

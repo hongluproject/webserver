@@ -17,6 +17,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             __type:1
         };
 
+        var dynamicReturn = [];
         //获取所有动态objectId，再查询该用户对这些动态是否点过赞
         var dynamicIdArray = [];
         for (var i=0; i<dynamics.length; i++) {
@@ -61,11 +62,14 @@ AV.Cloud.define('getDynamic', function(req,res){
 
                 //遍历user_id，去掉不需要返回的字段，减少网络传输
                 var rawUser = currDynamic.get('user_id');
+                console.dir(rawUser);
                 if (rawUser && rawUser.id) {
-                    var postUser = AV.User.createWithoutData('_User', rawUser.id);
+                    var postUser = AV.Object.createWithoutData('_User', rawUser.id);
                     postUser.set('icon', rawUser.get('icon'));
                     postUser.set('nickname', rawUser.get('nickname'));
-                    currDynamic.set('user_id', postUser);
+                    var jValue = postUser._toFullJSON();
+                    delete jValue.__type;
+                    currDynamic.set('user_id', jValue);
                 }
 
             }
@@ -141,7 +145,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                 return likeQuery.find();
             }, function(err){
                 //查询失败
-                console.dir(err);
+                console.dir('查询动态表失败：%o', err);
                 res.error('查询关注动态信息失败！');
             }).then(function(likes){
                 date3 = new Date();
@@ -177,11 +181,14 @@ AV.Cloud.define('getDynamic', function(req,res){
                             delete currDynamic.user_id[k];
                         }
                     }
+
+                    console.dir(currDynamic);
+
                 }
 
                 res.success(statusReturn);
             }, function(error){
-                res.error('查询点赞状态失败');
+                res.error('查询点赞状态失败:%o', error);
             });
 
             break;
@@ -202,11 +209,13 @@ AV.Cloud.define('getDynamic', function(req,res){
             query.include('user_id');
             query.skip(skip);
             query.limit(limit);
+            query.descending('createAt');
             query.find().then(function(dynamics) {
                 if (!dynamics) {
                     res.success([]);
                     return;
                 }
+
                 addLikesAndReturn(userId, dynamics, res);
             });
             break;
@@ -223,8 +232,10 @@ AV.Cloud.define('getDynamic', function(req,res){
             var query = new AV.Query('DynamicNews');
             query.skip(skip);
             query.limit(limit);
+            query.include('user_id');
             query.equalTo('commentUsers', userId);
             query.equalTo('type', parseInt(type));
+            query.descending('createAt');
             query.find().then(function(dynamics) {
                 if (!dynamics) {
                     res.success([]);

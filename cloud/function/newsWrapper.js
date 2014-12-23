@@ -21,6 +21,7 @@ AV.Cloud.define('getNews', function(req, res){
     var tag = req.params.tag;
     var cateid = req.params.cateid;
     var likeTarget = {};	//记录该用户点过赞的id
+    var newsResults = [];
 
     var newsClass = AV.Object.extend('News');
     var queryNews = new AV.Query(newsClass);
@@ -40,6 +41,7 @@ AV.Cloud.define('getNews', function(req, res){
     queryNews.equalTo('status', 1);
     var newsIds = [];
     queryNews.find().then(function(results) {
+        newsResults = results;
         for (var i in results) {
             newsIds.push(results[i].id);
 
@@ -63,7 +65,7 @@ AV.Cloud.define('getNews', function(req, res){
             for (var k in arrayArea) {
                 var name = '';
                 if (HPGlobalParam.hpAreas[arrayArea[k]]) {
-                    HPGlobalParam.hpAreas[arrayArea[k]].get('title');
+                    name = HPGlobalParam.hpAreas[arrayArea[k]].get('title');
                 }
                 arrayAreaName.push(name);
             }
@@ -77,7 +79,7 @@ AV.Cloud.define('getNews', function(req, res){
             for (var k in arrayTag) {
                 var name = '';
                 if (HPGlobalParam.hpTags[arrayTag[k]]) {
-                    HPGlobalParam.hpTags[arrayTag[k]].get('tag_name');
+                    name = HPGlobalParam.hpTags[arrayTag[k]].get('tag_name');
                 }
                 arrayTagName.push(name);
             }
@@ -102,13 +104,13 @@ AV.Cloud.define('getNews', function(req, res){
         }
 
         //将所有动态返回，添加isLike，记录点赞状态
-        for (var k in results) {
-            var currNew = results[k];
+        for (var k in newsResults) {
+            var currNew = newsResults[k];
             if (likeTarget[currNew.id] == true)	//添加点赞状态字段
                 currNew.set('isLike', true);
         }
 
-        res.success(results);
+        res.success(newsResults);
 
     });
 });
