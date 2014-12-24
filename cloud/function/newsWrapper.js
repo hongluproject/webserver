@@ -22,22 +22,43 @@ AV.Cloud.define('getNews', function(req, res){
     var cateid = req.params.cateid;
     var likeTarget = {};	//记录该用户点过赞的id
     var newsResults = [];
-
+    var queryOr = [];
     var newsClass = AV.Object.extend('News');
-    var queryNews = new AV.Query(newsClass);
+    if (area) {
+        var areaOr = null;
+        for(var i=0;i<area.length;i++){
+            var areaOr = new AV.Query(newsClass);
+            areaOr.equalTo("areas", area[i]);
+            queryOr.push(areaOr);
+        }
+    }
+    if (tag) {
+        var tagOr = null;
+        for(var i=0;i<tag.length;i++){
+            var tagOr = new AV.Query(newsClass);
+            tagOr.equalTo("tags", tag[i]);
+            queryOr.push(tagOr);
+        }
+    }
+    if (cateid) {
+        var cateOr = null;
+        for(var i=0;i<cateid.length;i++){
+            var cateOr = new AV.Query(newsClass);
+            cateOr.equalTo("cateids", cateid[i]);
+            queryOr.push(cateOr);
+        }
+    }
+
+    if(area||tag||cateid){
+        var queryNews= AV.Query.or.apply(null, queryOr);
+    }else{
+        var queryNews= new AV.Query(newsClass);
+
+    }
     queryNews.select(["comment_count","cateids","title","up_count","list_pic",
         "allow_comment","areas","contents_url","allow_forward","tags","rank"]);
     queryNews.limit(limit);
     queryNews.skip(skip);
-    if (area) {
-        queryNews.equalTo('areas', area);
-    }
-    if (tag) {
-        queryNews.equalTo('tags', tag);
-    }
-    if (cateid) {
-        queryNews.equalTo('cateids', cateid);
-    }
     queryNews.equalTo('status', 1);
     var newsIds = [];
     queryNews.find().then(function(results) {
