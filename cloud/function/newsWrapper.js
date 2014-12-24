@@ -121,14 +121,15 @@ AV.Cloud.define('getNews', function(req, res){
         }
     }).then(function(likes){
         for (var k in likes) {
-            likeTarget[likes[k].get('external_id')] = true;
+            likeTarget[likes[k].get('external_id')] = likes[k].id;
         }
-
         //将所有动态返回，添加isLike，记录点赞状态
         for (var k in newsResults) {
             var currNew = newsResults[k];
-            if (likeTarget[currNew.id] == true)	//添加点赞状态字段
-                currNew.set('isLike', true);
+            var likeObjectId = likeTarget[currNew.id];
+            if (likeObjectId)	//添加点赞状态字段
+               // currNew.set('isLike', true);
+               currNew.set('likeObjectId', likeObjectId);
         }
 
         res.success(newsResults);
