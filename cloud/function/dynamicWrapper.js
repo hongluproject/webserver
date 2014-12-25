@@ -209,7 +209,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             query.include('user_id');
             query.skip(skip);
             query.limit(limit);
-            query.descending('createAt');
+            query.descending('createdAt');
             query.find().then(function(dynamics) {
                 if (!dynamics) {
                     res.success([]);
@@ -235,7 +235,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             query.include('user_id');
             query.equalTo('commentUsers', userId);
             query.equalTo('type', parseInt(type));
-            query.descending('createAt');
+            query.descending('createdAt');
             query.find().then(function(dynamics) {
                 if (!dynamics) {
                     res.success([]);
