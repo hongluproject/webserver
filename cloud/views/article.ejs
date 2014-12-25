@@ -41,7 +41,7 @@
                                 <div class="a-tags">
                                     <% for(var i in tagList) { %>
                                         <% var item = tagList[i]; %>
-                                        <div class="a-tag"><a href="javascript:doFilter('filterNews','tag', '<%= item.tagId%>, <%= item.tagName%>);" onclick=""><%= item.tagName%></a></div>
+                                        <div class="a-tag"><a href="javascript:doFilter('filterNews','tag', <%= item.tagId%>, <%= item.tagName%>);" onclick=""><%= item.tagName%></a></div>
                                     <% }%>
                                     <div class="clear"></div>
                                 </div>
