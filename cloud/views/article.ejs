@@ -18,9 +18,9 @@
                 return false;
             }
 
-            function doFilter(methodName, tagId, tagName) {
+            function doFilter(methodName, type,objectId) {
                 if (isInHoopeng()) {
-                    external.callMethod(methodName,JSON.stringify({tagId:tagId,tagName:tagName}));
+                    external.callMethod(methodName,JSON.stringify({"type":type,"objectId":objectId}));
                 }
             }
         </script>
@@ -39,8 +39,8 @@
                             <div id="doc-container">
                                 <div class="a-tags">
                                     <% for(var i in tagList) { %>
-                                        <% var item = tagList[i]; %>
-                                        <div class="a-tag"><a href="javascript:doFilter('test', <%= item.tagId%>, '<%= item.tagName%>');" onclick=""><%= item.tagName%></a></div>
+                                    <% var item = tagList[i]; %>
+                                    <div class="a-tag"><a href="javascript:doFilter('filterNews','tag', <%= item.tagId%>);" onclick=""><%= item.tagName%></a></div>
                                     <% }%>
                                     <div class="clear"></div>
                                 </div>
