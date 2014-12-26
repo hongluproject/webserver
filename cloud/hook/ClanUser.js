@@ -62,69 +62,8 @@ AV.Cloud.afterSave('ClanUser', function(req){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
-    //部落人数加1
-    clanObj.increment('current_num');
-    clanObj.save();
 
-    //该用户加入部落数加1
-    userObj.increment('clanCount');
-    userObj.save();
-
-    //查找到对应的用户object
-    var query = new AV.Query('_User');
-    query.select('clanids');
-    query.get(userObj.id, {
-        success:function(user) {
-            if (!user) {
-                console.warn('ClanUser afterSave userid %s not found!', userObj.id);
-                return;
-            }
-
-            user.addUnique('clanids', clanObj.id);
-            user.save();
-
-            console.dir(user);
-        }
-    });
-
-    //找到该部落的founder
-    var queryClan = new AV.Query('Clan');
-    queryClan.select('founder_id');
-    queryClan.get(clanObj.id, {
-        success:function(clan) {
-            if (!clan) {
-                console.error('部落不存在:%s', clanObj.id);
-                return;
-            }
-            var founderId = clan.get('founder_id').id;
-            if (!founderId) {
-                console.error('ClanUser afterSave,clan %s founder id do not exist!', founderId);
-                return;
-            }
-
-            //向部落拥有者发送消息流，告知我已经加入该部落
-            var query = new AV.Query('_User');
-            query.equalTo('objectId', founderId);
-
-            var status = new AV.Status(null, '加入了你的部落！');
-            status.data.source = userObj._toPointer();
-            status.query = query;
-            status.set('messageType', 'addToClan');
-            status.send().then(function(status){
-                console.info('加入部落事件流发送成功！');
-            },function(error) {
-                console.error(error);
-            });
-        }
-    });
-
-    //加入融云组群
-    AV.Cloud.run('imAddToGroup',{
-        userid:userObj.id,
-        groupid:clanObj.id,
-        groupname:'hoopengGroup'
-    });
-
+    //找到
 
 });
 
