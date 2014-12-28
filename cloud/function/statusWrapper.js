@@ -49,6 +49,7 @@ AV.Cloud.define('getStatus', function(req, res) {
 });
 
 AV.Cloud.define('getFriendList', function(req, res) {
+    console.dir(req.user);
     var userId = req.params.userId;
     var limit = req.params.limit || 100;
     var skip = req.params.skip;
@@ -77,11 +78,14 @@ AV.Cloud.define('getFriendList', function(req, res) {
             returnUser.set('nickname', currUser.get('nickname'));
             returnUser.set('icon', currUser.get('icon'));
             returnUser.set('clanids', currUser.get('clanids'));
+            if (userId == findFriendId) {
+                returnUser.set('isFriend', true);
+            }
 
             followees.push(returnUser);
         }
 
-        if (findFriendId) { //查询好友关系
+        if (findFriendId && findFriendId!=userId) { //查询好友关系
             var friendList = [];
             for (var i in followees) {
                 friendList.push(AV.User.createWithoutData('_User', followees[i].id));
