@@ -1,4 +1,5 @@
 AV.Cloud.define("getClan",function(req, res){
+    var HPGlobalParam = AV.HPGlobalParam || {};
     var userid = req.params.userid;
     var User = AV.Object.extend("_User");
     var Clan = AV.Object.extend("Clan");
@@ -19,6 +20,18 @@ AV.Cloud.define("getClan",function(req, res){
                         var userClan = [];
                         for (var i = 0; i < result.length; i++) {
                             var outResult = {};
+                            var arrayTagName = [];
+                            var arrayTag = result[i].get('tags');
+                            for (var k in arrayTag) {
+                                var name = '';
+                                if (HPGlobalParam.hpTags[arrayTag[k]]) {
+                                    name = HPGlobalParam.hpTags[arrayTag[k]].get('tag_name');
+                                }
+                                arrayTagName.push(name);
+                            }
+                            if (arrayTagName.length) {
+                                result[i].set('tagsName', arrayTagName);
+                            }
                             outResult       = result[i];
                             userClan.push(outResult);
                         }
@@ -43,6 +56,18 @@ AV.Cloud.define("getClan",function(req, res){
                 var recommendClan = [];
                 for (var i = 0; i < result.length; i++) {
                     var outResult = {};
+                    var arrayTagName = [];
+                    var arrayTag = result[i].get('tags');
+                    for (var k in arrayTag) {
+                        var name = '';
+                        if (HPGlobalParam.hpTags[arrayTag[k]]) {
+                            name = HPGlobalParam.hpTags[arrayTag[k]].get('tag_name');
+                        }
+                        arrayTagName.push(name);
+                    }
+                    if (arrayTagName.length) {
+                        result[i].set('tagsName', arrayTagName);
+                    }
                     outResult       = result[i];
                     recommendClan.push(outResult);
                 }
