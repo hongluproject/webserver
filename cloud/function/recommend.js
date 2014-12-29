@@ -1,3 +1,5 @@
+
+
 /**
  * Created by fugang on 14/12/12.
  */
@@ -11,9 +13,11 @@ AV.Cloud.define("getRecommend",function(req, res){
     var User = AV.Object.extend("_User");
     var Clan = AV.Object.extend("Clan");
     var Dynamic = AV.Object.extend("DynamicNews");
+    var Followee = AV.Object.extend("_Followee");
+    var selfFriends = [];
+
     var ret = {
         recommendUser:{},
-        recommendClan:{},
         recommendDynamic:{},
         recommendAsk:{}
     };
@@ -22,6 +26,9 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId","tags");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 1);
+        if(userid) {
+            query.notEqualTo('user_id', AV.User.createWithoutData('_User', userid));
+        }
         query.limit(2);
         query.include('user_id');
         query.find({
@@ -49,6 +56,9 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId","tags");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 2);
+        if(userid) {
+            query.notEqualTo('user_id', AV.User.createWithoutData('_User', userid));
+        }
         query.limit(2);
         query.include('user_id');
         query.find({
@@ -69,80 +79,61 @@ AV.Cloud.define("getRecommend",function(req, res){
         })
     }
 
-    var getRecommendClan = function(userObj){
-        if(userObj){
-            var userGeoPoint = userObj.get("actual_position");
-            var clanids        = userObj.get("clanids");
-            var query = new AV.Query(Clan);
-            if(clanids!=undefined){
-                query.notContainedIn("objectId", clanids);
-            }
-            query.select("icon", "title","position","tags","objectId");
-            query.equalTo("tags", tags[index]);
-            query.near("position", userGeoPoint);
-            query.limit(2);
-            query.find({
-                success: function(result) {
-                    var clanResult = [];
-                    for (var i = 0; i < result.length; i++) {
-                        var outChannel = {};
-                        outChannel       = result[i];
-                        clanResult.push(outChannel);
-                    }
-                    ret.recommendClan = clanResult;
-                    getRecommendDynamic();
-                    return;
-                },
-                error:function(userObj,error) {
-                    ret.recommendClan = [];
-                    getRecommendDynamic();
-                    return;
-                }
-            });
-        }else{
-            ret.recommendClan = [];
-            getRecommendDynamic();
-            return;
-        }
-    }
 
     var  getRecommendUser = function(){
         if(userid){
-            var query = new AV.Query(User);
-            query.get(userid, {
-                success:function(userObj) {
-                    var userGeoPoint = userObj.get("actual_position");
-                    var query = new AV.Query(User);
-                    query.select("icon", "nickname","actual_position","tags","clanids","objectId");
-                    query.near("actual_position", userGeoPoint);
-                    query.notEqualTo("objectId", userid);
-                    query.equalTo("tags", tags[index]);
-                    query.limit(2);
-                    query.find({
-                        success: function(result) {
-                            var userResult = [];
-                            for (var i = 0; i < result.length; i++) {
-                                var outChannel = {};
-                                outChannel       = result[i];
-                                userResult.push(outChannel);
-                            }
-                            ret.recommendUser = userResult;
-                            getRecommendClan(userObj);
-                            return;
-                        }
-                    });
-                },
-                error:function(userObj,error) {
-                    ret.recommendUser = [];
-                    getRecommendClan(userObj);
-                    return;
+            var query = new AV.Query(Followee);
+            query.select('followee');
+            query.equalTo('user',AV.User.createWithoutData('_User', userid));
+            query.find().then(function(result){
+                var selfFriends = [];
+                for (var i = 0; i < result.length; i++) {
+                    selfFriends.push(result[i].get("followee").id);
                 }
+                var query = new AV.Query(User);
+                query.first(userid).then(function(result){
+                    getRecommendUserPublic(selfFriends,result);
+
+                });
             });
         }else{
-            ret.recommendUser = [];
-            getRecommendClan();
-            return;
+            getRecommendUserPublic(null,null);
         }
+    }
+    //封装
+    var  getRecommendUserPublic = function(selfFriends,userObj){
+        var query = new AV.Query(User);
+        query.select("icon", "nickname","actual_position","tags","clanids","objectId");
+        if(userObj){
+            //距离
+            var userGeoPoint = userObj.get("actual_position");
+            query.near("actual_position", userGeoPoint);
+        }
+        if(userid){
+            //非自己
+            query.notEqualTo("objectId", userid);
+        }
+        query.equalTo("tags", tags[index]);
+        if(selfFriends){
+            query.notContainedIn("objectId", selfFriends);
+        }
+        query.limit(2);
+        query.find({
+            success: function(result) {
+                var userResult = [];
+                for (var i = 0; i < result.length; i++) {
+                    var outChannel = {};
+                    outChannel       = result[i];
+                    userResult.push(outChannel);
+                }
+                ret.recommendUser = userResult;
+                getRecommendDynamic();
+            },
+            error:function(){
+                ret.recommendUser = [];
+                getRecommendDynamic();
+            }
+        });
     }
     getRecommendUser();
 });
