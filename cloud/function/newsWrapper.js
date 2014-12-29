@@ -5,6 +5,7 @@
 /*
  获取资讯列表包装函数
  request params:
+ favoriteIds：收藏的资讯列表
  userId:用户objectId，若不传，则点赞信息全部为false
  limit: 本次查询最多返回条目数
  skip: 本次查询起始查询位置
@@ -20,6 +21,7 @@ AV.Cloud.define('getNews', function(req, res){
     var area = req.params.area;
     var tag = req.params.tag;
     var cateid = req.params.cateid;
+    var favoriteIds = req.params.favoriteIds || [];
     var likeTarget = {};	//记录该用户点过赞的id
     var newsResults = [];
     var queryOr = [];
@@ -60,6 +62,9 @@ AV.Cloud.define('getNews', function(req, res){
     queryNews.limit(limit);
     queryNews.skip(skip);
     queryNews.equalTo('status', 1);
+    if (favoriteIds.length > 0) {
+        queryNews.containedIn('objectId', favoriteIds);
+    }
     var newsIds = [];
     queryNews.find().then(function(results) {
         newsResults = results;
