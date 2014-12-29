@@ -202,10 +202,14 @@ AV.Cloud.define('getDynamic', function(req,res){
             var limit = req.params.limit || 20;
             var skip = req.params.skip || 0;
             var type = req.params.type || 2;
+            var favoriteIds = req.params.favoriteIds || [];
 
             var query = new AV.Query('DynamicNews');
             query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
             query.equalTo('type', parseInt(type));
+            if (favoriteIds.length > 0) {
+                query.containedIn('objectId', favoriteIds);
+            }
             query.include('user_id');
             query.skip(skip);
             query.limit(limit);
