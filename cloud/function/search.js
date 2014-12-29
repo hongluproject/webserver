@@ -12,31 +12,14 @@ AV.Cloud.define("getSearch",function(req,res){
 
 
     //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
-    var  type = req.params.type;
+    var  type = req.params.type.toString();
     var  kw  = req.params.kw;
     var  tagId = req.params.tagId;
     var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
 
-    if(tagId){
-        switchTab(type);
-    }else if(kw){
-        var query = new AV.Query(Tag);
-        query.select("objectId","tag_name");
-        query.equalTo("tag_name", kw);
-        query.first({
-            success: function(result) {
-                if(result){
-                    tagId = result.id;
-                }
-                switchTab(type);
-            },
-            error:function(userObj,error) {
-            }
-        });
-    }else {
-        res.success([]);
-    }
+    console.info('getSearch params,type:%d kw:%s tagId:%s skip:%d limit:%d',
+        type, kw, tagId, skip, limit);
 
     //资讯
     var getNews =function(){
@@ -134,7 +117,7 @@ AV.Cloud.define("getSearch",function(req,res){
     };
 
 
-    var switchTab  = function(type){
+    var switchTab  = function(type, res){
         //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
         switch(type)
         {
@@ -153,8 +136,32 @@ AV.Cloud.define("getSearch",function(req,res){
             case "5":
                 getUser();
                 break;
+            default:
+                console.error('未知的查询类型:'+type);
+                res.error('未知的查询类型:'+type);
         }
 
     };
+
+    if(tagId){
+        switchTab(type, res);
+    }else if(kw){
+        var query = new AV.Query(Tag);
+        query.select("objectId","tag_name");
+        query.equalTo("tag_name", kw);
+        query.first({
+            success: function(result) {
+                if(result){
+                    tagId = result.id;
+                }
+                switchTab(type, res);
+            },
+            error:function(userObj,error) {
+                console.error('query tagName error:%o', error);
+            }
+        });
+    }else {
+        res.success([]);
+    }
 
 });

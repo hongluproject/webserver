@@ -8,6 +8,10 @@
 AV.Cloud.define("getRecommend",function(req, res){
     //共用
     var tags = req.params.tags;
+    if (!tags || tags.length <=0) {
+        res.error('tags not found!');
+        return;
+    }
     var index = Math.floor((Math.random()*tags.length));
     var userid = req.params.userid;
     var User = AV.Object.extend("_User");
@@ -42,7 +46,7 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.find({
             success:function(result){
                 var askResult = [];
-                for (var i = 0; i < result.length; i++) {
+                for (var i = 0; result && i < result.length; i++) {
                     var user =  result[i].get("user_id");
                     var outChannel = {};
                     outChannel       = result[i];
@@ -74,11 +78,11 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.greaterThan('createdAt',searchDate);
         query.limit(2);
         query.descending("up_count");
-        query.include('user_id');;
+        query.include('user_id');
         query.find({
             success:function(result){
                 var dynamicResult = [];
-                for (var i = 0; i < result.length; i++) {
+                for (var i = 0; result && i < result.length; i++) {
                     var outChannel = {};
                     outChannel       = result[i];
                     dynamicResult.push(outChannel);
@@ -100,7 +104,8 @@ AV.Cloud.define("getRecommend",function(req, res){
             query.select('followee');
             query.equalTo('user',AV.User.createWithoutData('_User', userid));
             query.find().then(function(result){
-                for (var i = 0; i < result.length; i++) {
+                var selfFriends = [];
+                for (var i = 0; result && i < result.length; i++) {
                     selfFriends.push(result[i].get("followee").id);
                 }
                 var query = new AV.Query(User);
@@ -134,7 +139,7 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.find({
             success: function(result) {
                 var userResult = [];
-                for (var i = 0; i < result.length; i++) {
+                for (var i = 0; result && i < result.length; i++) {
                     var outChannel = {};
                     outChannel       = result[i];
                     userResult.push(outChannel);
