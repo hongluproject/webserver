@@ -28,8 +28,16 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.equalTo("type", 1);
         if(userid) {
             query.notEqualTo('user_id', AV.User.createWithoutData('_User', userid));
+            query.notContainedIn('user_id', selfFriends);
         }
+
+        //30天
+        var today=new Date();
+        var t=today.getTime()-1000*60*60*24*30;
+        var searchDate=new Date(t);
+        query.greaterThan('createdAt',searchDate);
         query.limit(2);
+        query.descending("up_count");
         query.include('user_id');
         query.find({
             success:function(result){
@@ -58,9 +66,15 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.equalTo("type", 2);
         if(userid) {
             query.notEqualTo('user_id', AV.User.createWithoutData('_User', userid));
+            query.notContainedIn('user_id', selfFriends);
         }
+        var today=new Date();
+        var t=today.getTime()-1000*60*60*24*30;
+        var searchDate=new Date(t);
+        query.greaterThan('createdAt',searchDate);
         query.limit(2);
-        query.include('user_id');
+        query.descending("up_count");
+        query.include('user_id');;
         query.find({
             success:function(result){
                 var dynamicResult = [];
@@ -86,7 +100,6 @@ AV.Cloud.define("getRecommend",function(req, res){
             query.select('followee');
             query.equalTo('user',AV.User.createWithoutData('_User', userid));
             query.find().then(function(result){
-                var selfFriends = [];
                 for (var i = 0; i < result.length; i++) {
                     selfFriends.push(result[i].get("followee").id);
                 }
