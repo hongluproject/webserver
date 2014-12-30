@@ -1,6 +1,7 @@
 AV.Cloud.define("getClan",function(req, res){
     var HPGlobalParam = AV.HPGlobalParam || {};
     var userid = req.params.userid;
+    var tags = req.params.tags;
     var User = AV.Object.extend("_User");
     var Clan = AV.Object.extend("Clan");
     var ret = {
@@ -44,6 +45,9 @@ AV.Cloud.define("getClan",function(req, res){
                 getRecommendClan (clanids);
             }
 
+        },function(error) {
+            ret.selfClan = userClan=[];
+            getRecommendClan ();
         });
     }
 
@@ -75,9 +79,7 @@ AV.Cloud.define("getClan",function(req, res){
                 res.success(ret);
             }
         });
-
     }
-
     getSelfClan(userid);
 });
 
