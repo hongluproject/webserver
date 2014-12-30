@@ -12,31 +12,14 @@ AV.Cloud.define("getSearch",function(req,res){
 
 
     //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
-    var  type = req.params.type;
+    var  type = req.params.type.toString();
     var  kw  = req.params.kw;
     var  tagId = req.params.tagId;
     var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
 
-    if(tagId){
-        switchTab(type);
-    }else if(kw){
-        var query = new AV.Query(Tag);
-        query.select("objectId","tag_name");
-        query.equalTo("tag_name", kw);
-        query.first({
-            success: function(result) {
-                if(result){
-                    tagId = result.id;
-                }
-                switchTab(type);
-            },
-            error:function(userObj,error) {
-            }
-        });
-    }else {
-        res.success([]);
-    }
+    console.info('getSearch params,type:%d kw:%s tagId:%s skip:%d limit:%d',
+        type, kw, tagId, skip, limit);
 
     //资讯
     var getNews =function(){
@@ -59,7 +42,7 @@ AV.Cloud.define("getSearch",function(req,res){
     //问答
     var getAsk = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id", "content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("type", 1);
         query.include('user_id');
         if(tagId){
@@ -71,8 +54,20 @@ AV.Cloud.define("getSearch",function(req,res){
         query.skip(skip);
         query.include('user_id');
         query.find({
-            success:function(result){
-                res.success(result);
+            success:function(results){
+                if (results) {
+                    for (var i in results) {
+                        var currResult = results[i];
+                        var currUser = currResult.get('user_id');
+                        var retUser = AV.User.createWithoutData('_User', currUser.id);
+                        retUser.set('nickname', currUser.get('nickname'));
+                        retUser.set('tags', currUser.get('tags'));
+                        var jValue = retUser._toFullJSON();
+                        delete jValue.__type;
+                        currResult.set('user_id', jValue);
+                    }
+                }
+                res.success(results);
             }
         })
     }
@@ -80,7 +75,7 @@ AV.Cloud.define("getSearch",function(req,res){
     //动态
     var getDynamic = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id","nickname", "content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("type", 2);
         query.limit(limit);
         if(tagId){
@@ -91,8 +86,20 @@ AV.Cloud.define("getSearch",function(req,res){
         query.skip(skip);
         query.include('user_id');
         query.find({
-            success:function(result){
-                res.success(result);
+            success:function(results){
+                if (results) {
+                    for (var i in results) {
+                        var currResult = results[i];
+                        var currUser = currResult.get('user_id');
+                        var retUser = AV.User.createWithoutData('_User', currUser.id);
+                        retUser.set('nickname', currUser.get('nickname'));
+                        retUser.set('tags', currUser.get('tags'));
+                        var jValue = retUser._toFullJSON();
+                        delete jValue.__type;
+                        currResult.set('user_id', jValue);
+                    }
+                }
+                res.success(results);
             }
         })
     };
@@ -134,7 +141,7 @@ AV.Cloud.define("getSearch",function(req,res){
     };
 
 
-    var switchTab  = function(type){
+    var switchTab  = function(type, res){
         //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
         switch(type)
         {
@@ -153,8 +160,33 @@ AV.Cloud.define("getSearch",function(req,res){
             case "5":
                 getUser();
                 break;
+            default:
+                console.error('未知的查询类型:'+type);
+                res.error('未知的查询类型:'+type);
         }
 
     };
+
+    if(tagId){
+        switchTab(type, res);
+    }else if(kw){
+        var query = new AV.Query(Tag);
+        query.select("objectId","tag_name");
+        query.equalTo("tag_name", kw);
+        query.first({
+            success: function(result) {
+                if(result){
+                    tagId = result.id;
+                }
+                switchTab(type, res);
+            },
+            error:function(error) {
+                console.error('query tagName error:%O', error);
+                res.error('found tagName '+kw+' error!');
+            }
+        });
+    }else {
+        res.success([]);
+    }
 
 });
