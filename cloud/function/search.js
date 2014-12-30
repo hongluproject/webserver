@@ -42,7 +42,7 @@ AV.Cloud.define("getSearch",function(req,res){
     //问答
     var getAsk = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id", "content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("type", 1);
         query.include('user_id');
         if(tagId){
@@ -54,8 +54,20 @@ AV.Cloud.define("getSearch",function(req,res){
         query.skip(skip);
         query.include('user_id');
         query.find({
-            success:function(result){
-                res.success(result);
+            success:function(results){
+                if (results) {
+                    for (var i in results) {
+                        var currResult = results[i];
+                        var currUser = currResult.get('user_id');
+                        var retUser = AV.User.createWithoutData('_User', currUser.id);
+                        retUser.set('nickname', currUser.get('nickname'));
+                        retUser.set('tags', currUser.get('tags'));
+                        var jValue = retUser._toFullJSON();
+                        delete jValue.__type;
+                        currResult.set('user_id', jValue);
+                    }
+                }
+                res.success(results);
             }
         })
     }
@@ -63,7 +75,7 @@ AV.Cloud.define("getSearch",function(req,res){
     //动态
     var getDynamic = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id","nickname", "content", "type","thumbs","up_count","comment_count","objectId");
         query.equalTo("type", 2);
         query.limit(limit);
         if(tagId){
@@ -74,8 +86,20 @@ AV.Cloud.define("getSearch",function(req,res){
         query.skip(skip);
         query.include('user_id');
         query.find({
-            success:function(result){
-                res.success(result);
+            success:function(results){
+                if (results) {
+                    for (var i in results) {
+                        var currResult = results[i];
+                        var currUser = currResult.get('user_id');
+                        var retUser = AV.User.createWithoutData('_User', currUser.id);
+                        retUser.set('nickname', currUser.get('nickname'));
+                        retUser.set('tags', currUser.get('tags'));
+                        var jValue = retUser._toFullJSON();
+                        delete jValue.__type;
+                        currResult.set('user_id', jValue);
+                    }
+                }
+                res.success(results);
             }
         })
     };
@@ -156,8 +180,9 @@ AV.Cloud.define("getSearch",function(req,res){
                 }
                 switchTab(type, res);
             },
-            error:function(userObj,error) {
-                console.error('query tagName error:%o', error);
+            error:function(error) {
+                console.error('query tagName error:%O', error);
+                res.error('found tagName '+kw+' error!');
             }
         });
     }else {

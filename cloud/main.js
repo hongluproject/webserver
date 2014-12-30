@@ -27,6 +27,7 @@ require('cloud/function/recommend.js');
 require('cloud/function/search.js');
 require('cloud/function/clan.js');
 require('cloud/function/statusWrapper.js');
+require('cloud/function/activityWrapper.js');
 
 /** 测试返回多个class数据
  *
