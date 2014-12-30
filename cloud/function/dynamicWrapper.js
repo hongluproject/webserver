@@ -202,10 +202,35 @@ AV.Cloud.define('getDynamic', function(req,res){
             var limit = req.params.limit || 20;
             var skip = req.params.skip || 0;
             var type = req.params.type || 2;
-            var favoriteIds = req.params.favoriteIds || [];
 
             var query = new AV.Query('DynamicNews');
             query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.equalTo('type', parseInt(type));
+            query.include('user_id');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            query.find().then(function(dynamics) {
+                if (!dynamics) {
+                    res.success([]);
+                    return;
+                }
+
+                addLikesAndReturn(userId, dynamics, res);
+            });
+            break;
+
+        case 'favoriteDynamic': //获取收藏动态或问答信息
+            var favoriteIds = req.params.favoriteIds || [];
+            if (favoriteIds.length <= 0) {
+                res.error('请输入收藏的动态或问答信息！');
+                return;
+            }
+            var limit = req.params.limit || favoriteIds.length;
+            var skip = req.params.skip || 0;
+            var type = req.params.type || 2;
+
+            var query = new AV.Query('DynamicNews');
             query.equalTo('type', parseInt(type));
             if (favoriteIds.length > 0) {
                 query.containedIn('objectId', favoriteIds);
