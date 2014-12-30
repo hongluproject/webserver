@@ -44,6 +44,9 @@ AV.Cloud.define('joinActivity', function(req, res) {
         activityResult.save();
 
         res.success();
+    }, function(error) {
+        console.error('joinActivity error:', error);
+        res.error('加入活动失败！');
     });
 });
 
@@ -81,5 +84,8 @@ AV.Cloud.define('quitActivity', function(req, res) {
         activity.save();
 
         res.success();
+    }, function(error) {
+        console.error('quitActivity failed:', error);
+        res.error('取消活动加入失败!');
     });
 });

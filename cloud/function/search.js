@@ -42,7 +42,9 @@ AV.Cloud.define("getSearch",function(req,res){
     //问答
     var getAsk = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id", "content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id","nickname", "content", "type",
+            "thumbs","up_count","comment_count","objectId","tags", "voice", "duration",
+            "area", "position");
         query.equalTo("type", 1);
         query.include('user_id');
         if(tagId){
@@ -75,7 +77,9 @@ AV.Cloud.define("getSearch",function(req,res){
     //动态
     var getDynamic = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","nickname", "content", "type","thumbs","up_count","comment_count","objectId");
+        query.select("user_id","nickname", "content", "type",
+            "thumbs","up_count","comment_count","objectId","tags", "voice", "duration",
+            "area", "position");
         query.equalTo("type", 2);
         query.limit(limit);
         if(tagId){

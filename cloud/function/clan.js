@@ -9,6 +9,9 @@ AV.Cloud.define("getClan",function(req, res){
         selfClan:{},
         recommendClan:{}
     };
+
+    console.info('getClan params, userid:%s', userid);
+
     var getSelfClan = function(userid){
         var query = new AV.Query(User);
         query.select("nickname","tags","clanids");
