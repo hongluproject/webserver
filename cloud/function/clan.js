@@ -1,7 +1,8 @@
 AV.Cloud.define("getClan",function(req, res){
     var HPGlobalParam = AV.HPGlobalParam || {};
     var userid = req.params.userid;
-    var tags = req.params.tags;
+    var tags = req.params.tags||[];
+    var index = Math.floor((Math.random()*tags.length));
     var User = AV.Object.extend("_User");
     var Clan = AV.Object.extend("Clan");
     var ret = {
@@ -41,12 +42,12 @@ AV.Cloud.define("getClan",function(req, res){
                      }
                 });
             }else{
-                ret.selfClan = userClan=[];
-                getRecommendClan (clanids);
+                ret.selfClan =[];
+                getRecommendClan ();
             }
 
         },function(error) {
-            ret.selfClan = userClan=[];
+            ret.selfClan =[];
             getRecommendClan ();
         });
     }
@@ -54,7 +55,10 @@ AV.Cloud.define("getClan",function(req, res){
     var getRecommendClan = function (clanids){
         var query = new AV.Query(Clan);
         query.limit(2);
+        if(clanids)
         query.notContainedIn("objectId",clanids);
+        if(tags[index])
+        query.equalTo("tags", tags[index]);
         query.find({
             success: function(result) {
                 var recommendClan = [];
