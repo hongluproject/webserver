@@ -17,29 +17,8 @@ AV.Cloud.define('getDynamic', function(req,res){
             __type:1
         };
 
-        var dynamicReturn = [];
-        //获取所有动态objectId，再查询该用户对这些动态是否点过赞
-        var dynamicIdArray = [];
-        for (var i=0; i<dynamics.length; i++) {
-            if (dynamics[i].get('user_id')) {
-                dynamicIdArray.push(dynamics[i].id);
-            } else {    //删除不合法的数据
-                dynamics.splice(i, 1);
-                i--;
-            }
-        }
-
-        //查询点赞表
-        var likeClass = AV.Object.extend("Like");
-        var likeQuery = new AV.Query(likeClass);
-        likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
-        likeQuery.containedIn('external_id', dynamicIdArray);
-        likeQuery.find().then(function(likes) {
-            for (var i in likes) {
-                likeTarget[likes[i].get('external_id')] = true;
-            }
-
-
+        //为动态或问答加入点赞状态
+        var addLikeTarget = function(dynamics, likeTarget) {
             var hpTags = AV.HPGlobalParam.hpTags;
             //将所有动态返回，添加isLike，记录点赞状态，添加tagName字段，去掉user字段中多余的信息
             for (var i in dynamics) {
@@ -62,7 +41,6 @@ AV.Cloud.define('getDynamic', function(req,res){
 
                 //遍历user_id，去掉不需要返回的字段，减少网络传输
                 var rawUser = currDynamic.get('user_id');
-                console.dir(rawUser);
                 if (rawUser && rawUser.id) {
                     var postUser = AV.Object.createWithoutData('_User', rawUser.id);
                     postUser.set('icon', rawUser.get('icon'));
@@ -73,7 +51,36 @@ AV.Cloud.define('getDynamic', function(req,res){
                 }
 
             }
+        }
 
+        var dynamicReturn = [];
+        //获取所有动态objectId，再查询该用户对这些动态是否点过赞
+        var dynamicIdArray = [];
+        for (var i=0; i<dynamics.length; i++) {
+            if (dynamics[i].get('user_id')) {
+                dynamicIdArray.push(dynamics[i].id);
+            } else {    //删除不合法的数据
+                dynamics.splice(i, 1);
+                i--;
+            }
+        }
+
+        //查询点赞表
+        var likeClass = AV.Object.extend("Like");
+        var likeQuery = new AV.Query(likeClass);
+        likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+        likeQuery.containedIn('external_id', dynamicIdArray);
+        likeQuery.find().then(function(likes) {
+            for (var i in likes) {
+                likeTarget[likes[i].get('external_id')] = true;
+            }
+
+            addLikeTarget(dynamics, likeTarget);
+
+            response.success(dynamics);
+        }, function(error) {
+            console.error('query dynamic like failed:', error);
+            addLikeTarget(dynamics, likeTarget);
             response.success(dynamics);
         });
 
@@ -145,7 +152,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                 return likeQuery.find();
             }, function(err){
                 //查询失败
-                console.dir('查询动态表失败：%o', err);
+                console.error('查询动态表失败：', err);
                 res.error('查询关注动态信息失败！');
             }).then(function(likes){
                 date3 = new Date();
@@ -182,8 +189,6 @@ AV.Cloud.define('getDynamic', function(req,res){
                         }
                     }
 
-                    console.dir(currDynamic);
-
                 }
 
                 res.success(statusReturn);
@@ -217,15 +222,54 @@ AV.Cloud.define('getDynamic', function(req,res){
                 }
 
                 addLikesAndReturn(userId, dynamics, res);
+            }, function(error) {
+                console.error('getDynamic mineDynamic failed:', error);
+                res.success([]);
+            });
+            break;
+
+        case 'clanDynamic': //查询部落动态和问答
+            var userId = req.params.userId;
+            var clanId = req.params.clanId;
+            if (!userId || !clanId) {
+                res.error('请输入部落和用户信息！');
+                return;
+            }
+            var limit = req.params.limit || 20;
+            var skip = req.params.skip || 0;
+            var type = req.params.type;
+            var query = new AV.Query('DynamicNews');
+            if (type) {
+                query.equalTo('type', parseInt(type));
+            }
+            if (clanId) {
+                query.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+            }
+            query.include('user_id');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            query.find().then(function(dynamics) {
+                if (!dynamics) {
+                    res.success([]);
+                    return;
+                }
+
+                addLikesAndReturn(userId, dynamics, res);
+            }, function(error) {
+                console.error('getDynamic mineDynamic failed:', error);
+                res.success([]);
             });
             break;
 
         case 'favoriteDynamic': //获取收藏动态或问答信息
+            console.info('favoriteDynamic params:', req.params);
             var favoriteIds = req.params.favoriteIds || [];
             if (favoriteIds.length <= 0) {
                 res.error('请输入收藏的动态或问答信息！');
                 return;
             }
+            var userId = req.params.userId;
             var limit = req.params.limit || favoriteIds.length;
             var skip = req.params.skip || 0;
             var type = req.params.type || 2;
@@ -246,6 +290,9 @@ AV.Cloud.define('getDynamic', function(req,res){
                 }
 
                 addLikesAndReturn(userId, dynamics, res);
+            }, function(error) {
+                console.error('getDynamic favoriteDynamic failed:', error);
+                res.success([]);
             });
             break;
 
@@ -271,6 +318,9 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
                 addLikesAndReturn(userId, dynamics, res);
+            }, function(error) {
+                console.error('getDynamic commentDynamic failed:', error);
+                res.success([]);
             });
             break;
     }

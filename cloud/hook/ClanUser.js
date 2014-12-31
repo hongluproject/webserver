@@ -40,12 +40,13 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
                     res.success();
                 },
                 error:function(error) {
-                    console.dir(error);
+                    console.error('beforeSave ClanUser query error:', error);
                     res.error('部落不存在！');
                 }
             })
         },
         error:function(error) {
+            console.error('beforSave ClanUser queryClan error:', error);
             res.success();
         }
     });
@@ -62,9 +63,6 @@ AV.Cloud.afterSave('ClanUser', function(req){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
-    console.dir(req);
-
-
     //部落人数加1
     clanObj.increment('current_num');
     clanObj.save();
@@ -79,20 +77,18 @@ AV.Cloud.afterSave('ClanUser', function(req){
     query.get(userObj.id, {
         success:function(user) {
             if (!user) {
-                console.warn('ClanUser afterSave userid %s not found!', userObj.id);
+                console.error('ClanUser afterSave userid %s not found!', userObj.id);
                 return;
             }
 
             user.addUnique('clanids', clanObj.id);
             user.save();
-
-            console.dir(user);
         }
     });
 
     //找到该部落的founder
     var queryClan = new AV.Query('Clan');
-    queryClan.select('founder_id');
+    queryClan.select('founder_id', 'title');
     queryClan.get(clanObj.id, {
         success:function(clan) {
             if (!clan) {
@@ -104,6 +100,13 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 console.error('ClanUser afterSave,clan %s founder id do not exist!', founderId);
                 return;
             }
+
+            //加入融云组群
+            AV.Cloud.run('imAddToGroup',{
+                userid:userObj.id,
+                groupid:clanObj.id,
+                groupname:clanObj.get('title')
+            });
 
             //向部落拥有者发送消息流，告知我已经加入该部落
             var query = new AV.Query('_User');
@@ -120,14 +123,6 @@ AV.Cloud.afterSave('ClanUser', function(req){
             });
         }
     });
-
-    //加入融云组群
-    AV.Cloud.run('imAddToGroup',{
-        userid:userObj.id,
-        groupid:clanObj.id,
-        groupname:'hoopengGroup'
-    });
-
 
 });
 

@@ -16,7 +16,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
         return;
     }
 
-    console.info('submitActivityUser params activityId:%s activityUsers:%O', activityId, activityUsers);
+    console.info('submitActivityUser params activityId:%s activityUsers:', activityId, activityUsers);
 
     //查询活动是否已经超过上限
     var queryActivity = new AV.Query('Activity');
@@ -26,17 +26,42 @@ AV.Cloud.define('joinActivity', function(req, res) {
             return;
         }
 
+        //判断报名人数是否已经超过上限
         var currNum = activityResult.get('current_num');
         var maxNum = activityResult.get('max_num');
         if (currNum >= maxNum) {
-            res.error('报名人数已经操作上限！');
+            res.error('报名人数已经超过上限！');
             return;
         }
 
+        //判断报名截止时间已过
+        var currDate = new Date();
+
+        var saveObj = {
+            sex:1,
+            real_name:1,
+            phone:1,
+            idcard:1,
+            passport_card:1,
+            two_way_permit:1,
+            mpt:1
+        };
         //开始保存提交的报名信息
         for (var i=0; i<userCount; i++) {
-            var user = new AV.Object(activityUsers[i]);
-            user.save();
+            var currActivityUser = activityUsers[i];
+
+            //create return activityUser
+            var ActivityUserClass = AV.Object.extend('ActivityUser');
+            var returnActivityUser = new ActivityUserClass();
+            returnActivityUser.set('user_id', AV.Object.createWithoutData('_User', currActivityUser.user_id.objectId));
+            returnActivityUser.set('activity_id', AV.Object.createWithoutData('Activity', currActivityUser.activity_id.objectId));
+
+            for (var k in currActivityUser) {
+                if (saveObj[k] == 1) {
+                    returnActivityUser.set(k, currActivityUser[k]);
+                }
+            }
+            returnActivityUser.save();
         }
 
         //更新当前报名人数

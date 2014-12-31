@@ -62,6 +62,7 @@ AV.Cloud.define('getNews', function(req, res){
     queryNews.limit(limit);
     queryNews.skip(skip);
     queryNews.equalTo('status', 1);
+    queryNews.descending('createdAt');
     if (favoriteIds.length > 0) {
         queryNews.containedIn('objectId', favoriteIds);
     }
@@ -70,6 +71,13 @@ AV.Cloud.define('getNews', function(req, res){
         newsResults = results;
         for (var i in results) {
             newsIds.push(results[i].id);
+
+            //tags列表最多返回3个，否则前端会显示不下
+            var tags = results[i].get('tags');
+            if (tags && tags.length>3) {
+                tags.splice(3, tags.length-3);
+                results[i].set('tags', tags);
+            }
 
             //返回cate名称
             var arrayCateName = [];
