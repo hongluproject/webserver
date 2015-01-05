@@ -62,7 +62,7 @@ AV.Cloud.define('getNews', function(req, res){
     queryNews.limit(limit);
     queryNews.skip(skip);
     queryNews.equalTo('status', 1);
-    queryNews.descending('createdAt');
+    queryNews.descending('publicAt');
     if (favoriteIds.length > 0) {
         queryNews.containedIn('objectId', favoriteIds);
     }

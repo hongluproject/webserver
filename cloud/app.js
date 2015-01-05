@@ -98,10 +98,12 @@ app.get('/news/:objId', function(req, res) {
         var tagIds = [];
         for(var i in results) {
             var obj = results[i];
-            console.dir(obj);
             console.info(" id:" + obj.id);
             renderObj.title = obj.get('title');
-            renderObj.publicDate = obj.get('publicAt');
+            var publicAt = obj.get('publicAt');
+            renderObj.publicDate = publicAt.getFullYear() + '-' +
+                    common.pad((publicAt.getMonth()+1),2) + '-' +
+                    common.pad((publicAt.getDate()),2);
             renderObj.newsContent = obj.get('contents');
             renderObj.fromWhere = obj.get('source'),
             tagIds = obj.get('tags');
@@ -118,14 +120,11 @@ app.get('/news/:objId', function(req, res) {
         console.info("print tagList");
         for(var i in results) {
             var obj = results[i];
-            console.dir(obj);
             renderObj.tagList.push({
                 tagId:obj.id,
                 tagName:obj.get('tag_name')
             });
         }
-        console.info('renderobject:');
-        console.dir(renderObj);
         res.setHeader('cache-control','public, max-age=1800');
         res.render('article', renderObj);
     },function(err){

@@ -36,6 +36,11 @@ AV.Cloud.define('joinActivity', function(req, res) {
 
         //判断报名截止时间已过
         var currDate = new Date();
+        var deadDate = activityResult.get('dead_time');
+        if (currDate.getTime() > deadDate.getTime()) {
+            res.error('报名时间已过！');
+            return;
+        }
 
         var saveObj = {
             sex:1,

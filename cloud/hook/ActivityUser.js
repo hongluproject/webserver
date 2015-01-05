@@ -20,7 +20,7 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
             return;
         }
     }, function(error) {
-        console.error('get %s user info error:%o', activityId, error);
+        console.error('get %s user info error:', activityId, error);
         res.error(error);
     });
 });

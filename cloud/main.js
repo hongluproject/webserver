@@ -3,8 +3,9 @@
 var name = require('cloud/name.js');
 require('cloud/app.js');
 var qiniu = require('qiniu');
+var common = require('cloud/common.js');
 
-//初始化avos相关参数
+//初始化avos相关参数，并每隔1小时更新一次数据
 var globalParam = require('cloud/function/avosInitialize.js');
 globalParam.initializeAvosData();
 

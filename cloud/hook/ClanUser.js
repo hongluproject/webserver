@@ -62,10 +62,13 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
 AV.Cloud.afterSave('ClanUser', function(req){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
+    var userLevel = req.object.get('user_level');
 
-    //部落人数加1
-    clanObj.increment('current_num');
-    clanObj.save();
+    if (userLevel != 2) {   //不是创建者，则该部落当前人数加1
+        //部落人数加1
+        clanObj.increment('current_num');
+        clanObj.save();
+    }
 
     //该用户加入部落数加1
    userObj.increment('clanCount');
