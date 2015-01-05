@@ -47,9 +47,24 @@ AV.Cloud.define("getRecommend",function(req, res){
             success:function(result){
                 var askResult = [];
                 for (var i = 0; result && i < result.length; i++) {
-                    var user =  result[i].get("user_id");
                     var outChannel = {};
                     outChannel       = result[i];
+
+                    //遍历user_id，去掉不需要返回的字段，减少网络传输
+                    var user =  outChannel.get("user_id");
+                    if (!user || !user.id) {
+                        continue;
+                    }
+                    var rawUser = user;
+                    if (rawUser && rawUser.id) {
+                        var postUser = AV.Object.createWithoutData('_User', rawUser.id);
+                        postUser.set('icon', rawUser.get('icon'));
+                        postUser.set('nickname', rawUser.get('nickname'));
+                        var jValue = postUser._toFullJSON();
+                        delete jValue.__type;
+                        outChannel.set('user_id', jValue);
+                    }
+
                     askResult.push(outChannel);
                 }
                 ret.recommendAsk = askResult;
@@ -85,6 +100,22 @@ AV.Cloud.define("getRecommend",function(req, res){
                 for (var i = 0; result && i < result.length; i++) {
                     var outChannel = {};
                     outChannel       = result[i];
+
+                    //遍历user_id，去掉不需要返回的字段，减少网络传输
+                    var user =  outChannel.get("user_id");
+                    if (!user || !user.id) {
+                        continue;
+                    }
+                    var rawUser = user;
+                    if (rawUser && rawUser.id) {
+                        var postUser = AV.Object.createWithoutData('_User', rawUser.id);
+                        postUser.set('icon', rawUser.get('icon'));
+                        postUser.set('nickname', rawUser.get('nickname'));
+                        var jValue = postUser._toFullJSON();
+                        delete jValue.__type;
+                        outChannel.set('user_id', jValue);
+                    }
+
                     dynamicResult.push(outChannel);
                 }
                 ret.recommendDynamic = dynamicResult;

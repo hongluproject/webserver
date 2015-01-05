@@ -117,7 +117,6 @@ app.get('/news/:objId', function(req, res) {
     }).then(function(results){
         //根据资讯所属标签ID，找到对应的标签名称
         renderObj.tagList = new Array();
-        console.info("print tagList");
         for(var i in results) {
             var obj = results[i];
             renderObj.tagList.push({
@@ -127,10 +126,66 @@ app.get('/news/:objId', function(req, res) {
         }
         res.setHeader('cache-control','public, max-age=1800');
         res.render('article', renderObj);
-    },function(err){
-        console.dir(err);
+    }, function(err){
+        console.error(err);
         res.writeHead(404);
         res.end();
+    });
+});
+
+/** 访问动态详情
+ *  @param: objid 动态objectId
+ */
+app.get('/dynamic/:objId', function(req, res) {
+    var dynamicId = req.param("objId");
+    if (!dynamicId) {
+        console.error('dynamic id has not input!');
+        res.writeHead(404);
+        res.end();
+    }
+    var renderObj = {};
+
+    console.info('dynamic id:%s', dynamicId);
+
+    //获取动态详情
+    var query = new AV.Query('DynamicNews');
+    query.include('user_id');
+    query.get(dynamicId).then(function(dynamicResult) {
+        if (!dynamicResult) {
+            console.error('dynamic %s not found', dynamicId);
+            res.writeHead(404);
+            res.end();
+        }
+
+        //加标签名
+        var tags = dynamicResult.get('tags');
+        var tagsName = [];
+        for (var i in tags) {
+            var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+            tagsName.push(tagName?tagName:'');
+        }
+        dynamicResult.set('tagsName', tagsName);
+        console.dir(tagsName);
+
+        renderObj = dynamicResult;
+        //获取该动态最近10个评论
+        var queryComment = new AV.Query('DynamicComment');
+        queryComment.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews', dynamicId));
+        queryComment.include('user_id', 'reply_userid');
+        queryComment.limit(10); //取最近10条
+        queryComment.descending('createdAt');
+        return queryComment.find();
+    }, function(error) {
+        console.error('dynamic id %s find error:', dynamicId, error);
+        res.writeHead(404);
+        res.end();
+    }).then(function(commentResults) {
+        renderObj.set('comments', commentResults);
+        return AV.Promise.as(renderObj);
+    }, function(error) {
+        return AV.Promise.as(renderObj);
+    }).then(function(renderResult){
+        res.render('dynamic', {dynamic:renderResult});
     });
 });
 
