@@ -37,7 +37,8 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
  */
 AV.Cloud.afterSave('Clan', function(req) {
     var clanObj = req.object;
-    var clanUser = AV.Object.extend('ClanUser');
+    var ClanUser = AV.Object.extend('ClanUser');
+    var clanUser = new ClanUser();
     clanUser.set('user_level', 2);
     clanUser.set('clan_id', clanObj._toPointer());
     clanUser.set('user_id', clanObj.get('founder_id'));

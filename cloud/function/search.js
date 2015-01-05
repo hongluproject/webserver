@@ -61,6 +61,11 @@ AV.Cloud.define("getSearch",function(req,res){
                     for (var i in results) {
                         var currResult = results[i];
                         var currUser = currResult.get('user_id');
+                        if (!currUser || !currUser.id) {
+                            results.splice(i, 1);
+                            i--;
+                            continue;
+                        }
                         var retUser = AV.User.createWithoutData('_User', currUser.id);
                         retUser.set('nickname', currUser.get('nickname'));
                         retUser.set('tags', currUser.get('tags'));
@@ -95,6 +100,11 @@ AV.Cloud.define("getSearch",function(req,res){
                     for (var i in results) {
                         var currResult = results[i];
                         var currUser = currResult.get('user_id');
+                        if (!currUser || !currUser.id) {
+                            results.splice(i, 1);
+                            i--;
+                            continue;
+                        }
                         var retUser = AV.User.createWithoutData('_User', currUser.id);
                         retUser.set('nickname', currUser.get('nickname'));
                         retUser.set('tags', currUser.get('tags'));
