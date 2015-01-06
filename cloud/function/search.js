@@ -27,6 +27,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("title", "content_url","tags","objectId");
         query.limit(limit);
         query.skip(skip);
+        query.descending('publicAt');
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -55,6 +56,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.limit(limit);
         query.skip(skip);
         query.include('user_id');
+        query.descending('createdAt');
         query.find({
             success:function(results){
                 if (results) {
@@ -94,6 +96,7 @@ AV.Cloud.define("getSearch",function(req,res){
         }
         query.skip(skip);
         query.include('user_id');
+        query.descending('createdAt');
         query.find({
             success:function(results){
                 if (results) {
@@ -124,6 +127,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("icon", "title","position","tags","objectId");
         query.limit(limit);
         query.skip(skip);
+        query.descending('createdAt');
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -142,6 +146,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("icon", "nickname","actual_position","tags","clanids","objectId");
         query.limit(limit);
         query.skip(skip);
+        query.descending('createdAt');
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
