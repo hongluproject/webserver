@@ -30,3 +30,14 @@ Date.prototype.Format = function(fmt)
 exports.pad = function(num, n) {
     return (Array(n).join(0) + num).slice(-n);
 }
+
+exports.clanParam = {
+    maxClanUsers:{
+        1:10,
+        2:50
+    },
+    maxCreateClan:{
+        1:2,
+        2:5
+    }
+};

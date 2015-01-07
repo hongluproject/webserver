@@ -233,7 +233,6 @@ AV.Cloud.define('getDynamic', function(req,res){
             var clanId = req.params.clanId;
             if (!userId || !clanId) {
                 res.error('请输入部落和用户信息！');
-                return;
             }
             var limit = req.params.limit || 20;
             var skip = req.params.skip || 0;

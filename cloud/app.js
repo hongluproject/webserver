@@ -22,25 +22,6 @@ app.get('/hello', function(req, res) {
 	res.render('hello', { message: 'Congrats, you just set up your app!' });
 });
 
-/*
- //测试CQL
-AV.Query.doCloudQuery('select id0=row_number() over (partition by tag order by updateAt),* from interestList where id0<=3', {
-    success: function(result){
-        //results 是查询返回的结果，AV.Object 列表
-        var results = result.results;
-        results.forEach(function(item){
-            console.dir(item);
-        });
-        console.log("count:" + result.count);
-        //do something with results...
-    },
-    error: function(error){
-        //查询失败，查看 error
-        console.dir(error);
-    }
-});
-*/
-
 app.get('/qiniutoken', function(req,res) {
     function uptoken(bucketname) {
         var putPolicy = new qiniu.rs.PutPolicy(bucketname);
