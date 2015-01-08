@@ -230,32 +230,3 @@ var name = req.body.name;
 
 // This line is required to make Express respond to http requests.
 app.listen({status:{maxAge:604800000}});
-
-
-/*
-//插入一些随机信息，用于测试
-var tagNum = 10;
-var dateBegin = new Date();
-for (var i=0; i<3000; i++) {
-    var interestList = AV.Object.extend("interestList");
-    var iList = new interestList();
-    console.log("current index " + i);
-    iList.set("title", utils.randomString(32));
-    iList.set("content", utils.randomString(100));
-    iList.set("from", utils.randomString(10));
-    iList.set("tag", Math.floor(Math.random()*tagNum));
-    iList.save(null, {
-        success: function(item) {
-            // Execute any logic that should take place after the object is saved.
-            console.log('New object created with objectId: ' + item.id);
-        },
-        error: function(item, error) {
-            // Execute any logic that should take place if the save fails.
-            // error is a AV.Error with an error code and description.
-            console.log('Failed to create new object, with error code: ' + error.description);
-        }
-    });
-}
-var dateEnd = new Date();
-console.log("use " + (dateEnd.getTime()-dateBegin.getTime()) +"ms to insert 1000 data .");
-*/

@@ -30,6 +30,7 @@ require('cloud/function/clan.js');
 require('cloud/function/statusWrapper.js');
 require('cloud/function/activityWrapper.js');
 require('cloud/function/imWrapper.js');
+require('cloud/function/clanWrapper.js');
 
 /** 测试返回多个class数据
  *

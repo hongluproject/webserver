@@ -8,14 +8,14 @@ var clanParam = require('cloud/common.js').clanParam;
  *
  */
 AV.Cloud.define('canCreateClan', function(req, res) {
-    var userId = req.object.userId;
+    var userId = req.params.userId;
     if (!userId) {
         res.error('缺少用户信息！');
         return;
     }
 
     //查询用户已经创建的部落数
-    var queryUser = AV.Query('_User');
+    var queryUser = new AV.Query('_User');
     queryUser.get(userId).then(function(userResult) {
         if (!userResult) {
             console.error('get user error:%s', userId);
@@ -24,20 +24,26 @@ AV.Cloud.define('canCreateClan', function(req, res) {
         }
 
         var createdClanIds = userResult.get('createdClanIds');
+        var currClanNum = createdClanIds?createdClanIds.length:0;
         var userLevel = userResult.get('level');
         var nMaxCreateClan = clanParam.maxCreateClan[userLevel] || 2;
+        var nMaxClanUsers = clanParam.maxClanUsers[userLevel] || 10;
 
-        console.info('current createdClan num %d,max createdClan num%d', createdClanIds.length, nMaxCreateClan);
+        console.info('current createdClan num %d,max createdClan num%d', currClanNum, nMaxCreateClan);
 
-        if (createdClanIds.length >= nMaxCreateClan) {  //如果超过所能创建的上限，则禁止创建
+        if (currClanNum >= nMaxCreateClan) {  //如果超过所能创建的上限，则禁止创建
             res.success({
                 canCreate:false,
-                maxCreateClan:nMaxCreateClan
+                maxCreateClan:nMaxCreateClan,
+                canCreateClan:nMaxCreateClan-currClanNum,
+                maxClanUsers:nMaxClanUsers
             });
         } else {
             res.success({
                 canCreate:true,
-                maxCreateClan:nMaxCreateClan
+                maxCreateClan:nMaxCreateClan,
+                canCreateClan:nMaxCreateClan-currClanNum,
+                maxClanUsers:nMaxClanUsers
             });
         }
     }, function(error) {
