@@ -33,7 +33,7 @@ AV.Cloud.define('canCreateClan', function(req, res) {
 
         if (currClanNum >= nMaxCreateClan) {  //如果超过所能创建的上限，则禁止创建
             res.success({
-                canCreate:false,
+                canCreate:true,
                 maxCreateClan:nMaxCreateClan,
                 canCreateClan:nMaxCreateClan-currClanNum,
                 maxClanUsers:nMaxClanUsers
