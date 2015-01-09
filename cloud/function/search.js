@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/15.
  */
+var common = require('cloud/common.js');
 
 
 AV.Cloud.define("getSearch",function(req,res){
@@ -13,6 +14,7 @@ AV.Cloud.define("getSearch",function(req,res){
 
     //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
     var  type = req.params.type.toString();
+    var  userId = req.params.userId;
     var  kw  = req.params.kw;
     var  tagId = req.params.tagId;
     var  skip = req.params.skip || 0;
@@ -22,21 +24,23 @@ AV.Cloud.define("getSearch",function(req,res){
         type, kw, tagId, skip, limit);
 
     //资讯
-    var getNews =function(){
+    var getNews =function() {
         var query = new AV.Query(News);
-        query.select("title", "content_url","tags","objectId");
+        query.select(["comment_count", "cateids", "title", "up_count", "list_pic",
+            "allow_comment", "areas", "contents_url", "allow_forward", "tags", "rank"]);
         query.limit(limit);
         query.skip(skip);
         query.descending('publicAt');
-        if(tagId){
+        if (tagId) {
             query.equalTo("tags", tagId);
-        }else {
+        } else {
             query.contains("title", kw);
         }
-        query.find({
-            success: function(result) {
-                res.success(result);
-            }
+        var newsIds = [];
+        query.find().then(function(results){
+            return common.newsResultWapper(userId, results);
+        }).then(function(results){
+            res.success(results);
         });
     }
 

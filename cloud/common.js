@@ -41,3 +41,97 @@ exports.clanParam = {
         2:5
     }
 };
+
+/* @params:
+    userId: user objectId, maybe null
+    results: news result
+   @return:wrapped promise result
+
+    资讯查询返回内容包装：增加点赞
+ */
+exports.newsResultWapper = function(userId, results) {
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var newsIds = [];
+    var likeTarget = {};	//记录该用户点过赞的id
+    for (var i in results) {
+        newsIds.push(results[i].id);
+
+        //tags列表最多返回3个，否则前端会显示不下
+        var tags = results[i].get('tags');
+        if (tags && tags.length>3) {
+            tags.splice(3, tags.length-3);
+            results[i].set('tags', tags);
+        }
+
+        //返回cate名称
+        var arrayCateName = [];
+        var arrayCate = results[i].get('cateids');
+        for (var k in arrayCate) {
+            var name = '';
+            if (HPGlobalParam.hpCates[arrayCate[k]]) {
+                name = HPGlobalParam.hpCates[arrayCate[k]].get('cate_name');
+            }
+            arrayCateName.push(name);
+        }
+        if (arrayCateName.length) {
+            results[i].set('catesName', arrayCateName);
+        }
+
+        //返回area名称
+        var arrayAreaName = [];
+        var arrayArea = results[i].get('areas');
+        for (var k in arrayArea) {
+            var name = '';
+            if (HPGlobalParam.hpAreas[arrayArea[k]]) {
+                name = HPGlobalParam.hpAreas[arrayArea[k]].get('title');
+            }
+            arrayAreaName.push(name);
+        }
+        if (arrayAreaName.length) {
+            results[i].set('areasName', arrayAreaName);
+        }
+
+        //返回tags名称
+        var arrayTagName = [];
+        var arrayTag = results[i].get('tags');
+        for (var k in arrayTag) {
+            var name = '';
+            if (HPGlobalParam.hpTags[arrayTag[k]]) {
+                name = HPGlobalParam.hpTags[arrayTag[k]].get('tag_name');
+            }
+            arrayTagName.push(name);
+        }
+        if (arrayTagName.length) {
+            results[i].set('tagsName', arrayTagName);
+        }
+
+    }
+
+    if (userId && results && results.length) {
+        //根据资讯&用户id，查询点赞信息
+        var likeClass = AV.Object.extend("Like");
+        var queryLike = new AV.Query(likeClass);
+        queryLike.equalTo('like_type', 1);
+        queryLike.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+        queryLike.containedIn('external_id', newsIds);
+        return queryLike.find().then(function(likes) {
+            for (var k in likes) {
+                likeTarget[likes[k].get('external_id')] = likes[k].id;
+            }
+            //将所有动态返回，添加isLike，记录点赞状态
+            for (var k in results) {
+                var currNew = results[k];
+                var likeObjectId = likeTarget[currNew.id];
+                if (likeObjectId)	//添加点赞状态字段
+                // currNew.set('isLike', true);
+                    currNew.set('likeObjectId', likeObjectId);
+            }
+
+            return AV.Promise.as(results);
+        });
+    } else {
+        return AV.Promise.as(results);
+    }
+
+
+}

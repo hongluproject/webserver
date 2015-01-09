@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/12.
  */
 
+var common = require('cloud/common.js');
 /*
  获取资讯列表包装函数
  request params:
@@ -66,6 +67,14 @@ AV.Cloud.define('getNews', function(req, res){
     if (favoriteIds.length > 0) {
         queryNews.containedIn('objectId', favoriteIds);
     }
+
+    queryNews.find().then(function(results){
+        return common.newsResultWapper(userId, results);
+    }).then(function(results) {
+        res.success(results);
+    });
+
+    /*
     var newsIds = [];
     queryNews.find().then(function(results) {
         newsResults = results;
@@ -148,4 +157,5 @@ AV.Cloud.define('getNews', function(req, res){
         res.success(newsResults);
 
     });
+    */
 });

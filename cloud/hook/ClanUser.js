@@ -68,15 +68,13 @@ AV.Cloud.afterSave('ClanUser', function(req){
         //部落人数加1
         clanObj.increment('current_num');
         clanObj.save();
-    }
 
-    //该用户加入部落数加1
-   userObj.increment('clanCount');
-    userObj.save();
+        console.info('user %s is not clan founder, clan num increment', userObj.id);
+    }
 
     //查找到对应的用户object
     var query = new AV.Query('_User');
-    query.select('clanids');
+    query.select('clanCount', 'clanids');
     query.get(userObj.id, {
         success:function(user) {
             if (!user) {
@@ -84,8 +82,11 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 return;
             }
 
-            user.addUnique('clanids', clanObj.id);
+            user.increment('clanCount');    //部落人数加1
+            user.addUnique('clanids', clanObj.id);  //部落ID加入用户表
             user.save();
+
+            console.info('user %s added clan %s to user class ok', user.id, clanObj.id);
         }
     });
 
@@ -108,7 +109,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
             AV.Cloud.run('imAddToGroup',{
                 userid:userObj.id,
                 groupid:clanObj.id,
-                groupname:clanObj.get('title')
+                groupname:clan.get('title')
             });
 
             //向部落拥有者发送消息流，告知我已经加入该部落
