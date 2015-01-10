@@ -72,7 +72,20 @@
         </div>
         <div class="img cf">
             <% for (var i in thumbs) { %>
-                <a href="#"><img src="<%=thumbs[i]%>" width="165" height="165" /></a>
+                <% if (thumbs.length > 1) {
+                        var imageWidth = 192;
+                        var imageHeigth = 192;
+                        var imageView = thumbs[i] + '?imageView/1/w/'+imageWidth+'/h/'+imageHeigth;
+                %>
+                        <a href="<%=thumbs[i]%>" target="_blank"><img src="<%=imageView%>" width="<%=imageWidth%>" height="<%=imageHeigth%>" /></a>
+                <%} else {
+                        var imageWidth = 400;
+                        var imageHeigth = 296;
+                        var imageView = thumbs[i] + '?imageView/1/w/'+imageWidth+'/h/'+imageHeigth;
+                %>
+
+                        <a href="<%=thumbs[i]%>" target="_blank"><img src="<%=imageView%>" width="<%=imageWidth%>" height="<%=imageHeigth%>" /></a>
+                <%}%>
             <% } %>
         </div>
         <div class="info cf">
