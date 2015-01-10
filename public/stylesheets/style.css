@@ -78,6 +78,22 @@ article { display: block; }
 .doc-content img{ display:block; margin:5px auto; max-width:100%; overflow:hidden;}
 .share-items{ text-align:center;}
 .share-items div{ display:inline-block; vertical-align:middle; margin:0 20px;}
+.download {
+    position: fixed;
+    bottom: 0px;
+    max-width: 640px;
+    left: 0px;
+    right: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    background-image: url(/images/download-bg.png);
+    height: 60px;
+    background-repeat: repeat-x;
+}
+
+.download img{max-height:55px;margin:0 auto;padding-top: 0px;padding-bottom: 0px}
+.download a{margin-left:10px;margin-right:10px;padding-top: 0px;padding-bottom: 0px}
+
 @media (min-width: 480px) {
     body {
         font-size: 70%;

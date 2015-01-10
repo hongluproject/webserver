@@ -228,5 +228,13 @@ var name = req.body.name;
 	}
 });
 
+/* test code
+var queryUser = new AV.Query('_User');
+queryUser.get('54abc651e4b0154cef59f695').then(function(user){
+    user.unset('clanids');
+    user.save();
+});
+*/
+
 // This line is required to make Express respond to http requests.
 app.listen({status:{maxAge:604800000}});

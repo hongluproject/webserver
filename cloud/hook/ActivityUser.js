@@ -16,7 +16,7 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
         var currNum = activityResult.get('current_num');
         var maxNum = activityResult.get('max_num');
         if (currNum >= maxNum) {
-            res.error('报名人数已经操作上限！');
+            res.error('报名人数已经超过上限！');
             return;
         }
     }, function(error) {

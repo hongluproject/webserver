@@ -4,6 +4,7 @@
     <title></title>
     <link rel="stylesheet" type="text/css" href="/stylesheets/dynamic.css">
     <script src="/js/viewport.js"></script>
+    <script src="/js/jquery-1.11.2.min.js"></script>
 </head>
 
 <body>
@@ -11,70 +12,117 @@
 <div class="ly_page cf">
     <!--发帖人开始-->
     <div class="ftUser cf">
-        <img src="images/user.jpg" width="60" height="62" class="img" />
+        <%
+            var userIcon = '/images/user.jpg';
+            var userId = dynamic.get('user_id');
+            if (userId && userId.get('icon')) {
+                userIcon = userId.get('icon');
+            }
+            var userName = userId.get('nickname');
+            var tagsName = dynamic.get('tagsName');
+            var dynamicContent = dynamic.get('content');
+            var thumbs = dynamic.get('thumbs');
+            var voice = dynamic.get('voice');
+            var voiceDuration = dynamic.get('duration');
+            var location = dynamic.get('area');
+            var commentCount = dynamic.get('comment_count');
+            if (commentCount <= 0) {
+                commentCount = '';
+            }
+            var upCount = dynamic.get('up_count');
+            if (upCount <= 0) {
+                upCount = '';
+            }
+            var timeDisp = '';
+            var timeSpace = Math.floor(((new Date()).getTime() - dynamic.createdAt.getTime())/1000/60);
+            if (timeSpace >= 60) {
+                if (timeSpace >= 60*24) {
+                    timeDisp = Math.floor(timeSpace/60/24) + '天前';
+                } else {
+                    timeDisp = Math.floor(timeSpace/60) + '小时前';
+                }
+            } else {
+                timeDisp = timeSpace + '分钟前';
+            }
+            var comments = dynamic.get('comments');
+        %>
+        <img src="<%= userIcon %>" width="60" height="62" class="img" />
         <dl class="cf">
-            <dt>用户名字名字名字</dt>
+            <dt><%= userName %></dt>
             <dd>
-                <span class="key">[钓鱼]</span><span class="key">[发呆]</span>
+                <% for (var i in tagsName) {%>
+                    <span class="key">[<%= tagsName[i] %>]</span>
+                <%}%>
             </dd>
         </dl>
         <ul>
-            <li>10'<i></i></li>
-            <li>1分钟前</li>
+            <% if (voice && voiceDuration) {%>
+                <li><%=voiceDuration%>'<i></i></li>
+            <%} else {%>
+                <li></li>
+            <%}%>
+            <li><%=timeDisp%></li>
         </ul>
     </div>
     <!--发帖人结束-->
     <!--发帖内容开始-->
     <div class="ftContent">
         <div class="txt">
-            测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫测试文阿紫
+            <%= dynamicContent %>
         </div>
         <div class="img cf">
-            <a href="#"><img src="images/img.jpg" width="165" height="165" /></a>
-            <a href="#"><img src="images/img.jpg" width="165" height="165" /></a>
-            <a href="#"><img src="images/img.jpg" width="165" height="165" /></a>
-            <a href="#"><img src="images/img.jpg" width="165" height="165" /></a>
-            <a href="#"><img src="images/img.jpg" width="165" height="165" /></a>
+            <% for (var i in thumbs) { %>
+                <a href="#"><img src="<%=thumbs[i]%>" width="165" height="165" /></a>
+            <% } %>
         </div>
         <div class="info cf">
             <div class="dw">
-                <i></i>上海浦东什么什么路什么什么号
+                <i></i><%=location%>
             </div>
             <div class="btn">
-                <a href="#" class="link1">45</a>
-                <a href="#" class="link2">124</a>
+                <a href="#" class="link1"><%=commentCount%></a>
+                <a href="#" class="link2"><%=upCount%></a>
             </div>
         </div>
     </div>
     <!--发帖内容结束-->
     <!--评论开始-->
     <div class="plBox">
+        <% for (var i in comments) {%>
+        <%
+            var currComment = comments[i];
+            var commentUserName = currComment.get('user_id').get('nickname');
+            var commentUserIcon = currComment.get('user_id').get('icon') || '/images/user.jpg';
+            var replyUserName = '';
+            if (currComment.get('reply_userid')) {
+                replyUserName = currComment.get('reply_userid').get('nickname');
+            }
+            var commentContent = currComment.get('content');
+         %>
         <dl class="cf">
-            <dt><img src="images/user.jpg" width="60" height="62" class="img" /></dt>
+            <dt><img src="<%=commentUserIcon%>" width="60" height="62" class="img" /></dt>
             <dd>
-                <p class="name">用户名字</p>
+                <p class="name"><%=commentUserName%></p>
                 <p class="info">
-                    测试文字测试文字测试文字测试文字测试文字测试文字测试文字测试文字测测试文字测试文字测试文字测试文字测试文字测试文字测试文字测试试文字
+                    <% if (replyUserName.length > 0) {%>
+                    回复 <span class="u"><%=replyUserName%>:</span>
+                    <%}%>
+                    <%=commentContent%>
                 </p>
             </dd>
         </dl>
-        <dl class="cf">
-            <dt><img src="images/user.jpg" width="60" height="62" class="img" /></dt>
-            <dd>
-                <p class="name">用户名字</p>
-                <p class="info">
-                    回复 <span class="u">用户名</span>：测试文字测试文字测试文字测试文字测试文字测试文字测试文字测试文字测测试文字测试文字测试文字测试文字测试文字测试文字测试文字测试试文字
-                </p>
-            </dd>
-        </dl>
+        <% } %>
     </div>
     <!--评论结束-->
 </div>
 <!--页面主体结束-->
-<!--发表评论浮层开始-->
-<div class="f_fabu">
-    <input class="txt" type="text" placeholder="你怎么看" />
+<!-- 下载提示 -->
+<div class="download">
+    <a href="javascript:alert('即将上线，敬请期待！');" style="float:left;max-width:150px;">
+        <img src="/images/download1.png"></a>
+    <a href="javascript:alert('即将上线，敬请期待！');" style="float:right;max-width:89px;">
+        <img src="/images/download2.png"></a>
 </div>
-<!--发表评论浮层结束-->
+
 </body>
 </html>

@@ -56,7 +56,21 @@ body{ background:#FAFAFA;}
 .f_fabu{ position:fixed; left:50%; width:640px; box-sizing:border-box; bottom:0; margin-left:-320px; overflow:hidden; height:82px; background:#F0F0F0; border-top:solid 1px #C2C2C2; padding:13px 20px 0 20px;}
 .f_fabu .txt{ display:block; background:url('/images/ico4.jpg') no-repeat #fff; border:solid 1px #C2C2C2;box-sizing:border-box; height:56px; line-height:56px; border-radius:10px; width:100%; padding-left:55px; font-size:24px; color:#8D8D8D}
 
+.download {
+    position: fixed;
+    bottom: 0px;
+    max-width: 640px;
+    left: 0px;
+    right: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    background-image: url(/images/download-bg.png);
+    height: 60px;
+    background-repeat: repeat-x;
+}
 
+.download img{max-height:55px;margin:0 auto;padding-top: 0px;padding-bottom: 0px}
+.download a{margin-left:10px;margin-right:10px;padding-top: 0px;padding-bottom: 0px}
 
 
 

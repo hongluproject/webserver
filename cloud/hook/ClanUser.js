@@ -9,6 +9,11 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
+    if (!clanObj.id || !userObj.id) {
+        res.error('请输入正确的数据!');
+        return;
+    }
+
     //先检测用户是否已经加入该部落
     var queryClan = new AV.Query('ClanUser');
     queryClan.equalTo('clan_id', clanObj);
