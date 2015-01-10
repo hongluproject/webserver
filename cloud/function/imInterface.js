@@ -96,7 +96,7 @@ AV.Cloud.define("imGetClanUser",function(req, res){
                     outChannel.userObjectId =  user.id;
                     outChannel.clanName =  clan.get("title");
                     outChannel.clanIcon =  clan.get("icon");
-                    outChannel.clanUserObjectId = results[i].id;
+                    outChannel.objectId = outChannel.clanUserObjectId = results[i].id;
                     outChannel.userLevel = results[i].get('user_level');
                     finalResult.push(outChannel);
                 }
