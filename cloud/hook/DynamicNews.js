@@ -27,6 +27,12 @@ AV.Cloud.afterSave('DynamicNews', function(request){
     }
     postUser.save();
 
+
+    var DynamicObj = request.object;
+    var DynamicObjId = DynamicObj.id;
+    DynamicObj.set('share_url', 'https://hoopeng.avosapps.com/dynamic/' + DynamicObjId);
+    DynamicObj.save();
+
     var queryUser = new AV.Query('_User');
     queryUser.select("nickname");
     queryUser.get(postUser.id, {
