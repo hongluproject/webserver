@@ -46,6 +46,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
             sex:1,
             real_name:1,
             phone:1,
+            user_info:1,
             idcard:1,
             passport_card:1,
             two_way_permit:1,
