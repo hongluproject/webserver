@@ -19,7 +19,7 @@ AV.Cloud.afterSave('_Followee', function(req) {
     status.query = query;
     status.set('messageType', 'addFriend');
     status.send().then(function(status){
-        console.info('好友关注事件流发送成功！');
+        console.info('%s 加 %s好友关注事件流发送成功！', user.id, followee.id);
     },function(error) {
         console.error(error);
     });

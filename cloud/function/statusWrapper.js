@@ -49,7 +49,6 @@ AV.Cloud.define('getStatus', function(req, res) {
 });
 
 AV.Cloud.define('getFriendList', function(req, res) {
-    console.dir(req.user);
     var userId = req.params.userId;
     var limit = req.params.limit || 100;
     var skip = req.params.skip;
@@ -117,5 +116,39 @@ AV.Cloud.define('getFriendList', function(req, res) {
             res.success(followees);
         }
 
+    });
+});
+
+AV.Cloud.define('getUserInfo', function(req,res){
+    var userId = req.params.userId;
+    var findFriendId = req.params.findFriendId;
+    if (!userId || !findFriendId) {
+        res.error('请传入用户信息！');
+        return;
+    }
+
+    console.info('userId:%s findFriendId:%s', userId, findFriendId);
+
+    var userReturn;
+    //查找对应用户信息
+    var queryUser = new AV.Query('_User');
+    queryUser.get(userId).then(function(userResult){
+        userReturn = userResult;
+
+        if (userId == findFriendId) {
+            return AV.Promise.as(0);
+        } else {
+            //查找是否为好友关系
+            var queryFollowee = new AV.Query('_followee');
+            queryFollowee.equalTo('user', AV.Object.createWithoutData('_User',findFriendId));
+            queryFollowee.equalTo('followee', AV.Object.createWithoutData('_User',userId));
+            return queryFollowee.count();
+        }
+    }).then(function(count){
+        if (count > 0) {    //找到好友关系
+            userReturn.set('isFriend', true);
+        }
+
+        res.success(userReturn);
     });
 });

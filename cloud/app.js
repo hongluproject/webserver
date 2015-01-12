@@ -170,6 +170,9 @@ app.get('/dynamic/:objId', function(req, res) {
     });
 });
 
+/**
+ *  活动详情
+ */
 
 /**
  *      测试返回json
