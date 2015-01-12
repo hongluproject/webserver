@@ -3,7 +3,7 @@ var express = require('express');
 var app = express();
 var name = require('cloud/name.js');
 var common = require('cloud/common.js');
-var avosExpressHttpsRedirect = require('avos-express-https-redirect');
+//var avosExpressHttpsRedirect = require('avos-express-https-redirect');
 
 // App全局配置
 //设置模板目录
@@ -15,7 +15,7 @@ app.set('view engine', 'ejs');    // 设置template引擎
 
 app.use(express.bodyParser());    // 读取请求body的中间件
 
-app.use(avosExpressHttpsRedirect()); //启用HTTPS
+//app.use(avosExpressHttpsRedirect()); //启用HTTPS
 
 //使用express路由API服务/hello的http GET请求
 app.get('/hello', function(req, res) {
