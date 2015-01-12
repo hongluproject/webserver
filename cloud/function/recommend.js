@@ -172,6 +172,7 @@ AV.Cloud.define("getRecommend",function(req, res){
                 var userResult = [];
                 for (var i = 0; result && i < result.length; i++) {
                     var outChannel = {};
+                    result[i].attributes.indexTagId = tags[index];
                     outChannel       = result[i];
                     userResult.push(outChannel);
                 }

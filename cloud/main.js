@@ -12,6 +12,7 @@ globalParam.initializeAvosData();
 /*
 	require hook & function files
  */
+
 require('cloud/hook/Like.js');
 require('cloud/hook/News.js');
 require('cloud/hook/NewsComment.js');
