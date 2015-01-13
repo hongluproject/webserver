@@ -147,6 +147,8 @@ AV.Cloud.define('getUserInfo', function(req,res){
     }).then(function(count){
         if (count > 0) {    //找到好友关系
             userReturn.set('isFriend', true);
+        } else {
+            userReturn.set('isFriend', false);
         }
 
         res.success(userReturn);

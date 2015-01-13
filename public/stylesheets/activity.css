@@ -1,0 +1,59 @@
+html { color: #000; background:#fff; font-family: Helvetica, STHeiti, Droidsansfallback;}
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td { margin: 0; padding: 0 }
+table { border-collapse: collapse; border-spacing: 0 }
+fieldset, img { border: 0 }
+address, caption, cite, code, dfn, em, strong, th, var { font-style: normal; font-weight: normal }
+ol, ul { list-style: none }
+caption, th { text-align: left }
+h1, h2, h3, h4, h5, h6 { font-size: 100%; font-weight: normal }
+q:before, q:after { content: '' }
+abbr, acronym { border: 0; font-variant: normal }
+sup { vertical-align: text-top }
+sub { vertical-align: text-bottom }
+input, textarea, select { font-family: inherit; font-size: inherit; font-weight: inherit; *font-size:100%;
+}
+legend { color: #000; }
+input,
+textarea{outline: none;} 
+img{ display:block;}
+a{ text-decoration:none;}
+.cf:after { visibility: hidden; display: block; font-size: 0; content: " "; clear: both; height: 0; }
+.cf { zoom: 1;}
+html,
+body{ background:#FAFAFA;}
+
+.ly_page{ width:640px; margin:0 auto; position:relative; overflow:hidden;}
+
+.ftUser{ height:100px; overflow:hidden; box-sizing:border-box; padding:20px;}
+.ftUser .img{ float:left;}
+.ftUser .title{ float:left; font-size: 26px;color: #000;line-height: 60px;padding-right: 18px;}
+.ftUser dl{ float:left; margin-left:18px;}
+.ftUser dt{ font-size:26px; color:#000; line-height:60px;}
+.ftUser dd .key{ display:inline-block; color:#1BB6C5; font-size:22px; margin:0 2px;}
+
+.fengexian{ background:#F0F0F0; border-top:solid 1px #D1D1D1;height: 30px;}
+
+.plBox{  border-top:solid 1px #D1D1D1; padding:0 0 120px 20px;}
+.plBox dl{ border-bottom:solid 1px #d1d1d1; line-height:32px;}
+.plBox dt{ float:left; width:60px; padding-top:26px;}
+.plBox dd{ float:left; padding-left:10px; width:520px; padding:20px 0 20px 0px;}
+.plBox dd .name{
+    font-size: 26px;
+    color: #000;
+}}
+.plBox dd .info{ color:#030303;}
+.plBox dd .info .u{color:#0067BC;}
+
+.f_fabu{ position:fixed; left:50%; width:640px; box-sizing:border-box; bottom:0; margin-left:-320px; overflow:hidden; height:82px; background:#F0F0F0; border-top:solid 1px #C2C2C2; padding:13px 20px 0 20px;}
+.f_fabu .txt{ display:block; background:url(ico4.jpg) no-repeat #fff; border:solid 1px #C2C2C2;box-sizing:border-box; height:56px; line-height:56px; border-radius:10px; width:100%; padding-left:55px; font-size:24px; color:#8D8D8D}
+
+
+
+
+
+
+
+
+
+
+

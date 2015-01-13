@@ -69,6 +69,12 @@ app.get('/articleList', function(req, res) {
 app.get('/news/:objId', function(req, res) {
     var renderObj = {};
     var articleId = req.param("objId");
+    if (!articleId) {
+        console.error('article id has not input!');
+        res.writeHead(404);
+        res.end();
+        return;
+    }
     console.info("view news:%s",articleId);
     var query = new AV.Query('News');
     query.equalTo('objectId', articleId);
@@ -123,6 +129,7 @@ app.get('/dynamic/:objId', function(req, res) {
         console.error('dynamic id has not input!');
         res.writeHead(404);
         res.end();
+        return;
     }
     var renderObj = {};
 
@@ -173,6 +180,27 @@ app.get('/dynamic/:objId', function(req, res) {
 /**
  *  活动详情
  */
+app.get('/activity/:objId', function(req,res) {
+    var activityId = req.param('objId');
+    if (!activityId) {
+        console.error('activity id has not input!');
+        res.writeHead(404);
+        res.end();
+    }
+
+    var query = new AV.Query('Activity');
+    query.include('user_id');
+    query.get(activityId).then(function(activityResult) {
+        if (!activityResult) {
+            console.error('activity %s has not found!', activityId);
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+
+        res.render('activity', {activity:activityResult});
+    });
+});
 
 /**
  *      测试返回json
@@ -197,7 +225,7 @@ function renderIndex(res, name){
 		},
 		error: function(error){
 			console.log(error);
-			res.render('500',500)
+			res.render('500',500);
 		}
 	});
 
