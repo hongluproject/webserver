@@ -68,18 +68,21 @@ AV.Cloud.define("getSearch",function(req,res){
                         var currResult = results[i];
                         var currUser = currResult.get('user_id');
                         if (!currUser || !currUser.id) {
-                            results.splice(i, 1);
-                            i--;
+                            results[i] = undefined;
                             continue;
                         }
                         var retUser = AV.User.createWithoutData('_User', currUser.id);
                         retUser.set('nickname', currUser.get('nickname'));
+                        retUser.set('icon', currUser.get('icon'));
                         retUser.set('tags', currUser.get('tags'));
                         var jValue = retUser._toFullJSON();
                         delete jValue.__type;
                         currResult.set('user_id', jValue);
                     }
                 }
+                results = AV._.reject(results, function(val){
+                    return (val == undefined);
+                });
                 res.success(results);
             }
         })
@@ -108,18 +111,21 @@ AV.Cloud.define("getSearch",function(req,res){
                         var currResult = results[i];
                         var currUser = currResult.get('user_id');
                         if (!currUser || !currUser.id) {
-                            results.splice(i, 1);
-                            i--;
+                            results[i] = undefined;
                             continue;
                         }
                         var retUser = AV.User.createWithoutData('_User', currUser.id);
                         retUser.set('nickname', currUser.get('nickname'));
+                        retUser.set('icon', currUser.get('icon'));
                         retUser.set('tags', currUser.get('tags'));
                         var jValue = retUser._toFullJSON();
                         delete jValue.__type;
                         currResult.set('user_id', jValue);
                     }
                 }
+                results = AV._.reject(results, function(val){
+                   return (val == undefined);
+                });
                 res.success(results);
             }
         })

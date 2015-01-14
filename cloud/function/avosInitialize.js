@@ -55,3 +55,33 @@ exports.initializeAvosData = function() {
 AV.Cloud.define('updateHPParamTimer', function(req, res) {
     exports.initializeAvosData();
 });
+
+/*  查询升级信息，APP每次启动的时候调用。
+    @params:
+        clientVersion:client Version
+        deviceType: ios or android
+        deviceVersion: 8.1.2
+    @return:
+    {
+        needUpdate:true or false,
+        updateType: 0 提示升级
+                    1 强制升级
+        message:升级提示
+        clickURL:点击链接
+    }
+ */
+AV.Cloud.define('checkUpdate', function(req, res) {
+    var clientVersion = req.params.clientVersion;
+    var deviceType = req.params.deviceType;
+    var deviceVersion = req.params.deviceVersion;
+
+    console.info('checkUpdate params, clientVersion:%s deviceType:%s deviceVersion:%s',
+        clientVersion, deviceType, deviceVersion);
+
+    res.success({
+        needUpdate:false,
+        updateType:0,
+        message:'',
+        clickURL:''
+    });
+})

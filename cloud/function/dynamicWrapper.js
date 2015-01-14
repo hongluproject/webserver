@@ -53,17 +53,19 @@ AV.Cloud.define('getDynamic', function(req,res){
             }
         }
 
-        var dynamicReturn = [];
         //获取所有动态objectId，再查询该用户对这些动态是否点过赞
         var dynamicIdArray = [];
         for (var i=0; i<dynamics.length; i++) {
             if (dynamics[i].get('user_id')) {
                 dynamicIdArray.push(dynamics[i].id);
             } else {    //删除不合法的数据
-                dynamics.splice(i, 1);
-                i--;
+                dynamics[i] = undefined;
             }
         }
+
+        dynamics = AV._.reject(dynamics, function(val){
+            return (val == undefined);
+        });
 
         //查询点赞表
         var likeClass = AV.Object.extend("Like");
@@ -130,7 +132,6 @@ AV.Cloud.define('getDynamic', function(req,res){
                     res.success([]);
                     return;
                 }
-                statusReturn = statuses;
                 date2 = new Date();
                 console.info("userid:%s dynamic finding use time:%d ms", userId, date2.getTime()-date1.getTime());
                 //获取所有动态objectId，再查询该用户对这些动态是否点过赞
@@ -139,10 +140,12 @@ AV.Cloud.define('getDynamic', function(req,res){
                     if (statuses[i].data.dynamicNews && statuses[i].data.source) {
                         dynamicIdArray.push(statuses[i].data.dynamicNews.objectId);
                     } else {
-                        statuses.splice(i, 1);
-                        i--;
+                        statuses[i] = undefined;
                     }
                 }
+                statusReturn = statuses = AV._.reject(statuses, function(val){
+                    return (val == undefined);
+                });
 
                 //查询点赞表
                 var likeClass = AV.Object.extend("Like");
