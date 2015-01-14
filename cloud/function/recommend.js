@@ -19,6 +19,7 @@ AV.Cloud.define("getRecommend",function(req, res){
     var Dynamic = AV.Object.extend("DynamicNews");
     var Followee = AV.Object.extend("_Followee");
     var selfFriends = [];
+    var selfFriendsObj=[];
 
     var ret = {
         recommendUser:{},
@@ -32,7 +33,7 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.equalTo("type", 1);
         if(userid) {
             query.notEqualTo('user_id', AV.User.createWithoutData('_User', userid));
-            query.notContainedIn('user_id', selfFriends);
+            query.notContainedIn('user_id', selfFriendsObj);
         }
 
         //30天
@@ -85,7 +86,7 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.equalTo("type", 2);
         if(userid) {
             query.notEqualTo('user_id', AV.User.createWithoutData('_User', userid));
-            query.notContainedIn('user_id', selfFriends);
+            query.notContainedIn('user_id', selfFriendsObj);
         }
         var today=new Date();
         var t=today.getTime()-1000*60*60*24*30;
@@ -135,22 +136,22 @@ AV.Cloud.define("getRecommend",function(req, res){
             query.select('followee');
             query.equalTo('user',AV.User.createWithoutData('_User', userid));
             query.find().then(function(result){
-                var selfFriends = [];
                 for (var i = 0; result && i < result.length; i++) {
+                    selfFriendsObj.push(AV.User.createWithoutData('_User', result[i].get("followee").id));
                     selfFriends.push(result[i].get("followee").id);
                 }
                 var query = new AV.Query(User);
                 query.first(userid).then(function(result){
-                    getRecommendUserPublic(selfFriends,result);
+                    getRecommendUserPublic(result);
 
                 });
             });
         }else{
-            getRecommendUserPublic(null,null);
+            getRecommendUserPublic(null);
         }
     }
     //封装
-    var  getRecommendUserPublic = function(selfFriends,userObj){
+    var  getRecommendUserPublic = function(userObj){
         var query = new AV.Query(User);
         query.select("icon", "nickname","actual_position","tags","clanids","objectId");
         if(userObj){
