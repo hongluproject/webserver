@@ -20,8 +20,8 @@ AV.Cloud.define("getSearch",function(req,res){
     var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
 
-    console.info('getSearch params,type:%d kw:%s tagId:%s skip:%d limit:%d',
-        type, kw, tagId, skip, limit);
+    console.info('getSearch params,userId:%s type:%d kw:%s tagId:%s skip:%d limit:%d',
+        userId, type, kw, tagId, skip, limit);
 
     //资讯
     var getNews =function() {
@@ -163,10 +163,11 @@ AV.Cloud.define("getSearch",function(req,res){
         }else {
             query.contains("nickname", kw);
         }
-        query.find({
-            success: function(result) {
-                res.success(result);
-            }
+        query.find().then(function(results) {
+            return common.addFriendShipForUsers(userId, results);
+        }).then(function(results){
+            console.dir(results);
+            res.success(results);
         });
     };
 

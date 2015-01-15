@@ -135,3 +135,44 @@ exports.newsResultWapper = function(userId, results) {
 
 
 }
+
+exports.addFriendShipForUsers = function(findFriendId, users) {
+    if (!findFriendId) {
+        for (var i in users) {
+            users[i].set('isFriend', false);
+        }
+        return AV.Promise.as(users);
+    } else {
+        var friendList = [];
+        var friendStatus = {};
+        for (var i in users) {
+            friendList.push(AV.User.createWithoutData('_User', users[i].id));
+        }
+
+        var queryFriend = new AV.Query('_Followee');
+        queryFriend.select('followee');
+        queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
+        queryFriend.containedIn('followee', friendList);
+        return queryFriend.find().then(function(results) {
+            for (var i in results) {
+                var myFollowee = results[i].get('followee');
+                if (myFollowee) {
+                    friendStatus[myFollowee.id] = true;
+                }
+            }
+
+            //添加是否为好友字段
+            for (var i in users) {
+                if (friendStatus[users[i].id]) {
+                    users[i].set('isFriend', true);
+                } else {
+                    users[i].set('isFriend', false);
+                }
+            }
+
+            return AV.Promise.as(users);
+        });
+    }
+
+
+}
