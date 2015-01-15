@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/18.
  */
+var common = require('cloud/common.js');
 
 AV.Cloud.define('getStatus', function(req, res) {
     var userId = req.params.userId;
@@ -85,34 +86,13 @@ AV.Cloud.define('getFriendList', function(req, res) {
         }
 
         if (findFriendId && findFriendId!=userId) { //查询好友关系
-            var friendList = [];
-            for (var i in followees) {
-                friendList.push(AV.User.createWithoutData('_User', followees[i].id));
-            }
-            var queryFriend = new AV.Query('_Followee');
-            queryFriend.select('followee');
-            queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
-            queryFriend.containedIn('followee', friendList);
-            queryFriend.find().then(function(results){
-                for (var i in results) {
-                    var myFollowee = results[i].get('followee');
-                    if (myFollowee) {
-                        friendStatus[myFollowee.id] = true;
-                    }
-                }
 
-                //添加是否为好友字段
-                for (var i in followees) {
-                    if (friendStatus[followees[i].id]) {
-                        followees[i].set('isFriend', true);
-                    }
-                }
-
+            //查询用户列表与 findFriendId 的好友关系，返回 isFriend 字段
+            common.addFriendShipForUsers(findFriendId, followees).then(function(followees){
                 res.success(followees);
             });
 
         } else {
-            console.dir(followees);
             res.success(followees);
         }
 

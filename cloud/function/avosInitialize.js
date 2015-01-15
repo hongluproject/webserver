@@ -80,8 +80,12 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     res.success({
         needUpdate:false,
-        updateType:0,
-        message:'',
-        clickURL:''
+        updateType:1,
+        message:'1、第一次发布版本\n' +
+        '2、天天向上\n' +
+        '3、我是歌手\n' +
+        '4、奔跑吧兄弟\n' +
+        '5、最强大脑',
+        clickURL:'https://itunes.apple.com/us/app/pptv-ju-li/id438426078?mt=8&uo=4'
     });
 })
