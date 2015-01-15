@@ -29,7 +29,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
         //判断报名人数是否已经超过上限
         var currNum = activityResult.get('current_num');
         var maxNum = activityResult.get('max_num');
-        if (currNum >= maxNum) {
+        if (maxNum && currNum >= maxNum) {
             res.error('报名人数已经超过上限！');
             return;
         }
