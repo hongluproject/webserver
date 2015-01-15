@@ -5,6 +5,7 @@ var common = require('cloud/common.js');
 
 
 AV.Cloud.define("getSearch",function(req,res){
+    var currUserId = req.user?req.user.id:undefined;
     var Dynamic = AV.Object.extend("DynamicNews");
     var Clan = AV.Object.extend("Clan");
     var User = AV.Object.extend("_User");
@@ -20,8 +21,11 @@ AV.Cloud.define("getSearch",function(req,res){
     var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
 
-    console.info('getSearch params,userId:%s type:%d kw:%s tagId:%s skip:%d limit:%d',
-        userId, type, kw, tagId, skip, limit);
+    if (!userId) {  //如果用户ID未传，则以当前登录用户的ID为准
+        userId = currUserId;
+    }
+    console.info('getSearch params,userId:%s type:%d kw:%s tagId:%s skip:%d limit:%d currUserId:%s',
+        userId, type, kw, tagId, skip, limit, currUserId);
 
     //资讯
     var getNews =function() {

@@ -15,14 +15,17 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
         }
         var currNum = activityResult.get('current_num');
         var maxNum = activityResult.get('max_num');
-        if (!maxNum) {  //没有指定最大报名人数，不用判断
-            console.info('max num is null');
+        if (!maxNum || maxNum==0) {  //没有指定最大报名人数，不用判断
+            console.info('max num is null ', maxNum);
+            res.success();
             return;
         }
         if (currNum >= maxNum) {
             res.error('报名人数已经超过上限！');
             return;
         }
+
+        res.success();
     }, function(error) {
         console.error('get %s user info error:', activityId, error);
         res.error(error);
