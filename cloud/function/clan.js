@@ -67,6 +67,7 @@ AV.Cloud.define("getClan",function(req, res){
         query.equalTo("tags", tags[index]);
         if (userGeoPoint)
         query.near("position", userGeoPoint);
+        query.equalTo("is_full", false);
         query.find({
             success: function(result) {
                 if(result.length==0){
@@ -76,7 +77,8 @@ AV.Cloud.define("getClan",function(req, res){
                         query.notContainedIn("objectId",clanids);
                     if (userGeoPoint)
                         query.near("position", userGeoPoint);
-                        query.find({
+                          query.equalTo("is_full", false);
+                          query.find({
                             success : function(result){
                                 formatResult(result);
                             }
