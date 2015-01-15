@@ -69,14 +69,6 @@ AV.Cloud.afterSave('ClanUser', function(req){
     var userObj = req.object.get('user_id');
     var userLevel = req.object.get('user_level');
 
-    if (userLevel != 2) {   //不是创建者，则该部落当前人数加1
-        //部落人数加1
-        clanObj.increment('current_num');
-        clanObj.save();
-
-        console.info('user %s is not clan founder, clan num increment', userObj.id);
-    }
-
     //查找到对应的用户object
     var query = new AV.Query('_User');
     query.select('clanCount', 'clanids');
@@ -96,8 +88,10 @@ AV.Cloud.afterSave('ClanUser', function(req){
     });
 
     //找到该部落的founder
+    //如果不是创建者，该部落人数加1
+    //修改部落是否已满的状态
     var queryClan = new AV.Query('Clan');
-    queryClan.select('founder_id', 'title');
+    queryClan.select('founder_id', 'title', 'current_num', 'max_num');
     queryClan.get(clanObj.id, {
         success:function(clan) {
             if (!clan) {
@@ -109,6 +103,18 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 console.error('ClanUser afterSave,clan %s founder id do not exist!', founderId);
                 return;
             }
+
+            var currUserNum = clan.get('current_num');
+            var maxUserNum = clan.get('max_num');
+            if (userLevel != 2) {   //不是创建者，则该部落当前人数加1
+                //部落人数加1
+                clan.increment('current_num');
+                currUserNum++;
+
+                console.info('user %s is not clan founder, clan num increment', userObj.id);
+            }
+            clan.set('is_full', currUserNum>=maxUserNum);
+            clan.save();
 
             //加入融云组群
             AV.Cloud.run('imAddToGroup',{
@@ -145,18 +151,10 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
-    //部落成员数减1
-    clanObj.increment('current_num', -1);
-    clanObj.save();
-
-    //用户所在部落数减1
-    userObj.increment('clanCount', -1);
-    userObj.save();
-
     //从用户表的部落数组里面，删除当前的部落再保存。
     //查找到对应的用户object
     var query = new AV.Query('_User');
-    query.select('clanids');
+    query.select('clanids', 'clanCount');
     query.get(userObj.id, {
         success:function(user) {
             if (!user) {
@@ -164,29 +162,42 @@ AV.Cloud.afterDelete('ClanUser', function(req){
                 return;
             }
 
+            //删除用户所在的部落
             user.remove('clanids', clanObj.id);
+            //用户所在部落数减1
+            user.increment('clanCount', -1);
             user.save();
         }
     });
-    var currUser = req.user;
-    if (currUser && currUser.id==userObj.id) {  //自己从部落中移除，不用发消息流
-        console.info('用户%s从部落%s中移除', userObj.id, clanObj.id);
-    } else {
-        //找到该部落的founder
-        var queryClan = new AV.Query('Clan');
-        queryClan.select('founder_id');
-        queryClan.get(clanObj.id, {
-            success:function(clan) {
-                if (!clan) {
-                    console.warn('ClanUser afterDelete userid %s not found!', userObj.id);
-                    return;
-                }
-                var founder = clan.get('founder_id');
-                if (!founder) {
-                    console.error('ClanUser afterDelete,clan %d founder id do not exist!', clanObj.id);
-                    return;
-                }
 
+    //找到该部落的founder
+    var queryClan = new AV.Query('Clan');
+    queryClan.select('founder_id', 'current_num', 'max_num', 'is_full');
+    queryClan.get(clanObj.id, {
+        success:function(clan) {
+            if (!clan) {
+                console.warn('ClanUser afterDelete userid %s not found!', userObj.id);
+                return;
+            }
+            var founder = clan.get('founder_id');
+            if (!founder) {
+                console.error('ClanUser afterDelete,clan %d founder id do not exist!', clanObj.id);
+                return;
+            }
+
+            var currUserNum = clan.get('current_num');
+            var maxUserNum = clan.get('max_num');
+
+            //部落成员数减1
+            clan.increment('current_num', -1);
+            currUserNum--;
+
+            //设置部落是否满员状态
+            clan.set('is_full', currUserNum>=maxUserNum);
+            clan.save();
+
+            var currUser = req.user;
+            if (currUser && currUser.id!=userObj.id) {  //如果不是自己从部落中移除，需要通知到该用户
                 //告知该用户，他已经从该部落中移除
                 var query = new AV.Query('_User');
                 query.equalTo('objectId', userObj.id);
@@ -201,8 +212,9 @@ AV.Cloud.afterDelete('ClanUser', function(req){
                     console.error(error);
                 });
             }
-        });
-    }
+
+        }
+    });
 
     //从融云群组里面退出
     AV.Cloud.run('imQuitGroup',{
