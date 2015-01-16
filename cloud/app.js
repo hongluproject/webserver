@@ -267,5 +267,18 @@ queryUser.get('54abc651e4b0154cef59f695').then(function(user){
 });
 */
 
+/*
+//批量脚本：修改部落最大成员数
+var queryClan = new AV.Query('Clan');
+queryClan.include('founder_id');
+queryClan.find().then(function(results){
+    for (var i in results) {
+        var userLevel = results[i].get('founder_id').get('level');
+        results[i].set('max_num', common.clanParam.getMaxClanUsers(userLevel));
+        results[i].save();
+    }
+});
+*/
+
 // This line is required to make Express respond to http requests.
 app.listen({"static":{maxAge:604800000}});

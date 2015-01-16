@@ -32,15 +32,47 @@ exports.pad = function(num, n) {
 }
 
 exports.clanParam = {
-    maxClanUsers:{
-        1:10,
-        2:50
+    getMaxClanUsers : function(level) {
+        AV.HPGlobalParam = AV.HPGlobalParam || {};
+        if (AV.HPGlobalParam.hpLevels && AV.HPGlobalParam.hpLevels[level]) {
+            return AV.HPGlobalParam.hpLevels[level].get('maxClanUsers')||30;
+        }
+
+        switch (level) {
+            case 1:
+                return 30;
+            case 2:
+                return 50;
+        }
+
+        return 30;
     },
-    maxCreateClan:{
-        1:2,
-        2:5
+
+    getMaxCreateClan : function(level) {
+        AV.HPGlobalParam = AV.HPGlobalParam || {};
+        if (AV.HPGlobalParam.hpLevels && AV.HPGlobalParam.hpLevels[level]) {
+            return AV.HPGlobalParam.hpLevels[level].get('maxCreateClan')||2;
+        }
+
+        switch (level) {
+            case 1:
+                return 2;
+            case 2:
+                return 5;
+        }
+
+        return 2;
     }
 };
+
+exports.getUserGrownWithLevel = function(level) {
+    AV.HPGlobalParam = AV.HPGlobalParam || {};
+    if (AV.HPGlobalParam.hpLevels) {
+        return AV.HPGlobalParam.hpLevels[level];
+    }
+
+    return undefined;
+}
 
 /* @params:
     userId: user objectId, maybe null
@@ -153,7 +185,7 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
         queryFriend.select('followee');
         queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
         queryFriend.containedIn('followee', friendList);
-        return queryFriend.find().then(function(results) {
+        queryFriend.find().then(function(results) {
             for (var i in results) {
                 var myFollowee = results[i].get('followee');
                 if (myFollowee) {

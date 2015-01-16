@@ -1,8 +1,7 @@
 /**
  * Created by fugang on 14/12/22.
  */
-
-var clanParam = require('cloud/common.js').clanParam;
+var common = require('cloud/common.js');
 
 /** 判断用户是否可创建部落
  *
@@ -23,11 +22,13 @@ AV.Cloud.define('canCreateClan', function(req, res) {
             return;
         }
 
+        var clanParam = common.clanParam;
         var createdClanIds = userResult.get('createdClanIds');
         var currClanNum = createdClanIds?createdClanIds.length:0;
         var userLevel = userResult.get('level');
-        var nMaxCreateClan = clanParam.maxCreateClan[userLevel] || 2;
-        var nMaxClanUsers = clanParam.maxClanUsers[userLevel] || 10;
+
+        var nMaxCreateClan = clanParam.getMaxCreateClan(userLevel);
+        var nMaxClanUsers = clanParam.getMaxClanUsers(userLevel);
 
         console.info('current createdClan num %d,max createdClan num%d', currClanNum, nMaxCreateClan);
 

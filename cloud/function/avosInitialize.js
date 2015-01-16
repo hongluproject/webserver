@@ -8,6 +8,7 @@ exports.initializeAvosData = function() {
         globalObj.hpTags = globalObj.hpTags || {};
         globalObj.hpAreas = globalObj.hpAreas || {};
         globalObj.hpCates = globalObj.hpCates || {};
+        globalObj.hpLevels = globalObj.hpLevels || {};
 
         //拉取所有的标签列表
         var queryTags = new AV.Query('Tag');
@@ -45,6 +46,20 @@ exports.initializeAvosData = function() {
                 globalObj.hpCates[cateItem.id] = cateItem;
             }
             console.info('get cate ok,cate count:%d', cateResults?cateResults.length:0);
+
+            //拉取所有等级信息
+            var queryLevel = new AV.Query('UserGrown');
+            queryLevel.limit = 1000;
+            return queryLevel.find();
+        }).then(function(levelResults){
+            globalObj.hpLevels = {};
+            for (var i in levelResults) {
+                var levelItem = levelResults[i];
+                var level = levelItem.get('level');
+                globalObj.hpLevels[level] = levelItem;
+            }
+
+            console.info('get level ok,level count:%d', levelResults?levelResults.length:0);
         });
 
 }
