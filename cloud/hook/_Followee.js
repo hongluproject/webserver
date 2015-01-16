@@ -25,9 +25,14 @@ AV.Cloud.afterSave('_Followee', function(req) {
     });
 });
 
+/** cannot enter this function, I don't know why  : by GaryFu
+ *
 AV.Cloud.afterDelete('_Followee', function(req) {
+    console.info('afterDelete user:', req.user);
     //好友数加1
     var user = req.object.get('user');
+    console.info('afterDelete _Followee ', user);
     user.increment('friendCount', -1);
     user.save();
 });
+ */
