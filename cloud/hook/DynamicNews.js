@@ -64,16 +64,25 @@ AV.Cloud.afterSave('DynamicNews', function(request){
  *
  */
 AV.Cloud.afterDelete('DynamicNews', function(request) {
+    var type = request.object.get('type');   //1:ask 2:dynamic
+    var user = request.object.get('user_id');
+
     var query = new AV.Query('_Status');
-    query.equalTo('dynamicNews', request.object.id);
+    query.equalTo('dynamicNews', request.object._toPointer());
     query.equalTo('messageType', 'newPost');
-    query.equalTo('source', request.object.get('user_id')._toPointer());
-    query.destroyAll();
+    query.equalTo('source', user._toPointer());
+    query.first().then(function(status){
+        if (status && status.id) {
+            var deleteStatus = new AV.Status();
+            deleteStatus.id = status.id;
+            deleteStatus.destroy(); //调用后，对应的inbox信息也将会清除
+
+            console.info('destroy dynamic %s, status %s ok!', request.object.id, status.id);
+            status.destroy();
+        }
+    });
 
     //用户发布动态数减1
-    var type = request.object.get('type');   //1:ask 2:dynamic
-    var user = AV.Object.extend('_User');
-    user.id = request.object.get('user_id').id;
     switch(type) {
         case 1:
             user.increment('questionCount', -1);

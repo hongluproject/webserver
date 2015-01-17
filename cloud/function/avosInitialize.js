@@ -95,6 +95,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     res.success({
         needUpdate:false,
+        showAdForIdfa:true,
         updateType:1,
         message:'1、第一次发布版本\n' +
         '2、天天向上\n' +
