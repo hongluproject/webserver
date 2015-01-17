@@ -185,7 +185,7 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
         queryFriend.select('followee');
         queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
         queryFriend.containedIn('followee', friendList);
-        queryFriend.find().then(function(results) {
+        return queryFriend.find().then(function(results) {
             for (var i in results) {
                 var myFollowee = results[i].get('followee');
                 if (myFollowee) {

@@ -36,6 +36,7 @@ require('cloud/function/activityWrapper.js');
 require('cloud/function/imWrapper.js');
 require('cloud/function/clanWrapper.js');
 require('cloud/function/followeeWrapper.js');
+require('cloud/function/sahalaScript.js');
 
 /** 测试返回多个class数据
  *
