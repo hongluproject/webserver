@@ -5,7 +5,7 @@
         <script src="/js/viewport.js"></script>
         <script src="/js/jquery-1.11.2.min.js"></script>
         <title><%= title%></title>
-        <link rel="stylesheet" href="/stylesheets/style.css??201501140" type="text/css">
+        <link rel="stylesheet" href="/stylesheets/style.css?201501210" type="text/css">
         <script type="text/javascript">
             function isInHoopeng() {
                 try {
@@ -23,6 +23,12 @@
                 if (isInHoopeng()) {
                     external.callMethod(methodName,JSON.stringify({"type":type,"objectId":objectId,"objectName":objectName}));
                 }
+            }
+
+            function doClick(index,arr){
+                alert(index);
+
+
             }
 
         </script>
@@ -66,6 +72,17 @@
             if (!isInHoopeng()) {
                 $('#downloadDiv').css('display', 'block');
             }
+            var imgSrc = [];
+            $('.doc-content img').each(function(idx){
+                img_src = imgSrc.push($(this).attr('src'));
+                $(this).bind("click",function(){
+                    imageClick(imgSrc,idx);
+                });
+            })
+
+        function  imageClick(imgSrc,idx){
+            return true;
+        }
     </script>
 
 </html>

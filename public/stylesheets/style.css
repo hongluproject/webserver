@@ -56,7 +56,7 @@ article { display: block; }
 .a-header { height: 44px; position: relative; z-index: 100; top: 0; background: #fafafb; line-height: 44px; box-shadow: 0 1px 8px rgba(0,0,0,0.3); border-radius: 3px 3px 0 0; border-bottom: 1px solid #cecece; }
 .a-header h2 { font-size: 20px; color: #808080; margin: 0; padding: 0; font-weight: normal; position: absolute; left: 80px; white-space: nowrap; }
 .a-container { padding: 10px 0 0 0; }
-.article-doc h1 { font-size: 32px; line-height: 1.4; font-weight: 300; color: #222; padding: 0; margin: 0; margin-bottom: 20px; }
+.article-doc h1 { font-size: 22px; line-height: 1.4; font-weight: 300; color: #222; padding: 0; margin: 0; margin-bottom: 20px; }
 .a-source { font-size: 1.1em; margin-right: 10px; }
 .a-date { font-size: 1.1em; margin-right: 12px; }
 .a-tag { float: left; }
