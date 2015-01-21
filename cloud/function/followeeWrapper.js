@@ -10,6 +10,18 @@ AV.Cloud.define("unfollowFriend",function(req, res) {
         return;
     }
 
+    var myUserObj = AV.User.createWithoutData('_User', myUserId);
+    myUserObj.unfollow(friendUserId).then(function(){
+        //好友数减1
+        myUserObj.increment('friendCount', -1);
+        myUserObj.save();
+        res.success();
+    }, function(err){
+        console.error('%s unfollow %s error:', myUserId, friendUserId, err);
+        res.error(err);
+    });
+
+    /*
     var query = new AV.Query('_Followee');
     query.equalTo('user', AV.User.createWithoutData('_User', myUserId));
     query.equalTo('followee', AV.User.createWithoutData('_User', friendUserId));
@@ -28,4 +40,5 @@ AV.Cloud.define("unfollowFriend",function(req, res) {
         myUserObj.save();
         res.success();
     });
+    */
 });

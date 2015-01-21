@@ -1,3 +1,5 @@
+var clanParam = require('cloud/common.js').clanParam;
+
 AV.Cloud.define("getClan",function(req, res){
     var HPGlobalParam = AV.HPGlobalParam || {};
     var userid = req.params.userid;
@@ -15,13 +17,15 @@ AV.Cloud.define("getClan",function(req, res){
 
     var getSelfClan = function(userid){
         var query = new AV.Query(User);
-        query.select("nickname","tags","clanids","actual_position");
+        query.select("nickname","tags","clanids","actual_position",'level');
         query.get(userid).then(function(result) {
             userInfo =  result;
             var  clanids = result.get("clanids");
+            userLevel = result.get('level');
             if(clanids){
                 var query = new AV.Query(Clan);
                 query.containedIn("objectId",clanids);
+                query.include('founder_id');
                 query.find({
                     success: function(result) {
                         var userClan = [];
@@ -39,6 +43,10 @@ AV.Cloud.define("getClan",function(req, res){
                             if (arrayTagName.length) {
                                 result[i].set('tagsName', arrayTagName);
                             }
+
+                            var founderObj = result[i].get('founder_id');
+                            var userLevel = founderObj.get('level');
+                            result[i].set('max_num', clanParam.getMaxClanUsers(userLevel));
                             outResult       = result[i];
                             userClan.push(outResult);
                         }
@@ -73,16 +81,19 @@ AV.Cloud.define("getClan",function(req, res){
                 if(result.length==0){
                     var query = new AV.Query(Clan);
                     query.limit(2);
-                    if(clanids)
+                    if(clanids) {
                         query.notContainedIn("objectId",clanids);
-                    if (userGeoPoint)
+                    }
+                    if (userGeoPoint) {
                         query.near("position", userGeoPoint);
-                          query.equalTo("is_full", false);
-                          query.find({
-                            success : function(result){
-                                formatResult(result);
-                            }
-                        })
+                    }
+                    query.include('founder_id');
+                    query.equalTo("is_full", false);
+                    query.find({
+                        success : function(result){
+                        formatResult(result);
+                        }
+                     });
                 }else{
                     formatResult(result);
                 }
@@ -105,6 +116,9 @@ AV.Cloud.define("getClan",function(req, res){
                     result[i].set('tagsName', arrayTagName);
                 }
                 outResult       = result[i];
+                var founderObj = result[i].get('founder_id');
+                var userLevel = founderObj.get('level');
+                result[i].set('max_num', clanParam.getMaxClanUsers(userLevel));
                 recommendClan.push(outResult);
             }
             ret.recommendClan = recommendClan;

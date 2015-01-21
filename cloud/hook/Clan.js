@@ -22,11 +22,9 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
                 return;
             }
 
-            //根据power修改该部落可以最多加入的人数
-            var nMaxClanUser = clanParam.maxClanUsers[1];
-            if (userResult.get('power') >= 2) {
-                nMaxClanUser = clanParam.maxClanUsers[2];
-            }
+            //根据用户等级，修改该部落可以最多加入的人数
+            var userLevel = userResult.get('level');
+            var nMaxClanUser = clanParam.getMaxClanUsers(userLevel);
 
             clanObj.set('max_num', nMaxClanUser);
 
