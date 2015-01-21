@@ -69,6 +69,7 @@ exports.initializeAvosData = function() {
  */
 AV.Cloud.define('updateHPParamTimer', function(req, res) {
     exports.initializeAvosData();
+    res.success();
 });
 
 /*  查询升级信息，APP每次启动的时候调用。

@@ -327,3 +327,49 @@ AV.Cloud.define('getDynamic', function(req,res){
             break;
     }
 });
+
+
+/**
+ *  获取动态评论
+ */
+AV.Cloud.define('getDynamicComments', function(req,res) {
+    var dynamicId = req.params.dynamicId;
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+
+    if (!dynamicId) {
+        res.error('请输入动态ID!');
+        return;
+    }
+    var query = new AV.Query('DynamicComment');
+    query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews',dynamicId));
+    query.include('user_id', 'reply_userid');
+    query.skip(skip);
+    query.limit(limit);
+    query.descending('createdAt');
+    query.find().then(function(results){
+        for (var i in results) {
+            //replace 'user_info' attribute
+            var postUser = results[i].get('user_id');
+            if (postUser) {
+                var userInfo = {
+                    icon:postUser.get('icon'),
+                    nickname:postUser.get('nickname')
+                };
+                results[i].set('user_info', userInfo);
+            }
+
+            //replace 'append_replyinfo
+            var replyUser = results[i].get('reply_userid');
+            if (replyUser) {
+                var userInfo = {
+                    icon:replyUser.get('icon'),
+                    nickname:replyUser.get('nickname')
+                };
+                results[i].set('append_replyinfo', userInfo);
+            }
+        }
+
+        res.success(results);
+    });
+});
