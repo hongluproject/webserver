@@ -25,6 +25,12 @@
                 }
             }
 
+            function doClick(index,arr){
+                alert(index);
+
+
+            }
+
         </script>
     </head>
     <body ryt14206="1">
@@ -66,6 +72,17 @@
             if (!isInHoopeng()) {
                 $('#downloadDiv').css('display', 'block');
             }
+            var imgSrc = [];
+            $('.doc-content img').each(function(idx){
+                img_src = imgSrc.push($(this).attr('src'));
+                $(this).bind("click",function(){
+                    imageClick(imgSrc,idx);
+                });
+            })
+
+        function  imageClick(imgSrc,idx){
+            return true;
+        }
     </script>
 
 </html>
