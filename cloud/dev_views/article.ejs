@@ -74,7 +74,7 @@
             }
             var imgSrc = [];
             $('.doc-content img').each(function(idx){
-                img_src = imgSrc.push($(this).attr('src'));
+                imgSrc.push($(this).attr('src'));
                 $(this).bind("click",function(){
                     imageClick(imgSrc,idx);
                 });
