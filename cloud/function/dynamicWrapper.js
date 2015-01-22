@@ -240,12 +240,17 @@ AV.Cloud.define('getDynamic', function(req,res){
             var limit = req.params.limit || 20;
             var skip = req.params.skip || 0;
             var type = req.params.type;
-            var query = new AV.Query('DynamicNews');
+
+            var queryInClanIds = new AV.Query('DynamicNews');
+            queryInClanIds.equalTo('clan_ids', clanId);
+            var queryEqualToClan = new AV.Query('DynamicNews');
+            if (clanId) {
+                queryEqualToClan.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+            }
+
+            var query = AV.Query.or(queryInClanIds, queryEqualToClan);
             if (type) {
                 query.equalTo('type', parseInt(type));
-            }
-            if (clanId) {
-                query.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
             }
             query.include('user_id');
             query.skip(skip);
@@ -337,7 +342,7 @@ AV.Cloud.define('getComments', function(req,res) {
     var commentId = req.params.commentId;
     var limit = req.params.limit || 20;
     var skip = req.params.skip || 0;
-    var commentType = req.params.commentType || 'dynamicComment';
+    var commentType = req.params.commentType || 3;
 
     if (!sourceId) {
         res.error('请输入动态ID!');
@@ -345,19 +350,19 @@ AV.Cloud.define('getComments', function(req,res) {
     }
     var query;
     switch (commentType) {
-        case 'newsComment':
+        case 1:
             query = new AV.Query('NewsComment');
             if (sourceId) {
                 query.equalTo('newsid', AV.Object.createWithoutData('News',sourceId));
             }
             break;
-        case 'activityComment':
+        case 2:
             query = new AV.Query('ActivityComment');
             if (sourceId) {
                 query.equalTo('activity_id', AV.Object.createWithoutData('Activity',sourceId));
             }
             break;
-        case 'dynamicComment':
+        case 3:
         default :
             query = new AV.Query('DynamicComment');
             if (sourceId) {
@@ -415,24 +420,24 @@ AV.Cloud.define('postComment', function(req, res){
 
     var commentObj;
     switch (commentType) {
-        case 'newsComment':
+        case 1:
             var CommentClass = AV.Object.extend('NewsComment');
             commentObj = new CommentClass();
             commentObj.set('newsid', AV.Object.createWithoutData('News', resourceId));
             break;
-        case 'activityComment':
+        case 2:
             var CommentClass = AV.Object.extend('ActivityComment');
             commentObj = new CommentClass();
             commentObj.set('activity_id', AV.Object.createWithoutData('Activity', resourceId));
             break;
-        case 'dynamicComment':
+        case 3:
             var CommentClass = AV.Object.extend('DynamicComment');
             commentObj = new CommentClass();
             commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', resourceId));
             break;
         default:
             res.error('不支持的评论类型!');
-            break;
+            return;
     }
     commentObj.set('content', content);
     commentObj.set('user_id', AV.User.createWithoutData('_User', userId));
@@ -448,7 +453,7 @@ AV.Cloud.define('postComment', function(req, res){
         });
     }
     commentObj.save().then(function(comment){
-        res.success({objectId:comment.id});
+        res.success(comment);
     }, function(error){
         res.error(error);
     })
