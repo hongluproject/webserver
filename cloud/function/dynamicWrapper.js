@@ -330,19 +330,45 @@ AV.Cloud.define('getDynamic', function(req,res){
 
 
 /**
- *  获取动态评论
+ *  获取动态、资讯、活动等相关评论
  */
-AV.Cloud.define('getDynamicComments', function(req,res) {
-    var dynamicId = req.params.dynamicId;
+AV.Cloud.define('getComments', function(req,res) {
+    var sourceId = req.params.sourceId;
+    var commentId = req.params.commentId;
     var limit = req.params.limit || 20;
     var skip = req.params.skip || 0;
+    var commentType = req.params.commentType || 'dynamicComment';
 
-    if (!dynamicId) {
+    if (!sourceId) {
         res.error('请输入动态ID!');
         return;
     }
-    var query = new AV.Query('DynamicComment');
-    query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews',dynamicId));
+    var query;
+    switch (commentType) {
+        case 'newsComment':
+            query = new AV.Query('NewsComment');
+            if (sourceId) {
+                query.equalTo('newsid', AV.Object.createWithoutData('News',sourceId));
+            }
+            break;
+        case 'activityComment':
+            query = new AV.Query('ActivityComment');
+            if (sourceId) {
+                query.equalTo('activity_id', AV.Object.createWithoutData('Activity',sourceId));
+            }
+            break;
+        case 'dynamicComment':
+        default :
+            query = new AV.Query('DynamicComment');
+            if (sourceId) {
+                query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews',sourceId));
+            }
+            break;
+    }
+    if (commentId) {    //查询指定的评论ID
+        query.equalTo('objectId', commentId);
+    }
+    query.equalTo('status', 1);
     query.include('user_id', 'reply_userid');
     query.skip(skip);
     query.limit(limit);
@@ -372,4 +398,58 @@ AV.Cloud.define('getDynamicComments', function(req,res) {
 
         res.success(results);
     });
+});
+
+/*** 提交动态、资讯、活动评论
+ **/
+AV.Cloud.define('postComment', function(req, res){
+    var userId = req.params.userId;
+    var userNickname = req.params.userNickname;
+    var userIcon = req.params.userIcon;
+    var resourceId = req.params.resourceId;
+    var commentType = req.params.commentType;
+    var content = req.params.content;
+    var replyUserId = req.params.replyUserId;
+    var replyUserNickname = req.params.replyUserNickname;
+    var replyUserIcon = req.params.replyUserIcon;
+
+    var commentObj;
+    switch (commentType) {
+        case 'newsComment':
+            var CommentClass = AV.Object.extend('NewsComment');
+            commentObj = new CommentClass();
+            commentObj.set('newsid', AV.Object.createWithoutData('News', resourceId));
+            break;
+        case 'activityComment':
+            var CommentClass = AV.Object.extend('ActivityComment');
+            commentObj = new CommentClass();
+            commentObj.set('activity_id', AV.Object.createWithoutData('Activity', resourceId));
+            break;
+        case 'dynamicComment':
+            var CommentClass = AV.Object.extend('DynamicComment');
+            commentObj = new CommentClass();
+            commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', resourceId));
+            break;
+        default:
+            res.error('不支持的评论类型!');
+            break;
+    }
+    commentObj.set('content', content);
+    commentObj.set('user_id', AV.User.createWithoutData('_User', userId));
+    commentObj.set('user_info', {
+            nickname:userNickname,
+            icon:userIcon
+    });
+    if (replyUserId) {
+        commentObj.set('reply_userid', AV.User.createWithoutData('_User', replyUserId));
+        commentObj.set('append_relyinfo', {
+            nickname:replyUserNickname,
+            icon:replyUserIcon
+        });
+    }
+    commentObj.save().then(function(comment){
+        res.success({objectId:comment.id});
+    }, function(error){
+        res.error(error);
+    })
 });
