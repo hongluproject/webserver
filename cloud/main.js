@@ -42,16 +42,7 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(request, response) {
-	var query = new AV.Query('ClanUser');
-	query.include('clan_id', 'user_id');
-	query.find().then(function(results) {
-		for (var i in results) {
-			var jValue = results[i].get('clan_id')._toFullJSON();
-			delete jValue.__type;
-			results[i].set('clan_id', jValue);
-		}
-		response.success(results);
-	});
+	response.success('test');
 });
 
 /**  获取七牛云存储token
