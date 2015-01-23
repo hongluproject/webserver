@@ -154,9 +154,10 @@ exports.newsResultWapper = function(userId, results) {
             for (var k in results) {
                 var currNew = results[k];
                 var likeObjectId = likeTarget[currNew.id];
-                if (likeObjectId)	//添加点赞状态字段
-                // currNew.set('isLike', true);
+                if (likeObjectId) {	//添加点赞状态字段
+                    currNew.set('isLike', true);
                     currNew.set('likeObjectId', likeObjectId);
+                }
             }
 
             return AV.Promise.as(results);

@@ -343,6 +343,7 @@ AV.Cloud.define('getComments', function(req,res) {
     var limit = req.params.limit || 20;
     var skip = req.params.skip || 0;
     var commentType = req.params.commentType || 3;
+    commentType = parseInt(commentType);
 
     if (!sourceId) {
         res.error('请输入动态ID!');
@@ -387,7 +388,11 @@ AV.Cloud.define('getComments', function(req,res) {
                     icon:postUser.get('icon'),
                     nickname:postUser.get('nickname')
                 };
-                results[i].set('user_info', userInfo);
+                if (commentType==1) {
+                    results[i].set('append_userinfo', userInfo);
+                } else {
+                    results[i].set('user_info', userInfo);
+                }
             }
 
             //replace 'append_replyinfo
@@ -411,29 +416,42 @@ AV.Cloud.define('postComment', function(req, res){
     var userId = req.params.userId;
     var userNickname = req.params.userNickname;
     var userIcon = req.params.userIcon;
-    var resourceId = req.params.resourceId;
+    var sourceId = req.params.sourceId;
     var commentType = req.params.commentType;
     var content = req.params.content;
     var replyUserId = req.params.replyUserId;
     var replyUserNickname = req.params.replyUserNickname;
     var replyUserIcon = req.params.replyUserIcon;
+    commentType = parseInt(commentType);
 
     var commentObj;
     switch (commentType) {
         case 1:
             var CommentClass = AV.Object.extend('NewsComment');
             commentObj = new CommentClass();
-            commentObj.set('newsid', AV.Object.createWithoutData('News', resourceId));
+            commentObj.set('newsid', AV.Object.createWithoutData('News', sourceId));
+            commentObj.set('append_userinfo', {
+                nickname:userNickname,
+                icon:userIcon
+            });
             break;
         case 2:
             var CommentClass = AV.Object.extend('ActivityComment');
             commentObj = new CommentClass();
-            commentObj.set('activity_id', AV.Object.createWithoutData('Activity', resourceId));
+            commentObj.set('activity_id', AV.Object.createWithoutData('Activity', sourceId));
+            commentObj.set('user_info', {
+                nickname:userNickname,
+                icon:userIcon
+            });
             break;
         case 3:
             var CommentClass = AV.Object.extend('DynamicComment');
             commentObj = new CommentClass();
-            commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', resourceId));
+            commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', sourceId));
+            commentObj.set('user_info', {
+                nickname:userNickname,
+                icon:userIcon
+            });
             break;
         default:
             res.error('不支持的评论类型!');
@@ -441,13 +459,9 @@ AV.Cloud.define('postComment', function(req, res){
     }
     commentObj.set('content', content);
     commentObj.set('user_id', AV.User.createWithoutData('_User', userId));
-    commentObj.set('user_info', {
-            nickname:userNickname,
-            icon:userIcon
-    });
     if (replyUserId) {
         commentObj.set('reply_userid', AV.User.createWithoutData('_User', replyUserId));
-        commentObj.set('append_relyinfo', {
+        commentObj.set('append_replyinfo', {
             nickname:replyUserNickname,
             icon:replyUserIcon
         });
@@ -455,6 +469,7 @@ AV.Cloud.define('postComment', function(req, res){
     commentObj.save().then(function(comment){
         res.success(comment);
     }, function(error){
+        console.error('postComment error:', error);
         res.error(error);
     })
 });

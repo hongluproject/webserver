@@ -8,7 +8,6 @@
  */
 AV.Cloud.afterSave('NewsComment', function(request){
     var newsObj = request.object.get('newsid');
-    console.dir(newsObj);
     newsObj.increment('comment_count');
     newsObj.save();
 });
