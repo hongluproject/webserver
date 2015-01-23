@@ -25,10 +25,10 @@
                 }
             }
 
-            function doClick(index,arr){
-                alert(index);
-
-
+            function imageClick(imgSrc,idx){
+                if (isInHoopeng()) {
+                    external.callMethod("imgSlide", JSON.stringify({"imgs": imgSrc, "idx": idx}));
+                }
             }
 
         </script>
@@ -80,9 +80,6 @@
                 });
             })
 
-        function  imageClick(imgSrc,idx){
-            return true;
-        }
     </script>
 
 </html>
