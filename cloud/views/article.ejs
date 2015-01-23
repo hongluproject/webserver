@@ -5,7 +5,7 @@
         <script src="/js/viewport.js"></script>
         <script src="/js/jquery-1.11.2.min.js"></script>
         <title><%= title%></title>
-        <link rel="stylesheet" href="/stylesheets/style.css?2015011402" type="text/css">
+        <link rel="stylesheet" href="/stylesheets/style.css?201501210" type="text/css">
         <script type="text/javascript">
             function isInHoopeng() {
                 try {
@@ -22,6 +22,12 @@
             function doFilter(methodName,type, objectId, objectName) {
                 if (isInHoopeng()) {
                     external.callMethod(methodName,JSON.stringify({"type":type,"objectId":objectId,"objectName":objectName}));
+                }
+            }
+
+            function imageClick(imgSrc,idx){
+                if (isInHoopeng()) {
+                    external.callMethod("imgSlide", JSON.stringify({"imgs": imgSrc, "idx": idx}));
                 }
             }
 
@@ -66,6 +72,14 @@
             if (!isInHoopeng()) {
                 $('#downloadDiv').css('display', 'block');
             }
+            var imgSrc = [];
+            $('.doc-content img').each(function(idx){
+                imgSrc.push($(this).attr('src'));
+                $(this).bind("click",function(){
+                    imageClick(imgSrc,idx);
+                });
+            })
+
     </script>
 
 </html>
