@@ -268,4 +268,4 @@ queryUser.get('54abc651e4b0154cef59f695').then(function(user){
 */
 
 // This line is required to make Express respond to http requests.
-app.listen({"static":{maxAge:604800000}});
+app.listen({"static":{maxAge:2592000000}});
