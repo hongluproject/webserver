@@ -84,25 +84,45 @@ AV.Cloud.define('updateHPParamTimer', function(req, res) {
                     1 强制升级
         message:升级提示
         clickURL:点击链接
+        lastVersion:1.0.1 最近版本
     }
  */
 AV.Cloud.define('checkUpdate', function(req, res) {
     var clientVersion = req.params.clientVersion;
     var deviceType = req.params.deviceType;
     var deviceVersion = req.params.deviceVersion;
+    var customer = req.params.customer;
 
-    console.info('checkUpdate params, clientVersion:%s deviceType:%s deviceVersion:%s',
+    console.info('checkUpdate params, clientVersion:%s deviceType:%s deviceVersion:%s customer:%s',
         clientVersion, deviceType, deviceVersion);
 
-    res.success({
-        needUpdate:false,
-        showAdForIdfa:true,
-        updateType:1,
-        message:'1、第一次发布版本\n' +
-        '2、天天向上\n' +
-        '3、我是歌手\n' +
-        '4、奔跑吧兄弟\n' +
-        '5、最强大脑',
-        clickURL:'https://itunes.apple.com/us/app/pptv-ju-li/id438426078?mt=8&uo=4'
-    });
+    if (deviceType == 'android') {
+        res.success({
+            needUpdate:false,
+            showAdForIdfa:true,
+            updateType:1,
+            message:'1、第一次发布版本\n' +
+            '2、天天向上\n' +
+            '3、我是歌手\n' +
+            '4、奔跑吧兄弟\n' +
+            '5、最强大脑',
+            clickURL:'http://www.imsahala.com/hupeng.apk',
+            lastVersion:'1.0.1'
+        });
+    } else {
+        res.success({
+            needUpdate:false,
+            showAdForIdfa:true,
+            updateType:1,
+            message:'1、第一次发布版本\n' +
+            '2、天天向上\n' +
+            '3、我是歌手\n' +
+            '4、奔跑吧兄弟\n' +
+            '5、最强大脑',
+            clickURL:'https://itunes.apple.com/us/app/pptv-ju-li/id438426078?mt=8&uo=4',
+            lastVersion:'1.0.1'
+        });
+    }
+
+
 })
