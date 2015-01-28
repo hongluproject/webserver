@@ -165,7 +165,8 @@ AV.Cloud.define("getSearch",function(req,res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("nickname", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("nickname",  re);
         }
         query.find().then(function(results) {
             return common.addFriendShipForUsers(userId, results);
@@ -207,7 +208,8 @@ AV.Cloud.define("getSearch",function(req,res){
     }else if(kw){
         var query = new AV.Query(Tag);
         query.select("objectId","tag_name");
-        query.equalTo("tag_name", kw);
+        var re=new RegExp(kw,"i");
+        query.matches("tag_name",  re);
         query.first({
             success: function(result) {
                 if(result){
