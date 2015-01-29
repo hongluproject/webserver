@@ -198,6 +198,13 @@ app.get('/activity/:objId', function(req,res) {
             return;
         }
 
+        var tags = activityResult.get('tags');
+        var tagsName = [];
+        for (var i in tags) {
+            var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+            tagsName.push(tagName?tagName:'');
+        }
+        activityResult.set('tagsName', tagsName);
         res.render('activity', {activity:activityResult});
     });
 });
