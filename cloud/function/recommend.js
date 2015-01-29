@@ -28,7 +28,7 @@ AV.Cloud.define("getRecommend",function(req, res){
     };
     var getRecommendAsk = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId","tags");
+        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId","tags","share_url");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 1);
         if(userid) {
@@ -81,7 +81,7 @@ AV.Cloud.define("getRecommend",function(req, res){
 
     var getRecommendDynamic = function(){
         var query = new AV.Query(Dynamic);
-        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId","tags");
+        query.select("user_id","content", "type","thumbs","up_count","comment_count","objectId","tags","share_url");
         query.equalTo("tags", tags[index]);
         query.equalTo("type", 2);
         if(userid) {
