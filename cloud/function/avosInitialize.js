@@ -94,7 +94,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var customer = req.params.customer;
 
     console.info('checkUpdate params, clientVersion:%s deviceType:%s deviceVersion:%s customer:%s',
-        clientVersion, deviceType, deviceVersion);
+        clientVersion, deviceType, deviceVersion, customer);
 
     if (deviceType == 'android') {
         res.success({
