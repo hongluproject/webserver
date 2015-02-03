@@ -42,7 +42,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
             //如果用户没有设置动态所归属的部落，则需要将该动态自动加入所属标签的部落中
             var queryOr = [];
             var clanOfDynamic = request.object.get('clan_ids');
-            if (!clanOfDynamic && clansOfUser && tagsOfDynamic) {
+            if (!clanOfDynamic && clansOfUser && tagsOfDynamic && tagsOfDynamic.length>0) {
                 for(var i in tagsOfDynamic){
                     var clanOr = new AV.Query('Clan');
                     clanOr.equalTo("tags", tagsOfDynamic[i]);

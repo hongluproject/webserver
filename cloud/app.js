@@ -75,7 +75,7 @@ app.get('/news/:objId', function(req, res) {
         res.end();
         return;
     }
-    console.info("view news:%s",articleId);
+    console.info("begin find news:%s", articleId);
     var query = new AV.Query('News');
     query.equalTo('objectId', articleId);
     query.find().then(function(results){
@@ -113,8 +113,9 @@ app.get('/news/:objId', function(req, res) {
         }
         res.setHeader('cache-control','public, max-age=1800');
         res.render('article', renderObj);
+        console.info('render article %s', articleId);
     }, function(err){
-        console.error(err);
+        console.error('Render article error:', err);
         res.writeHead(404);
         res.end();
     });
