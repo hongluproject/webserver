@@ -1,4 +1,5 @@
 var clanParam = require('cloud/common.js').clanParam;
+var myutils = require('cloud/utils.js');
 
 AV.Cloud.define("getClan",function(req, res){
     var HPGlobalParam = AV.HPGlobalParam || {};
@@ -128,4 +129,164 @@ AV.Cloud.define("getClan",function(req, res){
     getSelfClan(userid);
 });
 
+function isClanFull(clan) {
+    var level = clan.get("founder_id").get("level");
+    var currClanNum = clan.get('current_num');
+    var maxClanNum = clanParam.getMaxClanUsers(level);
+
+    return currClanNum == maxClanNum;
+}
+
+function addClanUser(userid, clanid, callback) {
+    var ClanUser = AV.Object.extend("ClanUser");
+    var clanUser = new ClanUser();
+
+    clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
+    clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
+    clanUser.set("user_level", 1);
+
+    clanUser.save(null, {
+        success: function () {
+            callback(true);
+        },
+        error: function () {
+            callback(false);
+        }
+    });
+}
+
+function addReviewClanUser(userid, clanid, callback) {
+    var ClanReviewUser = AV.Object.extend("ClanReviewUser");
+    var clanUser = new ClanReviewUser();
+
+    clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
+    clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
+
+    clanUser.save(null, {
+        success: function () {
+            callback(true);
+        },
+        error: function () {
+            callback(false);
+        }
+    });
+}
+
+function removeReviewClanUser(userid, clanid, callback) {
+    var query = new AV.Query('ClanReviewUser');
+
+    query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
+    query.equalTo("clan_id", AV.Object.createWithoutData("_User", userid, false));
+
+    query.destroyAll({
+        success: function(){
+            callback(true);
+        },
+        error: function(err){
+            callback(false);
+        }
+    });
+}
+
+function postRCMessage(fromUserId, toUserId, content, type) {
+    console.log("fromUser:" + fromUserId, " toUserId:" + toUserId, " content:" + content, " type:" + type);
+
+    var rcParam = myutils.getRongCloudParam();
+
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/message/system/publish.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: {
+            fromUserId:fromUserId,
+            toUserId:toUserId,
+            objectName:type,
+            content:"",
+            pushContent:content
+        },
+        success: function(httpResponse) {
+            console.info('postRCMessage:rongcloud response is '+httpResponse.text);
+            delete httpResponse.data.code;
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('postRCMessage:'+errmsg);
+        }
+    });
+}
+
+//
+AV.Cloud.define("joinClan", function (req, res) {
+
+    var userid = req.params.userid;
+    var clanid = req.params.clanid;
+
+    if (!userid || !clanid) {
+        res.error("传入的参数有误");
+        return;
+    }
+
+    var query = new AV.Query('Clan');
+    query.include("founder_id.level");
+
+    query.get(clanid, {
+
+        success: function (clan) {
+            if (!clan) {
+                console.info('部落不存在:%s', clan.id);
+                res.error('部落不存在!');
+                return;
+            }
+
+            if (isClanFull(clan)) {
+                res.error('部落人员已满!');
+                return;
+            }
+        },
+
+        error: function (error) {
+            console.error('beforeSave ClanUser query error:', error);
+            res.error('部落不存在！');
+        }
+
+    }).then(function (clan) {
+        var joinMode = clan.get('join_mode');
+        switch (joinMode)
+        {
+            case 1:
+                addClanUser(userid, clanid, function(success) {
+                    if (!success) {
+                        res.error('加入部落失败');
+                    }
+                });
+                break;
+            case 2:
+                var query = new AV.Query('_User');
+                query.get(userid, {
+                    success: function (fromUser) {
+                        addReviewClanUser(userid, clanid, function(success) {
+                            if (success) {
+                                postRCMessage(userid, clan.get("founder_id").id,
+                                    fromUser.get("nickname")+"请求加入部落"+clan.get("title"), "requestJoinClan");
+                            }
+                            else {
+                                res.error('加入部落失败');
+                            }
+                        });
+                        console.log(fromUser);
+                    },
+                    error: function (error) {
+                        res.error('用户不存在!');
+                    }
+                })
+                break;
+        }
+    });
+});
 
