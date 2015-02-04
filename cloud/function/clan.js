@@ -264,6 +264,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                     if (!success) {
                         res.error('加入部落失败');
                     }
+                    else {
+                        res.success();
+                    }
                 });
                 break;
             case 2:
@@ -274,12 +277,12 @@ AV.Cloud.define("joinClan", function (req, res) {
                             if (success) {
                                 postRCMessage(userid, clan.get("founder_id").id,
                                     fromUser.get("nickname")+"请求加入部落"+clan.get("title"), "requestJoinClan");
+                                res.success();
                             }
                             else {
                                 res.error('加入部落失败');
                             }
                         });
-                        console.log(fromUser);
                     },
                     error: function (error) {
                         res.error('用户不存在!');
