@@ -176,8 +176,6 @@ function addReviewClanUser(userid, clanid, callback) {
 
     clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
     clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
-    callback(true);
-/*
     clanUser.save(null, {
         success: function () {
             callback(true);
@@ -185,7 +183,7 @@ function addReviewClanUser(userid, clanid, callback) {
         error: function () {
             callback(false);
         }
-    });*/
+    });
 }
 
 function removeReviewClanUser(userid, clanid, callback) {
