@@ -276,7 +276,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                             if (success) {
                                 postRCMessage(userid, clan.get("founder_id").id,
                                     fromUser.get("nickname")+"请求加入部落"+clan.get("title"),
-                                    "{" + "type:'requestJoinClan'" + ",clanid:" + "'" + clanid + "'" + "}");
+                                    "{" + "\\\"type\\\":\\\"requestJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
                                 res.success();
                             }
                             else {
