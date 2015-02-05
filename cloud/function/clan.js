@@ -188,7 +188,7 @@ function removeReviewClanUser(userid, clanid, callback) {
     });
 }
 
-function postRCMessage(fromUserId, toUserId, content, type) {
+function postRCMessage(fromUserId, toUserId, content, pushcontent, type) {
     console.log("fromUser:" + fromUserId, " toUserId:" + toUserId, " content:" + content, " type:" + type);
 
     var rcParam = myutils.getRongCloudParam();
@@ -207,8 +207,8 @@ function postRCMessage(fromUserId, toUserId, content, type) {
             fromUserId:fromUserId,
             toUserId:toUserId,
             objectName:type,
-            content:"",
-            pushContent:content
+            content:content,
+            pushContent:pushcontent
         },
         success: function(httpResponse) {
             console.info('postRCMessage:rongcloud response is '+httpResponse.text);
@@ -275,7 +275,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                     success: function (fromUser) {
                         addReviewClanUser(userid, clanid, function(success) {
                             if (success) {
-                                postRCMessage(userid, clan.get("founder_id").id,
+                                postRCMessage(userid, clan.get("founder_id").id, {"clanid":clanid},
                                     fromUser.get("nickname")+"请求加入部落"+clan.get("title"), "requestJoinClan");
                                 res.success();
                             }
