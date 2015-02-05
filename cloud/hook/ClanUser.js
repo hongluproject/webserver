@@ -30,7 +30,7 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
 
             //查询部落表，判断用户是否已经超过上限
             var query = new AV.Query('Clan');
-            query.include("founder_id");
+            query.include("founder_id.level");
             query.get(clanObj.id, {
                 success:function(clan) {
                     if (!clan) {
