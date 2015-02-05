@@ -137,14 +137,29 @@ function isClanFull(clan) {
     return currClanNum == maxClanNum;
 }
 
+
+function NotInClan(userid, clanid,callback){
+    var query = new AV.Query('ClanUser');
+    query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
+    query.equalTo("clan_id", AV.Object.createWithoutData("ClanUser", clanid, false));
+    query.count({
+        success: function(count){
+            callback(count==0);
+        },
+        error: function(err){
+            callback(false);
+
+        }
+    });
+}
+
+
 function addClanUser(userid, clanid, callback) {
     var ClanUser = AV.Object.extend("ClanUser");
     var clanUser = new ClanUser();
-
     clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
     clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
     clanUser.set("user_level", 1);
-
     clanUser.save(null, {
         success: function () {
             callback(true);
@@ -161,7 +176,8 @@ function addReviewClanUser(userid, clanid, callback) {
 
     clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
     clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
-
+    callback(true);
+/*
     clanUser.save(null, {
         success: function () {
             callback(true);
@@ -169,20 +185,40 @@ function addReviewClanUser(userid, clanid, callback) {
         error: function () {
             callback(false);
         }
-    });
+    });*/
 }
 
 function removeReviewClanUser(userid, clanid, callback) {
     var query = new AV.Query('ClanReviewUser');
 
     query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
-    query.equalTo("clan_id", AV.Object.createWithoutData("_User", userid, false));
+    query.equalTo("clan_id", AV.Object.createWithoutData("Clan", userid, false));
 
     query.destroyAll({
         success: function(){
             callback(true);
         },
         error: function(err){
+            callback(false);
+        }
+    });
+}
+
+
+function removeUserClanId(userid,clanid,joinuser,callback){
+    var review_clanids = joinuser.get("review_clanids")?joinuser.get("review_clanids"):[];
+    var  new_review_clanids = [];
+    for(var i=0;i<review_clanids.length;i++){
+        if(clanid!=review_clanids[i]){
+            new_review_clanids.push(review_clanids[i]);
+        }
+    }
+    joinuser.set("review_clanids", new_review_clanids);
+    joinuser.save(null, {
+        success: function () {
+            callback(true);
+        },
+        error: function () {
             callback(false);
         }
     });
@@ -289,6 +325,74 @@ AV.Cloud.define("joinClan", function (req, res) {
                     }
                 })
                 break;
+        }
+    });
+});
+
+
+
+
+
+AV.Cloud.define("reviewClan", function (req, res) {
+    var userid = req.params.userid;
+    var clanid = req.params.clanid;
+    var type = req.params.type;
+
+    if (!userid || !clanid||!type) {
+        res.error("传入的参数有误");
+        return;
+    }
+    var query = new AV.Query('Clan');
+    query.include("founder_id.level");
+    query.get(clanid, {
+        success: function (clan) {
+            if (!clan) {
+                console.info('部落不存在:%s', clan.id);
+                res.error('部落不存在!');
+                return;
+            }
+            if (isClanFull(clan)) {
+                res.error('部落人员已满!');
+                return;
+            }
+            NotInClan(userid, clanid, function(success) {
+                if (!success) {
+                    res.error('已加入过部落');
+                    return
+                }
+            });
+        },
+        error: function (error) {
+            console.error('beforeSave ClanUser query error:', error);
+            res.error('部落不存在！');
+        }
+    }).then(function (clan) {
+        if(type == 1){
+            var query = new AV.Query('_User');
+            query.get(userid, {
+                success: function (JoinUser) {
+                    addClanUser(userid, clanid, function(success) {
+                        if (success) {
+                            postRCMessage( clan.get("founder_id").id,userid,
+                                    JoinUser.get("nickname")+"您已加入"+clan.get("title"),
+                                    "{" + "\\\"type\\\":\\\"requestJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
+                            removeReviewClanUser(userid,clanid,function(success){
+                            removeUserClanId(userid,clanid,JoinUser,function(success){
+                                res.success('加入部落成功');
+                            });
+                            });
+                         }
+                        else {
+                            res.error('加入部落失败');
+                        }
+                    });
+                },
+                error: function (error) {
+                    res.error('用户不存在!');
+                }
+            })
+        }else {
+            res.error('申请被拒绝');
         }
     });
 });
