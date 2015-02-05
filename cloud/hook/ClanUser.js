@@ -9,7 +9,6 @@ var clanParam = common.clanParam;
  *
  */
 AV.Cloud.beforeSave('ClanUser', function(req,res){
-    var userLevel = req.user.get('level');
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
@@ -31,6 +30,7 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
 
             //查询部落表，判断用户是否已经超过上限
             var query = new AV.Query('Clan');
+            query.include("founder_id");
             query.get(clanObj.id, {
                 success:function(clan) {
                     if (!clan) {
@@ -38,7 +38,7 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
                         res.error('部落不存在！');
                         return;
                     }
-
+                    var userLevel = clan.get("founder_id").get("level");
                     var maxClanNum = clanParam.getMaxClanUsers(userLevel);
                     var currClanNum = clan.get('current_num');
                     if (currClanNum >= maxClanNum) {
