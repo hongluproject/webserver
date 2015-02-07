@@ -18,10 +18,11 @@ AV.Cloud.define("getClan",function(req, res){
 
     var getSelfClan = function(userid){
         var query = new AV.Query(User);
-        query.select("nickname","tags","clanids","actual_position",'level');
+        query.select("nickname","tags","clanids","actual_position",'level','review_clanids');
         query.get(userid).then(function(result) {
             userInfo =  result;
             var  clanids = result.get("clanids");
+            var review_clanids = result.get("review_clanids");
             userLevel = result.get('level');
             if(clanids){
                 var query = new AV.Query(Clan);
@@ -52,7 +53,7 @@ AV.Cloud.define("getClan",function(req, res){
                             userClan.push(outResult);
                         }
                         ret.selfClan = userClan;
-                        getRecommendClan (clanids);
+                        getRecommendClan (clanids,review_clanids);
                      }
                 });
             }else{
@@ -66,12 +67,15 @@ AV.Cloud.define("getClan",function(req, res){
         });
     }
 
-    var getRecommendClan = function (clanids){
+    var getRecommendClan = function (clanids,review_clanids){
         var userGeoPoint = userInfo.get('actual_position');
         var query = new AV.Query(Clan);
         query.limit(2);
         if(clanids)
         query.notContainedIn("objectId",clanids);
+        if(review_clanids){
+            query.notContainedIn("objectId",review_clanids);
+        }
         if(tags[index])
         query.equalTo("tags", tags[index]);
         if (userGeoPoint)
@@ -84,6 +88,9 @@ AV.Cloud.define("getClan",function(req, res){
                     query.limit(2);
                     if(clanids) {
                         query.notContainedIn("objectId",clanids);
+                    }
+                    if(review_clanids) {
+                        query.notContainedIn("objectId",review_clanids);
                     }
                     if (userGeoPoint) {
                         query.near("position", userGeoPoint);
