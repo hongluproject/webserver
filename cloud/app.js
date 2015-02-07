@@ -75,6 +75,9 @@ app.get('/news/:objId', function(req, res) {
         res.end();
         return;
     }
+    var globalObj = AV.HPGlobalParam || {};
+    var hpTags = globalObj.hpTags || {};
+
     console.info("begin find news:%s", articleId);
     var query = new AV.Query('News');
     query.equalTo('objectId', articleId);
@@ -94,26 +97,21 @@ app.get('/news/:objId', function(req, res) {
             renderObj.newsContent = obj.get('contents');
             renderObj.fromWhere = obj.get('source'),
             tagIds = obj.get('tags');
+
             break;
         }
 
-        //根据提供的tagid，查询到tag详细信息
-        var queryTag = new AV.Query('Tag');
-        queryTag.containedIn('objectId', tagIds);
-        return queryTag.find();
-    }).then(function(results){
-        //根据资讯所属标签ID，找到对应的标签名称
         renderObj.tagList = new Array();
-        for(var i in results) {
-            var obj = results[i];
+        for (var i in tagIds) {
             renderObj.tagList.push({
-                tagId:obj.id,
-                tagName:obj.get('tag_name')
+                tagId:tagIds[i],
+                tagName:hpTags[tagIds[i]]?hpTags[tagIds[i]].get('tag_name'):""
             });
         }
         res.setHeader('cache-control','public, max-age=1800');
         res.render('article', renderObj);
         console.info('render article %s', articleId);
+
     }, function(err){
         console.error('Render article error:', err);
         res.writeHead(404);
