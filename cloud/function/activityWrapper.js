@@ -8,6 +8,7 @@
  *  activityUsers: Array 参加活动的用户信息
  */
 AV.Cloud.define('joinActivity', function(req, res) {
+    console.log(req);
     var activityId = req.params.activityId;
     var activityUsers = req.params.activityUsers;
     var userCount = activityUsers.length;
