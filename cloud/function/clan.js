@@ -222,25 +222,6 @@ function removeReviewClanUser(userid, clanid, callback) {
 }
 
 
-function removeUserClanId(userid,clanid,joinuser,callback){
-    var review_clanids = joinuser.get("review_clanids")?joinuser.get("review_clanids"):[];
-    var  new_review_clanids = [];
-    for(var i=0;i<review_clanids.length;i++){
-        if(clanid!=review_clanids[i]){
-            new_review_clanids.push(review_clanids[i]);
-        }
-    }
-    joinuser.set("review_clanids", new_review_clanids);
-    joinuser.save(null, {
-        success: function () {
-            callback(true);
-        },
-        error: function () {
-            callback(false);
-        }
-    });
-}
-
 function postRCMessage(fromUserId, toUserId, content, extra) {
     console.log("fromUser:" + fromUserId, " toUserId:" + toUserId, '{"content":"' + content + '",' + '"extra":"' + extra + '"}');
 
@@ -401,9 +382,7 @@ AV.Cloud.define("reviewClan", function (req, res) {
                                     JoinUser.get("nickname")+"您已加入"+clan.get("title"),
                                     "{" + "\\\"type\\\":\\\"requestJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
                             removeReviewClanUser(userid,clanid,function(success){
-                            removeUserClanId(userid,clanid,JoinUser,function(success){
                                 res.success('加入部落成功');
-                            });
                             });
                          }
                         else {
