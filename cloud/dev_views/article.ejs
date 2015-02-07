@@ -73,6 +73,8 @@
             $('#downloadDiv').css('display', 'block');
         }
         var imgSrc = [];
+        $('.doc-content img').removeAttr('width');
+        $('.doc-content img').removeAttr('height');
         $('.doc-content img').each(function(idx){
             imgSrc.push($(this).attr('src'));
             $(this).bind("click",function(){
