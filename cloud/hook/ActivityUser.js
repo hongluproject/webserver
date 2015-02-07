@@ -24,7 +24,7 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
             res.error('报名人数已经超过上限！');
             return;
         }
-        console.info(req);
+
         res.success();
     }, function(error) {
         console.error('get %s user info error:', activityId, error);
