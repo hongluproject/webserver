@@ -387,7 +387,7 @@ AV.Cloud.define("reviewClan", function (req, res) {
                         if (success) {
                             postRCMessage( clan.get("founder_id").id,userid,
                                     JoinUser.get("nickname")+"您已加入"+clan.get("title"),
-                                    "{" + "\\\"type\\\":\\\"requestJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
+                                    "{" + "\\\"type\\\":\\\"reviewJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
                             removeReviewClanUser(userid,clanid,function(success){
                                 res.success('加入部落成功');
                             });
@@ -402,7 +402,20 @@ AV.Cloud.define("reviewClan", function (req, res) {
                 }
             })
         }else {
-            res.error('申请被拒绝');
+            var query = new AV.Query('_User');
+            query.get(userid, {
+                success: function (JoinUser) {
+                    postRCMessage( clan.get("founder_id").id,userid,
+                            JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),
+                            "{" + "\\\"type\\\":\\\"reviewJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
+                    removeReviewClanUser(userid,clanid,function(success){
+                        res.success('拒绝申请加入部落');
+                    });
+                },
+                error: function (error) {
+                    res.error('用户不存在!');
+                }
+            })
         }
     });
 });
