@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/11.
  */
+var utils = require('cloud/utils.js');
 
 
 /** 添加点赞时，对应的文章源点赞数动态调整
@@ -48,6 +49,8 @@ AV.Cloud.afterSave('Like', function(request){
                 status.query = query;
                 status.set('messageType', 'newLike');
                 status.set('dynamicNews', dynamic._toPointer());
+                status.set('targetUser', postUser._toPointer());
+                status.set('messageSignature', utils.calcStatusSignature(likeUser.id,'newLike',new Date()));
                 status.send().then(function(status){
                     console.info('点赞事件流发送成功！');
                 },function(error) {

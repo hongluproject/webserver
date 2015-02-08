@@ -4,6 +4,7 @@
 
 var common = require('cloud/common.js');
 var clanParam = common.clanParam;
+var utils = require('cloud/utils.js');
 
 /** 部落用户添加数据前，检查是否已经超过部落上限
  *
@@ -134,6 +135,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 status.data.source = userObj._toPointer();
                 status.query = query;
                 status.set('messageType', 'addToClan');
+                status.set('messageSignature', utils.calcStatusSignature(userObj.id,"addToClan",new Date()));
                 status.send().then(function(status){
                     console.info('加入部落事件流发送成功！');
                 },function(error) {
@@ -209,6 +211,8 @@ AV.Cloud.afterDelete('ClanUser', function(req){
                 status.data.source = founder._toPointer();
                 status.query = query;
                 status.set('messageType', 'removeFromClan');
+                status.set('clan', clan._toPointer());
+                status.set('messageSignature', utils.calcStatusSignature(founder.id,"removeFromClan",new Date()));
                 status.send().then(function(status){
                     console.info('部落移除事件流发送成功！');
                 },function(error) {

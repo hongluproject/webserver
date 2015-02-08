@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/16.
  */
+var utils = require('cloud/utils.js');
 
 /**/
 AV.Cloud.afterSave('_Followee', function(req) {
@@ -18,6 +19,8 @@ AV.Cloud.afterSave('_Followee', function(req) {
     status.data.source = user._toPointer();
     status.query = query;
     status.set('messageType', 'addFriend');
+    status.set('targetUser', followee._toPointer());
+    status.set('messageSignature', utils.calcStatusSignature(user.id,"addFriend",new Date()));
     status.send().then(function(status){
         console.info('%s 加 %s好友关注事件流发送成功！', user.id, followee.id);
     },function(error) {

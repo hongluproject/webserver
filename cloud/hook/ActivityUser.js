@@ -6,6 +6,7 @@
  *
  */
 AV.Cloud.beforeSave('ActivityUser', function(req, res) {
+    console.info('enter ActivityUser beforeSave');
     var activityId = req.object.get('activity_id').id;
     var queryActivity = new AV.Query('Activity');
     queryActivity.get(activityId).then(function(activityResult){

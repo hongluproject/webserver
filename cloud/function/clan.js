@@ -141,7 +141,7 @@ function isClanFull(clan) {
     var currClanNum = clan.get('current_num');
     var maxClanNum = clanParam.getMaxClanUsers(level);
 
-    return currClanNum == maxClanNum;
+    return currClanNum >= maxClanNum;
 }
 
 

@@ -11,17 +11,60 @@ AV.Cloud.define('getStatus', function(req, res) {
     }
     var limit = req.params.limit || 20;
     var maxId = req.params.maxId || 0;
-    var returnUserItem = {	//消息流中发布者信息，可以保留返回的字段
-        objectId:1,
-        username:1,
-        nickname:1,
-        className:1,
-        icon:1,
-        __type:1
-    };
+    //保留的user keys
+    var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+    //保留的clan keys
+    var pickClanKeys = ['objectId','__type', 'title'];
 
-    var queryMsgArray = ['newPost', 'newQuestion', 'addFriend',
-        'newComment', 'newLike', 'addToClan', 'removeFromClan', 'sysMessage'];
+    var userObj = AV.User.createWithoutData('_User', userId);
+    var queryOr = [];
+    //query newLike addFriend newComment newLike
+    var queryMsgArray1 = ['newLike', 'addFriend', 'newComment', 'newLike'];
+    var query1 = AV.Status.inboxQuery(userObj);
+    query1.containedIn('messageType', queryMsgArray1);
+    query1.notEqualTo('source', userObj);   //不包含自己发送的消息
+    query1.equalTo('targetUser', userObj);   //目标用户是自己
+    queryOr.push(query1);
+
+    var queryMsgArray2 = ['newPost', 'addToClan', 'removeFromClan', 'joinActivity', 'sysMessage'];
+    var query2 = AV.Status.inboxQuery(userObj);
+    query2.containedIn('messageType', queryMsgArray2);
+    query2.notEqualTo('source', userObj);   //不包含自己发送的消息
+    queryOr.push(query2);
+
+    var query = new AV.InboxQuery(AV.Status);
+    query._owner = userObj;
+    query._orQuery(queryOr);
+    query.include('source', 'clan');
+    query.limit(limit);
+    query.maxId(maxId);
+    var date1 = new Date();
+    var _ = AV._;
+    query.find().then(function(results) {
+        var date2 = new Date();
+        console.info('query user status use time:%dms', date2.getTime()-date1.getTime());
+        //去掉source中多余的信息，只保留APP需要的字段
+        for (var i in results) {
+            var postUser = results[i].get('source');
+            if (postUser) {
+                results[i].set('source', _.pick(postUser, pickUserKeys));
+            }
+
+            var clan = results[i].get('clan');
+            if (clan) {
+                results[i].set('clan', _.pick(clan, pickClanKeys));
+            }
+        }
+
+        res.success(results);
+    }, function(err) {
+        console.error(err);
+        res.error(err);
+    });
+
+    /*
+    var queryMsgArray = ['newPost', 'addFriend',
+        'newComment', 'newLike', 'addToClan', 'removeFromClan', 'joinActivity', 'sysMessage'];
     //查询事件流，获取用户关注的所有动态
     var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User', userId));
     query.include('source');
@@ -46,6 +89,7 @@ AV.Cloud.define('getStatus', function(req, res) {
 
         res.success(results);
     });
+    */
 
 });
 

@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/11.
  */
+var utils = require('cloud/utils.js');
 
 /** 如果有新增的动态评论，动态表里面的评论数加1
  *
@@ -41,6 +42,8 @@ AV.Cloud.afterSave('DynamicComment', function(request){
             status.query = query;
             status.set('messageType', 'newComment');
             status.set('dynamicNews', dynamicObj._toPointer());
+            status.set('targetUser', postUser._toPointer());
+            status.set('messageSignature', utils.calcStatusSignature(commentUser.id,"newComment",new Date()));
             status.send().then(function(status){
                 console.info('评论事件流发送成功！');
             },function(error) {
