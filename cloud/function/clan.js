@@ -131,9 +131,8 @@ AV.Cloud.define("getClan",function(req, res){
             }
             ret.recommendClan = recommendClan;
 
-
-            console.info("req".req);
-            console.info('result'.ret.recommendClan );
+            console.info("req",req);
+            console.info('result',ret.recommendClan );
 
             res.success(ret);
         }
