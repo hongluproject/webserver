@@ -72,13 +72,18 @@ AV.Cloud.define('imGetToken', function(req, res){
 
 AV.Cloud.define("imGetClanUser",function(req, res){
     var clan_id = req.params.clan_id;
+    var type = req.params.type;
     if (!clan_id) {
         res.error('请输入部落信息');
         return;
     }
-
     //根据部落ID查询ClanUser表
-    var query = new AV.Query('ClanUser');
+    if(type == 2){
+        var query = new AV.Query('ClanReviewUser');
+    }else{
+        var query = new AV.Query('ClanUser');
+    }
+
     query.equalTo("clan_id", AV.Object.createWithoutData('Clan', clan_id));
     query.include("user_id");
     query.include("clan_id");
