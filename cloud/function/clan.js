@@ -423,9 +423,9 @@ AV.Cloud.define("reviewClan", function (req, res) {
                     removeReviewClanUser(userid,clanid,function(success){
                         var query = new AV.Query('_User');
                         query.equalTo('objectId', userid);
-                        //AV.User._currentUser = AV.Object.createWithoutData("_User", clan.get('founder_id').id, false);
+                        AV.User._currentUser = clan.get('founder_id');
                         common.sendStatus('refuseToJoinClan', clan.get('founder_id'),JoinUser, query, {clan:clan});
-                     //   AV.User = null;
+                        AV.User._currentUser = null;
                         res.success('拒绝申请加入部落');
                     });
                 },
