@@ -223,8 +223,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         removeFromClan:'退出部落！',
         joinActivity:"加入了活动！",
         refuseToJoinClan  :"拒绝加入部落"
-
     };
+
 
     var status = new AV.Status(null, messageObj[messageType]);
     status.data.source = sourceUser._toPointer();
@@ -233,6 +233,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
     if (targetUser) {
         status.set('targetUser', targetUser._toPointer());
     }
+
     status.set('messageSignature', utils.calcStatusSignature(sourceUser.id,messageType,new Date()));
     switch (messageType) {
         case 'newPost':
@@ -258,11 +259,23 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         });
 
     } else { //将消息发送到目标用户
+        var emptyUser = false;
+        if (!AV.User.current()) {
+            process.domain._currentUser = sourceUser;
+        }
         status.send().then(function(status){
+            if (!AV.User.current()) {
+                process.domain._currentUser=null;
+            }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {
+            if (!AV.User.current()) {
+                process.domain._currentUser=null;
+            }
             console.error(error);
         });
-
+        if (emptyUser) {
+            AV.User._currentUser = null;
+        }
     }
 }
