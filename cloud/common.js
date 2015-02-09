@@ -221,7 +221,9 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         newLike:"点赞了你！",
         addToClan:"加入了部落！",
         removeFromClan:'退出部落！',
-        joinActivity:"加入了活动！"
+        joinActivity:"加入了活动！",
+        refuseToJoinClan  :"拒绝加入部落"
+
     };
 
     var status = new AV.Status(null, messageObj[messageType]);

@@ -1,5 +1,6 @@
 var clanParam = require('cloud/common.js').clanParam;
 var myutils = require('cloud/utils.js');
+var common = require('cloud/common.js');
 
 AV.Cloud.define("getClan",function(req, res){
     var HPGlobalParam = AV.HPGlobalParam || {};
@@ -236,23 +237,6 @@ function removeReviewClanUser(userid, clanid, callback) {
 }
 
 
-function post(){
-    //向部落拥有者发送消息流，告知我已经加入该部落
-    var query = new AV.Query('_User');
-    query.equalTo('objectId', founderId);
-
-    var status = new AV.Status(null, '加入了你的部落！');
-    status.data.source = userObj._toPointer();
-    status.query = query;
-    status.set('messageType', 'addToClan');
-    status.set('messageSignature', utils.calcStatusSignature(userObj.id,"addToClan",new Date()));
-    status.send().then(function(status){
-        console.info('加入部落事件流发送成功！');
-    },function(error) {
-        console.error(error);
-    });
-
-}
 
 
 
@@ -437,6 +421,9 @@ AV.Cloud.define("reviewClan", function (req, res) {
                             JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),
                             "{" + "\\\"type\\\":\\\"reviewJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
                     removeReviewClanUser(userid,clanid,function(success){
+                        var query = new AV.Query('_User');
+                        query.equalTo('objectId', userid);
+                        common.sendStatus('refuseToJoinClan', JoinUser, clan.get('founder_id'), query);
                         res.success('拒绝申请加入部落');
                     });
                 },
