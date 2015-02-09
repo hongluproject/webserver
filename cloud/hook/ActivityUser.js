@@ -16,6 +16,7 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
         }
         var currNum = activityResult.get('current_num');
         var maxNum = activityResult.get('max_num');
+        console.info('maxNum:%d currNum:%d', maxNum, currNum);
         if (!maxNum || maxNum==0) {  //没有指定最大报名人数，不用判断
             console.info('max num is null ', maxNum);
             res.success();

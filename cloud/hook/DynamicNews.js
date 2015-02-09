@@ -77,7 +77,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
             status.data.source = postUser._toPointer();
             status.set('messageType', messageType);
             status.set('dynamicNews', request.object._toPointer());
-            status.set('messageSignature', utils.calcStatusSignature(commentUser.id,messageType,new Date()));
+            status.set('messageSignature', utils.calcStatusSignature(postUser.id,messageType,new Date()));
 
             //再将此消息发送给所有我的关注者（粉丝），让他们可以看到我的动态
             AV.Status.sendStatusToFollowers(status).then(function(status){
