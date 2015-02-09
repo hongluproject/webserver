@@ -26,7 +26,7 @@ AV.Cloud.define('getStatus', function(req, res) {
     query1.equalTo('targetUser', userObj);   //目标用户是自己
     queryOr.push(query1);
 
-    var queryMsgArray2 = ['newPost', 'addToClan', 'removeFromClan', 'joinActivity', 'sysMessage'];
+    var queryMsgArray2 = ['newPost', 'addToClan', 'removeFromClan', 'joinActivity', 'sysMessage','refuseToJoinClan'];
     var query2 = AV.Status.inboxQuery(userObj);
     query2.containedIn('messageType', queryMsgArray2);
     query2.notEqualTo('source', userObj);   //不包含自己发送的消息
