@@ -54,7 +54,7 @@ AV.Cloud.define("getClan",function(req, res){
                         }
                         ret.selfClan = userClan;
                         getRecommendClan (clanids,review_clanids);
-                     }
+                    }
                 });
             }else{
                 ret.selfClan =[];
@@ -71,15 +71,22 @@ AV.Cloud.define("getClan",function(req, res){
         var userGeoPoint = userInfo.get('actual_position');
         var query = new AV.Query(Clan);
         query.limit(2);
-        if(clanids)
-        query.notContainedIn("objectId",clanids);
-        if(review_clanids){
-            query.notContainedIn("objectId",review_clanids);
+        var arr_clanids = [];
+        if(clanids){
+            arr_clanids = arr_clanids.concat(clanids);
         }
-        if(tags[index])
-        query.equalTo("tags", tags[index]);
+        if(review_clanids){
+            arr_clanids =arr_clanids.concat(review_clanids);
+        }
+        if(arr_clanids){
+            query.notContainedIn("objectId",arr_clanids);
+        }
+
+        if(tags[index]){
+            query.equalTo("tags", tags[index]);
+        }
         if (userGeoPoint)
-        query.near("position", userGeoPoint);
+            query.near("position", userGeoPoint);
         query.equalTo("is_full", false);
         query.find({
             success: function(result) {
@@ -99,9 +106,9 @@ AV.Cloud.define("getClan",function(req, res){
                     query.equalTo("is_full", false);
                     query.find({
                         success : function(result){
-                        formatResult(result);
+                            formatResult(result);
                         }
-                     });
+                    });
                 }else{
                     formatResult(result);
                 }
@@ -227,6 +234,27 @@ function removeReviewClanUser(userid, clanid, callback) {
         callback(false);
     });
 }
+
+
+function post(){
+    //向部落拥有者发送消息流，告知我已经加入该部落
+    var query = new AV.Query('_User');
+    query.equalTo('objectId', founderId);
+
+    var status = new AV.Status(null, '加入了你的部落！');
+    status.data.source = userObj._toPointer();
+    status.query = query;
+    status.set('messageType', 'addToClan');
+    status.set('messageSignature', utils.calcStatusSignature(userObj.id,"addToClan",new Date()));
+    status.send().then(function(status){
+        console.info('加入部落事件流发送成功！');
+    },function(error) {
+        console.error(error);
+    });
+
+}
+
+
 
 
 function postRCMessage(fromUserId, toUserId, content, extra) {
@@ -391,7 +419,7 @@ AV.Cloud.define("reviewClan", function (req, res) {
                             removeReviewClanUser(userid,clanid,function(success){
                                 res.success('加入部落成功');
                             });
-                         }
+                        }
                         else {
                             res.error('加入部落失败');
                         }
