@@ -19,7 +19,7 @@ AV.Cloud.define('getStatus', function(req, res) {
     var userObj = AV.User.createWithoutData('_User', userId);
     var queryOr = [];
     //query newLike addFriend newComment newLike
-    var queryMsgArray1 = ['newLike', 'addFriend', 'newComment', 'newLike'];
+    var queryMsgArray1 = ['newLike', 'addFriend', 'newComment'];
     var query1 = AV.Status.inboxQuery(userObj);
     query1.containedIn('messageType', queryMsgArray1);
     query1.notEqualTo('source', userObj);   //不包含自己发送的消息

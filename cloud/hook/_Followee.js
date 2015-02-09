@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/16.
  */
 var utils = require('cloud/utils.js');
+var common = require('cloud/common.js');
 
 /**/
 AV.Cloud.afterSave('_Followee', function(req) {
@@ -15,17 +16,7 @@ AV.Cloud.afterSave('_Followee', function(req) {
     var query = new AV.Query('_User');
     query.equalTo('objectId', followee.id);
 
-    var status = new AV.Status(null, '加你为好友！');
-    status.data.source = user._toPointer();
-    status.query = query;
-    status.set('messageType', 'addFriend');
-    status.set('targetUser', followee._toPointer());
-    status.set('messageSignature', utils.calcStatusSignature(user.id,"addFriend",new Date()));
-    status.send().then(function(status){
-        console.info('%s 加 %s好友关注事件流发送成功！', user.id, followee.id);
-    },function(error) {
-        console.error(error);
-    });
+    common.sendStatus('addFriend', user, followee, query);
 });
 
 /** cannot enter this function, I don't know why  : by GaryFu

@@ -130,17 +130,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 //向部落拥有者发送消息流，告知我已经加入该部落
                 var query = new AV.Query('_User');
                 query.equalTo('objectId', founderId);
-
-                var status = new AV.Status(null, '加入了你的部落！');
-                status.data.source = userObj._toPointer();
-                status.query = query;
-                status.set('messageType', 'addToClan');
-                status.set('messageSignature', utils.calcStatusSignature(userObj.id,"addToClan",new Date()));
-                status.send().then(function(status){
-                    console.info('加入部落事件流发送成功！');
-                },function(error) {
-                    console.error(error);
-                });
+                common.sendStatus('addToClan', userObj, clan.get('founder_id'), query, {clan:clan});
             }
         });
     });
@@ -206,6 +196,8 @@ AV.Cloud.afterDelete('ClanUser', function(req){
                 //告知该用户，他已经从该部落中移除
                 var query = new AV.Query('_User');
                 query.equalTo('objectId', userObj.id);
+
+
 
                 var status = new AV.Status(null, '从部落中移除！');
                 status.data.source = founder._toPointer();

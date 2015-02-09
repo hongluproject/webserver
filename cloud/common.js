@@ -1,6 +1,7 @@
 /**
  * Created by gary on 14-9-28.
  */
+var utils = require('cloud/utils.js');
 
 // 对Date的扩展，将 Date 转化为指定格式的String
 // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
@@ -208,4 +209,58 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
     }
 
 
+}
+
+exports.sendStatus = function(messageType, sourceUser, targetUser, query, extendProp) {
+    var messageObj = {
+        addFriend:"加你为好友！",
+        removeFromClan:"从部落中移除！",
+        newComment:"发表了评论！",
+        newPost:"发布了动态！",
+        newQuestion:'发布了提问！',
+        newLike:"点赞了你！",
+        addToClan:"加入了部落！",
+        removeFromClan:'退出部落！',
+        joinActivity:"加入了活动！"
+    };
+
+    var status = new AV.Status(null, messageObj[messageType]);
+    status.data.source = sourceUser._toPointer();
+    status.query = query;
+    status.set('messageType', messageType);
+    if (targetUser) {
+        status.set('targetUser', targetUser._toPointer());
+    }
+    status.set('messageSignature', utils.calcStatusSignature(sourceUser.id,messageType,new Date()));
+    switch (messageType) {
+        case 'newPost':
+        case 'newComment':
+        case 'newQuestion':
+            status.set('dynamicNews', extendProp.dynamicNews._toPointer());
+            break;
+        case 'addToClan':
+        case 'removeFromClan':
+            status.set('clan', extendProp.clan._toPointer());
+            break;
+    }
+    if (messageType=='newPost' || messageType=='newQuestion') {
+        //将此消息发送给所有我的关注者（粉丝），让他们可以看到我的动态
+        AV.Status.sendStatusToFollowers(status).then(function(status){
+            //发布状态成功，返回状态信息
+            console.info("%s 发布动态给粉丝成功!", sourceUser.id);
+            console.dir(status);
+        }, function(err){
+            //发布失败
+            console.error("%s 发布动态给粉丝失败!", sourceUser.id);
+            console.dir(err);
+        });
+
+    } else { //将消息发送到目标用户
+        status.send().then(function(status){
+            console.info('%s 事件流发送成功', messageType);
+        },function(error) {
+            console.error(error);
+        });
+
+    }
 }

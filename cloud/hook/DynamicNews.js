@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/11.
  */
 var utils = require('cloud/utils.js');
+var common = require('cloud/common.js');
 
 
 /** 发布动态后，通知到所有关注我的人
@@ -72,23 +73,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
                 DynamicObj.save();
             }
 
-            var sourceNickName = userObj.get('nickname');
-            var status = new AV.Status(null, '发布了动态！');
-            status.data.source = postUser._toPointer();
-            status.set('messageType', messageType);
-            status.set('dynamicNews', request.object._toPointer());
-            status.set('messageSignature', utils.calcStatusSignature(postUser.id,messageType,new Date()));
-
-            //再将此消息发送给所有我的关注者（粉丝），让他们可以看到我的动态
-            AV.Status.sendStatusToFollowers(status).then(function(status){
-                //发布状态成功，返回状态信息
-                console.info("%s 发布动态给粉丝成功!", postUser.id);
-                console.dir(status);
-            }, function(err){
-                //发布失败
-                console.error("%s 发布动态给粉丝失败!", postUser.id);
-                console.dir(err);
-            });
+            common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
         }
     })
 });

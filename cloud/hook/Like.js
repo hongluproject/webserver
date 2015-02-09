@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/11.
  */
 var utils = require('cloud/utils.js');
+var common = require('cloud/common.js');
 
 
 /** 添加点赞时，对应的文章源点赞数动态调整
@@ -43,19 +44,7 @@ AV.Cloud.afterSave('Like', function(request){
                 //向动态发布者发送事件流，告知他的动态被 likeUser 评论了
                 var query = new AV.Query('_User');
                 query.equalTo('objectId', postUser.id);
-
-                var status = new AV.Status(null, '点赞了你！');
-                status.data.source = likeUser._toPointer();
-                status.query = query;
-                status.set('messageType', 'newLike');
-                status.set('dynamicNews', dynamic._toPointer());
-                status.set('targetUser', postUser._toPointer());
-                status.set('messageSignature', utils.calcStatusSignature(likeUser.id,'newLike',new Date()));
-                status.send().then(function(status){
-                    console.info('点赞事件流发送成功！');
-                },function(error) {
-                    console.error(error);
-                });
+                common.sendStatus('newLike', likeUser, postUser, query, {dynamicNews:dynamic});
             },
             error: function(error) {
                 console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
