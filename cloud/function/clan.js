@@ -297,9 +297,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                             success: function (fromUser) {
                                 addReviewClanUser(userid, clanid, function(success) {
                                     if (success) {
-                                       common.postRCMessage(userid, clan.get("founder_id").id,
+                                     /*  common.postRCMessage(userid, clan.get("founder_id").id,
                                                 fromUser.get("nickname")+"请求加入部落"+clan.get("title"),'requestJoinClan',clanid
-                                                );
+                                                );*/
                                         res.success('已经发送申请');
                                     }
                                     else {
@@ -363,9 +363,9 @@ AV.Cloud.define("reviewClan", function (req, res) {
                 success: function (JoinUser) {
                     addClanUser(userid, clanid, function(success) {
                         if (success) {
-                            common.postRCMessage( clan.get("founder_id").id,userid,
+                          /*  common.postRCMessage( clan.get("founder_id").id,userid,
                                     JoinUser.get("nickname")+"您已加入"+clan.get("title"),'reviewJoinClan',clanid
-                                    );
+                                    );*/
                             removeReviewClanUser(userid,clanid,function(success){
                                 res.success('加入部落成功');
                             });
@@ -383,8 +383,7 @@ AV.Cloud.define("reviewClan", function (req, res) {
             var query = new AV.Query('_User');
             query.get(userid, {
                 success: function (JoinUser) {
-                    common.postRCMessage( clan.get("founder_id").id,userid,
-                            JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),'reviewJoinClan',clanid);
+                  //  common.postRCMessage( clan.get("founder_id").id,userid, JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),'reviewJoinClan',clanid);
                     removeReviewClanUser(userid,clanid,function(success){
                         var query = new AV.Query('_User');
                         query.equalTo('objectId', userid);

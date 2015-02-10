@@ -14,7 +14,7 @@ AV.Cloud.afterSave('Activity', function(request) {
     queryClan.get(ClanObj.id, {
         success:function(clan) {
             var founderId = clan.get('founder_id').id;
-            common.postRCMessage(commentUser.id,founderId,'加入了您发起的活动','joinActivity',ActivityId);
+       //     common.postRCMessage(commentUser.id,founderId,'加入了您发起的活动','joinActivity',ActivityId);
         }})
     //发起者
 });

@@ -172,48 +172,6 @@ exports.newsResultWapper = function(userId, results) {
 }
 
 
-exports.postRCMessage=function (fromUserId, toUserId, content, messageType,objectId) {
-/*    var messageObj = {
-        addFriend:"加你为好友！",
-        removeFromClan:"从部落中移除！",
-        newComment:"发表了评论！",
-        newPost:"发布了动态！",
-        newQuestion:'发布了提问！',
-        newLike:"点赞了你！",
-        addToClan:"加入了部落！",
-        quitClan:'用户退出部落！',
-        joinActivity:"加入了活动！",
-        refuseToJoinClan  :"拒绝加入部落"
-    };*/
-    var rcParam = utils.getRongCloudParam();
-    //通过avcloud发送HTTP的post请求
-    var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + objectId + "\\\"" + "}";
-    var   body= {
-        fromUserId:fromUserId,
-        toUserId:toUserId,
-        objectName:"RC:TxtMsg",
-        content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
-    };
-    AV.Cloud.httpRequest({
-        method: 'POST',
-        url: 'https://api.cn.rong.io/message/system/publish.json',
-        headers: {
-            'App-Key': rcParam.appKey,
-            'Nonce': rcParam.nonce,
-            'Timestamp': rcParam.timestamp,
-            'Signature': rcParam.signature
-        },
-        body:querystring.stringify(body),
-        success: function(httpResponse) {
-            console.info('postRCMessage:rongcloud response is '+httpResponse.text);
-            delete httpResponse.data.code;
-        },
-        error: function(httpResponse) {
-            var errmsg = 'Request failed with response code ' + httpResponse.status;
-            console.error('postRCMessage:'+errmsg);
-        }
-    });
-}
 
 exports.addFriendShipForUsers = function(findFriendId, users) {
     if (!findFriendId) {
@@ -267,10 +225,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         addToClan:"加入了部落！",
         quitClan:'用户退出部落！',
         joinActivity:"加入了活动！",
-        refuseToJoinClan  :"拒绝加入部落",
-        joinActivity :"加入活动"
+        refuseToJoinClan  :"拒绝加入部落"
     };
-
 
     var status = new AV.Status(null, messageObj[messageType]);
     status.data.source = sourceUser._toPointer();
@@ -315,6 +271,39 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             if (!AV.User.current()) {
                 process.domain._currentUser=null;
             }
+
+            if(messageType=='newLike'||messageType=='newComment'||messageType=='joinActivity'||messageType=='refuseToJoinClan'||messageType=='addToClan'){
+            var rcParam = utils.getRongCloudParam();
+            //通过avcloud发送HTTP的post请求
+
+            var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + status.id + "\\\"" + "}";
+
+            var   body= {
+                fromUserId:sourceUser.id,
+                toUserId:targetUser.id,
+                objectName:"RC:TxtMsg",
+                content:'{"content":"' + messageObj[messageType] + '",' + '"extra":"' + extra + '"}'
+            };
+            AV.Cloud.httpRequest({
+                method: 'POST',
+                url: 'https://api.cn.rong.io/message/system/publish.json',
+                headers: {
+                    'App-Key': rcParam.appKey,
+                    'Nonce': rcParam.nonce,
+                    'Timestamp': rcParam.timestamp,
+                    'Signature': rcParam.signature
+                },
+                body:querystring.stringify(body),
+                success: function(httpResponse) {
+                    console.info('postRCMessage:rongcloud response is '+httpResponse.text);
+                    delete httpResponse.data.code;
+                },
+                error: function(httpResponse) {
+                    var errmsg = 'Request failed with response code ' + httpResponse.status;
+                    console.error('postRCMessage:'+errmsg);
+                }
+            });
+        }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {
             if (!AV.User.current()) {
@@ -326,4 +315,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             AV.User._currentUser = null;
         }
     }
+
+
+
 }

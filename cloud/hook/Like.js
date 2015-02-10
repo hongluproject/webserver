@@ -45,8 +45,6 @@ AV.Cloud.afterSave('Like', function(request){
                 var query = new AV.Query('_User');
                 query.equalTo('objectId', postUser.id);
                 common.sendStatus('newLike', likeUser, postUser, query, {dynamicNews:dynamic});
-                common.postRCMessage(likeUser.id,postUser.id,'点赞了你的动态','newLike',dynamic.id);
-
             },
             error: function(error) {
                 console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);

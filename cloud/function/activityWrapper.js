@@ -73,7 +73,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
         //更新当前报名人数
         activityResult.increment('current_num', userCount);
         activityResult.save();
-        common.postRCMessage(likeUser.id,postUser.id,'点赞了你的动态','newLike',dynamic.id);
+       // common.postRCMessage(likeUser.id,postUser.id,'点赞了你的动态','newLike',dynamic.id);
 
         res.success();
     }, function(error) {
