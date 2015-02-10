@@ -220,7 +220,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         newQuestion:'发布了提问！',
         newLike:"点赞了你！",
         addToClan:"加入了部落！",
-        removeFromClan:'退出部落！',
+        quitClan:'用户退出部落！',
         joinActivity:"加入了活动！",
         refuseToJoinClan  :"拒绝加入部落"
     };
@@ -244,6 +244,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             break;
         case 'addToClan':
         case 'removeFromClan':
+        case 'quitClan':
             status.set('clan', extendProp.clan._toPointer());
             break;
     }

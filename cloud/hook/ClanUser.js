@@ -192,24 +192,18 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             clan.save();
 
             var currUser = req.user;
-            if (currUser && currUser.id!=userObj.id) {  //如果不是自己从部落中移除，需要通知到该用户
-                //告知该用户，他已经从该部落中移除
-                var query = new AV.Query('_User');
-                query.equalTo('objectId', userObj.id);
-
-
-
-                var status = new AV.Status(null, '从部落中移除！');
-                status.data.source = founder._toPointer();
-                status.query = query;
-                status.set('messageType', 'removeFromClan');
-                status.set('clan', clan._toPointer());
-                status.set('messageSignature', utils.calcStatusSignature(founder.id,"removeFromClan",new Date()));
-                status.send().then(function(status){
-                    console.info('部落移除事件流发送成功！');
-                },function(error) {
-                    console.error(error);
-                });
+            if (currUser) {
+                if (currUser.id == founder.id) {    //酋长移除用户
+                    //告知该用户，他已经从该部落中移除
+                    var query = new AV.Query('_User');
+                    query.equalTo('objectId', userObj.id);
+                    common.sendStatus("removeFromClan", founder, userObj, query, {clan:clan});
+                } else if (currUser.id == userObj.id) { //用户主动退出
+                    //告知酋长，他已经从该部落中退出
+                    var query = new AV.Query('_User');
+                    query.equalTo('objectId', founder.id);
+                    common.sendStatus("quitClan", userObj, founder, query, {clan:clan});
+                }
             }
 
         }
