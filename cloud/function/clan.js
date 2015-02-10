@@ -297,9 +297,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                             success: function (fromUser) {
                                 addReviewClanUser(userid, clanid, function(success) {
                                     if (success) {
-                                     /*  common.postRCMessage(userid, clan.get("founder_id").id,
+                                       common.postRCMessage(userid, clan.get("founder_id").id,
                                                 fromUser.get("nickname")+"请求加入部落"+clan.get("title"),'requestJoinClan',clanid
-                                                );*/
+                                                );
                                         res.success('已经发送申请');
                                     }
                                     else {

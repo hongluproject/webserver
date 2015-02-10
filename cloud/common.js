@@ -214,6 +214,39 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
 
 }
 
+function postRCMessage (fromUserId, toUserId, content, messageType,objectId) {
+    var rcParam = utils.getRongCloudParam();
+    //通过avcloud发送HTTP的post请求
+
+    var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + objectId + "\\\"" + "}";
+    var   body= {
+        fromUserId:fromUserId,
+        toUserId:toUserId,
+        objectName:"RC:TxtMsg",
+        content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
+    };
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/message/system/publish.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body:querystring.stringify(body),
+        success: function(httpResponse) {
+            console.info('postRCMessage:rongcloud response is '+httpResponse.text);
+            delete httpResponse.data.code;
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('postRCMessage:'+errmsg);
+        }
+    });
+}
+exports.postRCMessage= postRCMessage;
+
 exports.sendStatus = function(messageType, sourceUser, targetUser, query, extendProp) {
     var messageObj = {
         addFriend:"加你为好友！",
@@ -227,6 +260,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         joinActivity:"加入了活动！",
         refuseToJoinClan  :"拒绝加入部落"
     };
+
 
     var status = new AV.Status(null, messageObj[messageType]);
     status.data.source = sourceUser._toPointer();
@@ -273,37 +307,9 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             }
 
             if(messageType=='newLike'||messageType=='newComment'||messageType=='joinActivity'||messageType=='refuseToJoinClan'||messageType=='addToClan'){
-            var rcParam = utils.getRongCloudParam();
-            //通过avcloud发送HTTP的post请求
-
-            var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + status.id + "\\\"" + "}";
-
-            var   body= {
-                fromUserId:sourceUser.id,
-                toUserId:targetUser.id,
-                objectName:"RC:TxtMsg",
-                content:'{"content":"' + messageObj[messageType] + '",' + '"extra":"' + extra + '"}'
-            };
-            AV.Cloud.httpRequest({
-                method: 'POST',
-                url: 'https://api.cn.rong.io/message/system/publish.json',
-                headers: {
-                    'App-Key': rcParam.appKey,
-                    'Nonce': rcParam.nonce,
-                    'Timestamp': rcParam.timestamp,
-                    'Signature': rcParam.signature
-                },
-                body:querystring.stringify(body),
-                success: function(httpResponse) {
-                    console.info('postRCMessage:rongcloud response is '+httpResponse.text);
-                    delete httpResponse.data.code;
-                },
-                error: function(httpResponse) {
-                    var errmsg = 'Request failed with response code ' + httpResponse.status;
-                    console.error('postRCMessage:'+errmsg);
-                }
-            });
-        }
+               //fromUserId, toUserId, content, messageType,objectId
+                postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id);
+             }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {
             if (!AV.User.current()) {
