@@ -38,6 +38,7 @@ AV.Cloud.afterSave('DynamicComment', function(request){
             var query = new AV.Query('_User');
             query.equalTo('objectId', postUser.id);
             common.sendStatus('newComment', commentUser, postUser, query, {dynamicNews:dynamicObj});
+            common.postRCMessage(commentUser.id,postUser.id,'评论了你的动态','newComment',dynamicObj.id);
         }
     })
 });
