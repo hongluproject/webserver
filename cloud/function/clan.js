@@ -239,40 +239,6 @@ function removeReviewClanUser(userid, clanid, callback) {
 
 
 
-
-
-function postRCMessage(fromUserId, toUserId, content, extra) {
-    console.log("fromUser:" + fromUserId, " toUserId:" + toUserId, '{"content":"' + content + '",' + '"extra":"' + extra + '"}');
-
-    var rcParam = myutils.getRongCloudParam();
-
-    //通过avcloud发送HTTP的post请求
-    AV.Cloud.httpRequest({
-        method: 'POST',
-        url: 'https://api.cn.rong.io/message/system/publish.json',
-        headers: {
-            'App-Key': rcParam.appKey,
-            'Nonce': rcParam.nonce,
-            'Timestamp': rcParam.timestamp,
-            'Signature': rcParam.signature
-        },
-        body: {
-            fromUserId:fromUserId,
-            toUserId:toUserId,
-            objectName:"RC:TxtMsg",
-            content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
-        },
-        success: function(httpResponse) {
-            console.info('postRCMessage:rongcloud response is '+httpResponse.text);
-            delete httpResponse.data.code;
-        },
-        error: function(httpResponse) {
-            var errmsg = 'Request failed with response code ' + httpResponse.status;
-            console.error('postRCMessage:'+errmsg);
-        }
-    });
-}
-
 //
 AV.Cloud.define("joinClan", function (req, res) {
 
@@ -331,9 +297,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                             success: function (fromUser) {
                                 addReviewClanUser(userid, clanid, function(success) {
                                     if (success) {
-                                        postRCMessage(userid, clan.get("founder_id").id,
-                                                fromUser.get("nickname")+"请求加入部落"+clan.get("title"),
-                                                "{" + "\\\"type\\\":\\\"requestJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
+                                       common.postRCMessage(userid, clan.get("founder_id").id,
+                                                fromUser.get("nickname")+"请求加入部落"+clan.get("title"),'requestJoinClan',clanid
+                                                );
                                         res.success('已经发送申请');
                                     }
                                     else {
@@ -397,9 +363,9 @@ AV.Cloud.define("reviewClan", function (req, res) {
                 success: function (JoinUser) {
                     addClanUser(userid, clanid, function(success) {
                         if (success) {
-                            postRCMessage( clan.get("founder_id").id,userid,
-                                    JoinUser.get("nickname")+"您已加入"+clan.get("title"),
-                                    "{" + "\\\"type\\\":\\\"reviewJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
+                            common.postRCMessage( clan.get("founder_id").id,userid,
+                                    JoinUser.get("nickname")+"您已加入"+clan.get("title"),'reviewJoinClan',clanid
+                                    );
                             removeReviewClanUser(userid,clanid,function(success){
                                 res.success('加入部落成功');
                             });
@@ -417,9 +383,8 @@ AV.Cloud.define("reviewClan", function (req, res) {
             var query = new AV.Query('_User');
             query.get(userid, {
                 success: function (JoinUser) {
-                    postRCMessage( clan.get("founder_id").id,userid,
-                            JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),
-                            "{" + "\\\"type\\\":\\\"reviewJoinClan\\\"" + ",\\\"clanid\\\":" + "\\\"" + clanid + "\\\"" + "}");
+                    common.postRCMessage( clan.get("founder_id").id,userid,
+                            JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),'reviewJoinClan',clanid);
                     removeReviewClanUser(userid,clanid,function(success){
                         var query = new AV.Query('_User');
                         query.equalTo('objectId', userid);

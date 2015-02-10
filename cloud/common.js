@@ -2,6 +2,7 @@
  * Created by gary on 14-9-28.
  */
 var utils = require('cloud/utils.js');
+var querystring = require('querystring');
 
 // 对Date的扩展，将 Date 转化为指定格式的String
 // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
@@ -168,6 +169,38 @@ exports.newsResultWapper = function(userId, results) {
     }
 
 
+}
+
+
+exports.postRCMessage=function (fromUserId, toUserId, content, type,objectId) {
+    var rcParam = utils.getRongCloudParam();
+    //通过avcloud发送HTTP的post请求
+    var extra = {"type":type,"objectId":objectId};
+    var   body= {
+        fromUserId:fromUserId,
+        toUserId:toUserId,
+        objectName:"RC:TxtMsg",
+        content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
+    };
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/message/system/publish.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body:querystring.stringify(body),
+        success: function(httpResponse) {
+            console.info('postRCMessage:rongcloud response is '+httpResponse.text);
+            delete httpResponse.data.code;
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('postRCMessage:'+errmsg);
+        }
+    });
 }
 
 exports.addFriendShipForUsers = function(findFriendId, users) {
