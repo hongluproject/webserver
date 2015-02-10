@@ -239,6 +239,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         case 'newPost':
         case 'newComment':
         case 'newQuestion':
+        case 'newLike':
             status.set('dynamicNews', extendProp.dynamicNews._toPointer());
             break;
         case 'addToClan':

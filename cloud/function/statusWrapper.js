@@ -19,14 +19,15 @@ AV.Cloud.define('getStatus', function(req, res) {
     var userObj = AV.User.createWithoutData('_User', userId);
     var queryOr = [];
     //query newLike addFriend newComment newLike
-    var queryMsgArray1 = ['newLike', 'addFriend', 'newComment'];
+    var queryMsgArray1 = ['newLike', 'addFriend', 'newComment', 'refuseToJoinClan',
+        'addToClan', 'removeFromClan', 'joinActivity'];
     var query1 = AV.Status.inboxQuery(userObj);
     query1.containedIn('messageType', queryMsgArray1);
     query1.notEqualTo('source', userObj);   //不包含自己发送的消息
     query1.equalTo('targetUser', userObj);   //目标用户是自己
     queryOr.push(query1);
 
-    var queryMsgArray2 = ['newPost', 'addToClan', 'removeFromClan', 'joinActivity', 'sysMessage','refuseToJoinClan'];
+    var queryMsgArray2 = ['newPost', 'sysMessage'];
     var query2 = AV.Status.inboxQuery(userObj);
     query2.containedIn('messageType', queryMsgArray2);
     query2.notEqualTo('source', userObj);   //不包含自己发送的消息
