@@ -225,6 +225,7 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId) {
         objectName:"RC:TxtMsg",
         content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
     };
+
     AV.Cloud.httpRequest({
         method: 'POST',
         url: 'https://api.cn.rong.io/message/system/publish.json',
@@ -249,16 +250,17 @@ exports.postRCMessage= postRCMessage;
 
 exports.sendStatus = function(messageType, sourceUser, targetUser, query, extendProp) {
     var messageObj = {
-        addFriend:"加你为好友！",
-        removeFromClan:"从部落中移除！",
-        newComment:"发表了评论！",
-        newPost:"发布了动态！",
-        newQuestion:'发布了提问！',
-        newLike:"点赞了你！",
-        addToClan:"加入了部落！",
-        quitClan:'用户退出部落！',
-        joinActivity:"加入了活动！",
-        refuseToJoinClan  :"拒绝加入部落"
+        addFriend:"把您加为好友",
+        removeFromClan:"被酋长移出了部落",
+        newComment:"有了新的评论",
+        newPost:"发布了新的动态",
+        newQuestion:'发布了新的问答',
+        newLike:"觉得你牛掰了",
+        addToClan:"加入了部落",
+        quitClan:'用户退出部落',
+        joinActivity:"加入了活动",
+        //refuseToJoinClan  :"拒绝加入部落",
+        reviewJoinClan:extendProp.type == 1 ? "请求加入部落成功" : "拒绝加入部落"
     };
 
 
@@ -305,8 +307,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             if (!AV.User.current()) {
                 process.domain._currentUser=null;
             }
-
-            if(messageType=='newLike'||messageType=='newComment'||messageType=='joinActivity'||messageType=='refuseToJoinClan'||messageType=='addToClan'){
+            if(messageType=='newLike'||messageType=='newComment'||messageType=='joinActivity'||messageType=='reviewJoinClan'){
                //fromUserId, toUserId, content, messageType,objectId
                 postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id);
              }

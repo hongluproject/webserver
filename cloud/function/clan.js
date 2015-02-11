@@ -367,6 +367,7 @@ AV.Cloud.define("reviewClan", function (req, res) {
                                     JoinUser.get("nickname")+"您已加入"+clan.get("title"),'reviewJoinClan',clanid
                                     );*/
                             removeReviewClanUser(userid,clanid,function(success){
+                                common.sendStatus('reviewJoinClan', clan.get('founder_id'),JoinUser, query, {clan:clan, type:1});
                                 res.success('加入部落成功');
                             });
                         }
@@ -387,7 +388,7 @@ AV.Cloud.define("reviewClan", function (req, res) {
                     removeReviewClanUser(userid,clanid,function(success){
                         var query = new AV.Query('_User');
                         query.equalTo('objectId', userid);
-                        common.sendStatus('refuseToJoinClan', clan.get('founder_id'),JoinUser, query, {clan:clan});
+                        common.sendStatus('reviewJoinClan', clan.get('founder_id'),JoinUser, query, {clan:clan, type:2});
                         res.success('拒绝申请加入部落');
                     });
                 },

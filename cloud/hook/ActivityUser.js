@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/30.
  */
+var common = require('cloud/common.js');
 
 /** 判断活动人数是否已经超过上限
  *
@@ -33,3 +34,26 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
         res.error(error);
     });
 });
+
+
+AV.Cloud.afterSave('ActivityUser', function(req){
+    var ActivityObj = req.object.get('activity_id');
+    var userObj = req.object.get('user_id');
+    var query = new AV.Query('_User');
+    query.get(userObj.id).then(function(user) {
+        var queryActivity = new AV.Query('Activity');
+        queryActivity.select('user_id');
+        queryActivity.get(ActivityObj.id, {
+            success:function(activity) {
+                var founderId = activity.get('user_id').id;
+                var query = new AV.Query('_User');
+                query.equalTo('objectId', founderId);
+                common.sendStatus('joinActivity', userObj, activity.get('user_id'), query,{"activity":activity});
+            }
+        });
+    });
+});
+
+
+
+
