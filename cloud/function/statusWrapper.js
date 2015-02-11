@@ -22,7 +22,7 @@ AV.Cloud.define('getStatus', function(req, res) {
     var queryOr = [];
     //query newLike addFriend newComment newLike
     var queryMsgArray1 = ['newLike', 'addFriend', 'newComment', 'refuseToJoinClan',
-        'addToClan', 'removeFromClan', 'quitClan', 'joinActivity', 'reviewJoinClan'];
+        'addToClan', 'removeFromClan', 'quitClan', 'joinActivity', 'allowToJoinClan', 'refuseToJoinClan'];
     var query1 = AV.Status.inboxQuery(userObj);
     query1.containedIn('messageType', queryMsgArray1);
     query1.notEqualTo('source', userObj);   //不包含自己发送的消息

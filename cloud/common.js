@@ -281,7 +281,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             status.set('dynamicNews', extendProp.dynamicNews._toPointer());
             break;
         case 'removeFromClan':
-        case 'reviewJoinClan':
+        case 'refuseToJoinClan':
+        case 'allowToJoinClan':
             status.set('clan', extendProp.clan._toPointer());
             break;
         case 'joinActivity':
@@ -313,7 +314,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 messageType=='newComment'||
                 messageType=='joinActivity'||
                 messageType=='refuseToJoinClan' ||
-                messageType=='allowToJoinClan'){
+                messageType=='allowToJoinClan' ||
+                messageType=='removeFromClan'){
                //fromUserId, toUserId, content, messageType,objectId
                 postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id);
              }
