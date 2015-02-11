@@ -280,10 +280,12 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         case 'newLike':
             status.set('dynamicNews', extendProp.dynamicNews._toPointer());
             break;
-        case 'addToClan':
         case 'removeFromClan':
-        case 'quitClan':
+        case 'reviewJoinClan':
             status.set('clan', extendProp.clan._toPointer());
+            break;
+        case 'joinActivity':
+            status.set('activity', extendProp.activity._toPointer());
             break;
     }
     if (messageType=='newPost' || messageType=='newQuestion') {
