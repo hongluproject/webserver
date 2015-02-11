@@ -14,7 +14,9 @@ AV.Cloud.define('getStatus', function(req, res) {
     //保留的user keys
     var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
     //保留的clan keys
-    var pickClanKeys = ['objectId','__type', 'title'];
+    var pickClanKeys = ['objectId','__type', 'title', "className"];
+    //保留的activity keys
+    var pcickActivityKeys = ['objectId','__type', 'title', "className"];
 
     var userObj = AV.User.createWithoutData('_User', userId);
     var queryOr = [];
@@ -36,7 +38,7 @@ AV.Cloud.define('getStatus', function(req, res) {
     var query = new AV.InboxQuery(AV.Status);
     query._owner = userObj;
     query._orQuery(queryOr);
-    query.include('source', 'clan');
+    query.include('source', 'clan', 'activity');
     query.limit(limit);
     query.maxId(maxId);
     var date1 = new Date();
@@ -54,6 +56,11 @@ AV.Cloud.define('getStatus', function(req, res) {
             var clan = results[i].get('clan');
             if (clan) {
                 results[i].set('clan', _.pick(clan, pickClanKeys));
+            }
+
+            var activity = results[i].get('activity');
+            if (activity) {
+                results[i].set('activity', _.pick(activity, pcickActivityKeys));
             }
         }
 
