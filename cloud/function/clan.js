@@ -289,7 +289,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                 query.equalTo("clan_id", AV.Object.createWithoutData("ClanUser", clanid, false));
                 query.count().then(function(count){
                     if(count>0){
-                        res.error('已申请过部落');
+                        res.success('已申请过部落');
                         return;
                     }else{
                         var query = new AV.Query('_User');
@@ -363,11 +363,10 @@ AV.Cloud.define("reviewClan", function (req, res) {
                 success: function (JoinUser) {
                     addClanUser(userid, clanid, function(success) {
                         if (success) {
-                          /*  common.postRCMessage( clan.get("founder_id").id,userid,
-                                    JoinUser.get("nickname")+"您已加入"+clan.get("title"),'reviewJoinClan',clanid
-                                    );*/
                             removeReviewClanUser(userid,clanid,function(success){
-                                common.sendStatus('reviewJoinClan', clan.get('founder_id'),JoinUser, query, {clan:clan, type:1});
+                                var query = new AV.Query('_User');
+                                query.equalTo('objectId', userid);
+                                common.sendStatus('allowToJoinClan', clan.get('founder_id'), JoinUser, query, {clan:clan});
                                 res.success('加入部落成功');
                             });
                         }
@@ -384,11 +383,10 @@ AV.Cloud.define("reviewClan", function (req, res) {
             var query = new AV.Query('_User');
             query.get(userid, {
                 success: function (JoinUser) {
-                  //  common.postRCMessage( clan.get("founder_id").id,userid, JoinUser.get("nickname")+"您已被拒绝申请加入"+clan.get("title"),'reviewJoinClan',clanid);
                     removeReviewClanUser(userid,clanid,function(success){
                         var query = new AV.Query('_User');
                         query.equalTo('objectId', userid);
-                        common.sendStatus('reviewJoinClan', clan.get('founder_id'),JoinUser, query, {clan:clan, type:2});
+                        common.sendStatus('refuseToJoinClan', clan.get('founder_id'), JoinUser, query, {clan:clan});
                         res.success('拒绝申请加入部落');
                     });
                 },

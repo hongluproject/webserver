@@ -259,8 +259,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         addToClan:"加入了部落",
         quitClan:'用户退出部落',
         joinActivity:"加入了活动",
-        //refuseToJoinClan  :"拒绝加入部落",
-        reviewJoinClan:extendProp.type == 1 ? "请求加入部落成功" : "拒绝加入部落"
+        refuseToJoinClan  :"拒绝加入部落",
+        allowToJoinClan :"允许加入部落"
     };
 
 
@@ -309,7 +309,11 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             if (!AV.User.current()) {
                 process.domain._currentUser=null;
             }
-            if(messageType=='newLike'||messageType=='newComment'||messageType=='joinActivity'||messageType=='reviewJoinClan'){
+            if( messageType=='newLike'||
+                messageType=='newComment'||
+                messageType=='joinActivity'||
+                messageType=='refuseToJoinClan' ||
+                messageType=='allowToJoinClan'){
                //fromUserId, toUserId, content, messageType,objectId
                 postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id);
              }
