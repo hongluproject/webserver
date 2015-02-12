@@ -326,7 +326,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 messageType=='allowToJoinClan' ||
                 messageType=='removeFromClan'){
                //fromUserId, toUserId, content, messageType,objectId
-                postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id,extendProp.replyUser);
+                var replyUserId = extendProp.replyUser?extendProp.replyUser.id:undefined;
+                postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id,replyUserId);
              }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {
