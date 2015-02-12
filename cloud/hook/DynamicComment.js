@@ -38,7 +38,10 @@ AV.Cloud.afterSave('DynamicComment', function(request){
             //向动态发布者发送事件流，告知他的动态被 commentUser 评论了
             var query = new AV.Query('_User');
             if (replyUser) {
-                var userIds = [postUser.id, replyUser.id];
+                var userIds = [replyUser.id];
+                if (postUser.id != commentUser.id) {
+                    userIds.push(postUser.id);
+                }
                 query.containedIn('objectId', userIds);
             } else {
                 query.equalTo('objectId', postUser.id);

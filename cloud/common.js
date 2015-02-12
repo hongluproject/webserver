@@ -218,9 +218,12 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,repl
     var rcParam = utils.getRongCloudParam();
     //通过avcloud发送HTTP的post请求
 
-    var toUsers = [toUserId];
+    var toUsers = [];
     if (replyUserId) {
         toUsers.push(replyUserId);
+    }
+    if (fromUserId != toUserId) {
+        toUsers.push(toUserId);
     }
     var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + objectId + "\\\"" + "}";
     var   body= {
