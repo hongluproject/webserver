@@ -10,6 +10,7 @@ var common = require('cloud/common.js');
 AV.Cloud.afterSave('DynamicComment', function(request){
     var dynamicObj = request.object.get('dynamic_id');
     var commentUser = request.object.get('user_id');
+    var replyUser = request.object.get('reply_userid');
     if (!dynamicObj || !commentUser) {
         console.error('DynamicComment 数据非法！');
         return;
@@ -29,15 +30,20 @@ AV.Cloud.afterSave('DynamicComment', function(request){
             dynamic.save();
 
             var postUser = dynamic.get('user_id');
-            if (postUser.id == commentUser.id) {
+            if (postUser.id==commentUser.id && !replyUser) {
                 console.info('发布者和评论者是同一个人，不用发消息流:%s', postUser.id);
                 return;
             }
 
             //向动态发布者发送事件流，告知他的动态被 commentUser 评论了
             var query = new AV.Query('_User');
-            query.equalTo('objectId', postUser.id);
-            common.sendStatus('newComment', commentUser, postUser, query, {dynamicNews:dynamicObj});
+            if (replyUser) {
+                var userIds = [postUser.id, replyUser.id];
+                query.containedIn('objectId', userIds);
+            } else {
+                query.equalTo('objectId', postUser.id);
+            }
+            common.sendStatus('newComment', commentUser, postUser, query, {dynamicNews:dynamicObj,replyUser:replyUser});
         }
     })
 });

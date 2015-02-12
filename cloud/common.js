@@ -214,14 +214,18 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
 
 }
 
-function postRCMessage (fromUserId, toUserId, content, messageType,objectId) {
+function postRCMessage (fromUserId, toUserId, content, messageType,objectId,replyUserId) {
     var rcParam = utils.getRongCloudParam();
     //通过avcloud发送HTTP的post请求
 
+    var toUsers = [toUserId];
+    if (replyUserId) {
+        toUsers.push(replyUserId);
+    }
     var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + objectId + "\\\"" + "}";
     var   body= {
         fromUserId:fromUserId,
-        toUserId:toUserId,
+        toUserId:toUsers,
         objectName:"RC:TxtMsg",
         content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
     };
@@ -275,10 +279,15 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
     status.set('messageSignature', utils.calcStatusSignature(sourceUser.id,messageType,new Date()));
     switch (messageType) {
         case 'newPost':
-        case 'newComment':
         case 'newQuestion':
         case 'newLike':
             status.set('dynamicNews', extendProp.dynamicNews._toPointer());
+            break;
+        case 'newComment':
+            status.set('dynamicNews', extendProp.dynamicNews._toPointer());
+            if (extendProp.replyUser) {
+                status.set('replyUser', extendProp.replyUser._toPointer());
+            }
             break;
         case 'removeFromClan':
         case 'refuseToJoinClan':
@@ -317,7 +326,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 messageType=='allowToJoinClan' ||
                 messageType=='removeFromClan'){
                //fromUserId, toUserId, content, messageType,objectId
-                postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id);
+                postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id,extendProp.replyUser);
              }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {

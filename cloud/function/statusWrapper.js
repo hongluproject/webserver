@@ -35,6 +35,12 @@ AV.Cloud.define('getStatus', function(req, res) {
     query2.notEqualTo('source', userObj);   //不包含自己发送的消息
     queryOr.push(query2);
 
+    var query3 = AV.Status.inboxQuery(userObj);
+    query3.equalTo('messageType', 'newComment');
+    query3.notEqualTo('source', userObj);   //不包含自己发送的消息
+    query3.equalTo('replyUser', userObj);   //回复评论的用户是自己
+    queryOr.push(query3);
+
     var query = new AV.InboxQuery(AV.Status);
     query._owner = userObj;
     query._orQuery(queryOr);
