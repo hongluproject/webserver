@@ -14,6 +14,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
         console.info("DynamicNews afterSave:user is null!");
         return;
     }
+    var clanObj = request.object.get('clan_id');
 
     var queryUser = new AV.Query('_User');
     queryUser.select("nickname", "clanids");
@@ -73,7 +74,9 @@ AV.Cloud.afterSave('DynamicNews', function(request){
                 DynamicObj.save();
             }
 
-            common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
+            if (!clanObj) { //如果是在部落里面发布动态，则不同步到事件流
+                common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
+            }
         }
     })
 });
