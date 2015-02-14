@@ -94,11 +94,8 @@ AV.Cloud.define("getClan",function(req, res){
                 if(result.length==0){
                     var query = new AV.Query(Clan);
                     query.limit(2);
-                    if(clanids) {
-                        query.notContainedIn("objectId",clanids);
-                    }
-                    if(review_clanids) {
-                        query.notContainedIn("objectId",review_clanids);
+                    if (arr_clanids) {
+                        query.notContainedIn('objectId', arr_clanids);
                     }
                     if (userGeoPoint) {
                         query.near("position", userGeoPoint);
