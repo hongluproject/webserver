@@ -26,3 +26,26 @@ AV.Cloud.define('updateClanParam', function(req, res){
         res.success();
     });
 });
+
+AV.Cloud.define('updateClanForRC', function(req, res){
+    var userId = req.params.userId;
+    var queryClanUser = new AV.Query('ClanUser');
+    queryClanUser.include('clan_id');
+    queryClanUser.limit(1000);
+    if (userId) {
+        queryClanUser.equalTo('user_id', AV.User.createWithoutData('_User',userId));
+    }
+    queryClanUser.find().then(function(results){
+        results.forEach(function(clanUser){
+            var userObj = clanUser.get('user_id');
+            var clanObj = clanUser.get('clan_id');
+            //加入融云组群
+            AV.Cloud.run('imAddToGroup',{
+                userid:userObj.id,
+                groupid:clanObj.id,
+                groupname:clanObj.get('title')
+            });
+        });
+        res.success(results);
+    });
+});

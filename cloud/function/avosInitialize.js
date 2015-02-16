@@ -106,8 +106,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '3、我是歌手\n' +
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
-            clickURL:'http://www.imsahala.com/hupeng.apk',
-            lastVersion:'1.0.1'
+            clickURL:'http://www.imsahala.com/sahala.apk',
+            lastVersion:'1.0.2'
         });
     } else {
         res.success({

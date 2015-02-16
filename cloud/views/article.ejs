@@ -2,35 +2,43 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, minimal-ui" />
-        <script src="/js/viewport.js"></script>
-        <script src="/js/jquery-1.11.2.min.js"></script>
         <title><%= title%></title>
         <link rel="stylesheet" href="/stylesheets/style.css?2015012603" type="text/css">
-        <script type="text/javascript">
-            function isInHoopeng() {
-                try {
-                    if (external.appName() == "hoopeng") {
-                        return true;
+        <script src="/js/viewport.js"></script>
+        <script src="/js/jquery-1.11.2.min.js"></script>
+        <script src="/js/common.js?2015021501"></script>
+        <!-- load lazy load javascript -->
+        <script src="/js/echo.min.js"></script>
+        <script language="JavaScript">
+            $(document).ready(function() {
+                if (!isInHoopeng()) {
+                    $('#downloadDiv').css('display', 'block');
+                }
+                var imgSrc = [];
+                $('.doc-content img').removeAttr('width');
+                $('.doc-content img').removeAttr('height');
+                $('.doc-content img').each(function(idx){
+                    imgSrc.push($(this).attr('src'));
+                    $(this).bind("click",function(){
+                        imageClick(imgSrc,idx);
+                    });
+
+                    //set lazy load attributes
+                    var oldSrc = $(this).attr("src");
+                    $(this).attr("src", "/images/blank.gif");
+                    $(this).attr("alt", "");
+                    $(this).attr("data-echo", oldSrc);
+                })
+
+                echo.init({
+                    offset: 100,
+                    throttle: 250,
+                    unload: false,
+                    callback: function (element, op) {
+                        console.log(element, 'has been', op + 'ed')
                     }
-                } catch (e) {
-                    return false;
-                }
-
-                return false;
-            }
-
-            function doFilter(methodName,type, objectId, objectName) {
-                if (isInHoopeng()) {
-                    external.callMethod(methodName,JSON.stringify({"type":type,"objectId":objectId,"objectName":objectName}));
-                }
-            }
-
-            function imageClick(imgSrc,idx){
-                if (isInHoopeng()) {
-                    external.callMethod("imgSlide", JSON.stringify({"imgs": imgSrc, "idx": idx}));
-                }
-            }
-
+                });
+            });
         </script>
     </head>
     <body ryt14206="1">
@@ -59,49 +67,15 @@
                         </div>
                     </div>
                     <div style="height: 30px"></div>
-                    <div class="download" id="downloadDiv" style="display: none"><a href="javascript:alert('即将上线，敬请期待！');" style="float:left;max-width:150px;">
+                    <div class="download" id="downloadDiv" style="display: none"><a href="javascript:doClient();" style="float:left;max-width:150px;">
                             <img src="/images/download1.png"></a>
-                        <a href="javascript:alert('即将上线，敬请期待！');" style="float:right;max-width:89px;">
+                        <a href="javascript:doClient();" style="float:right;max-width:89px;">
                             <img src="/images/download2.png"></a>
                     </div>
                 </article>
             </div>
         </div>
     </body>
-    <script language="JavaScript">
-        if (!isInHoopeng()) {
-            $('#downloadDiv').css('display', 'block');
-        }
-        var imgSrc = [];
-        $('.doc-content img').removeAttr('width');
-        $('.doc-content img').removeAttr('height');
-        $('.doc-content img').each(function(idx){
-            imgSrc.push($(this).attr('src'));
-            $(this).bind("click",function(){
-                imageClick(imgSrc,idx);
-            });
-
-            //set lazy load attributes
-            var oldSrc = $(this).attr("src");
-            $(this).attr("src", "/images/blank.gif");
-            $(this).attr("alt", "");
-            $(this).attr("data-echo", oldSrc);
-        })
-
-    </script>
-
-    <!-- load lazy load javascript -->
-    <script src="/js/echo.min.js"></script>
-    <script type="text/javascript">
-        echo.init({
-            offset: 100,
-            throttle: 250,
-            unload: false,
-            callback: function (element, op) {
-                console.log(element, 'has been', op + 'ed')
-            }
-        });
-    </script>
 </html>
 
 
