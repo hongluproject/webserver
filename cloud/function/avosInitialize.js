@@ -119,8 +119,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '3、我是歌手\n' +
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
-            clickURL:'https://itunes.apple.com/us/app/pptv-ju-li/id438426078?mt=8&uo=4',
-            lastVersion:'1.0.1'
+            clickURL:'https://itunes.apple.com/us/app/sa-ha-la-jie-shi-tong-qu-peng/id952260502?mt=8&uo=4',
+            lastVersion:'1.0.3'
         });
     }
 
