@@ -67,6 +67,7 @@ body{ background:#FAFAFA;}
     background-image: url(/images/download-bg.png);
     height: 80px;
     background-repeat: repeat-x;
+    opacity: 0.9;
 }
 
 .download img{max-height:77px;margin:0 auto;padding-top: 0px;padding-bottom: 0px}
