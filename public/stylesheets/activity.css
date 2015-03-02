@@ -1,4 +1,4 @@
-html { color: #000; background:#fff; font-family: Helvetica, STHeiti, Droidsansfallback;}
+html { color: #000; background:#fff; font-family: Helvetica, STHeiti, Droidsansfallback}
 body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td { margin: 0; padding: 0 }
 table { border-collapse: collapse; border-spacing: 0 }
 fieldset, img { border: 0 }
@@ -18,11 +18,11 @@ textarea{outline: none;}
 img{ display:block;}
 a{ text-decoration:none;}
 .cf:after { visibility: hidden; display: block; font-size: 0; content: " "; clear: both; height: 0; }
-.cf { zoom: 1;}
+.cf {}
 html,
 body{ background:#FAFAFA;}
 
-.ly_page{ width:100%; margin:0 auto; position:relative; overflow:hidden;}
+.ly_page{ max-width: 640px; width:100%; margin:0 auto; position:relative; overflow:hidden}
 
 .ftUser{ height:100px; overflow:hidden; box-sizing:border-box; padding:20px;}
 .ftUser .img{ float:left;}
