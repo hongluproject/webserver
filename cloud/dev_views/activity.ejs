@@ -1,0 +1,139 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>撒哈拉活动</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, minimal-ui" />
+    <link rel="stylesheet" type="text/css" href="/stylesheets/activity.css?2015022801">
+</head>
+
+<body>
+<!--页面主体开始-->
+<div class="ly_page cf">
+    <%
+        var activityUser = activity.get('user_id');
+        var icon = activityUser.get('icon');
+        if (icon) {
+            icon += '?imageView2/1/w/62/h/60';
+        } else {
+            icon = '/images/user.jpg';
+        }
+        var userName = activityUser.get('nickname');
+        var title = activity.get('title');
+        var priceInfo = activity.get('price_info');
+        var intro = activity.get('intro');
+        var activity_time = activity.get('activity_time');
+        var sport_start = activity_time.getFullYear()+"年"+(activity_time.getMonth()+1)+"月"+activity_time.getDay()+"日"+activity_time.getHours()+'时'+activity_time.getMinutes()+'分';
+        var duration = activity.get('duration');
+        var place = activity.get('place');
+        var tags = activity.get('tagsName');
+        var pay_type = activity.get('pay_type');
+        var comment_count = activity.get('comment_count');
+
+    %>
+
+    <div class="ftUser cf">
+        <h1 class="title">发起人:</h1>
+        <img src="<%=icon%>" class="img" height="62" width="60">
+        <dl class="cf">
+            <dt><%=userName%></dt>
+        </dl>
+    </div>
+    <div class="fengexian">
+    </div>
+
+    <div class="plBox" style="background: #ffffff">
+        <dl class="cf">
+            <dd>
+                <p class="name">活动主题</p>
+                <p class="info">
+                    <%=title%>
+                </p>
+            </dd>
+        </dl>
+        <dl class="cf">
+            <dd>
+                <p class="name">行程描述</p>
+                <p class="info">
+                    <%=intro%>
+                </p>
+            </dd>
+        </dl>
+
+        <dl class="cf">
+            <dd>
+                <p class="name">活动时间</p>
+                <p class="info">
+                    <%=sport_start%>
+                </p>
+            </dd>
+        </dl>
+
+        <dl class="cf">
+            <dd>
+                <p class="name">活动天数</p>
+                <p class="info">
+                    <%=duration%>
+                </p>
+            </dd>
+        </dl>
+
+        <dl class="cf">
+            <dd>
+                <p class="name">集合地点</p>
+                <p class="info">
+                    <%=place%>
+                </p>
+            </dd>
+        </dl>
+
+
+        <dl class="cf">
+            <dd>
+                <p class="name">活动标签</p>
+                <p class="info">
+                    <% for (var i in tags) {%>
+                    <span class="key">[<%= tags[i] %>]</span>
+                    <%}%>
+                </p>
+            </dd>
+        </dl>
+
+        <dl class="cf">
+            <dd>
+                <p class="name">费用说明</p>
+                <p class="info">
+                    <%=priceInfo%>
+                </p>
+            </dd>
+        </dl>
+
+        <dl class="cf">
+            <dd>
+                <p class="name">支付方式</p>
+                <p class="info">
+                    <%=pay_type%>
+                </p>
+            </dd>
+        </dl>
+
+        <dl class="cf">
+            <dd>
+                <p class="name">评论数目</p>
+                <p class="info">
+                    <%=comment_count%>
+                </p>
+            </dd>
+        </dl>
+
+    </div>
+    <!--评论结束-->
+</div>
+<!--页面主体结束-->
+<div class="download">
+    <a href="javascript:alert('即将上线，敬请期待！');" style="float:left;max-width:150px;margin-left: 1px">
+        <img src="/images/download1.png"></a>
+    <a href="javascript:alert('即将上线，敬请期待！');" style="float:right;max-width:89px;">
+        <img src="/images/download2.png"></a>
+</div>
+</body>
+</html>

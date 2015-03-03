@@ -1,6 +1,7 @@
 /**
  * Created by gary on 2014/11/15.
  */
+var crypto = require('crypto');
 
 exports.printObject = function() {
     console.log("hehe");
@@ -218,3 +219,33 @@ exports.SHA1 =  function (msg) {
     return temp.toLowerCase();
 
 }
+
+exports.getRongCloudParam = function() {
+    //融云appkey & secret
+    var rongCloudAppKey = 'pwe86ga5er6m6';
+    var rongCloudAppSecret = 'ScUoRd65VLv';
+
+    //融云校验信息
+    var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
+    var nonce = Math.floor(Math.random()*100000); // 获取随机数。
+    var nowTime = new Date();
+    var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
+
+    var sourcedata = appSecret + nonce.toString() + timestamp.toString();
+    var signature = exports.SHA1(sourcedata); //生成签名
+
+    return {
+        appKey:rongCloudAppKey,
+        nonce:nonce,
+        timestamp:timestamp,
+        signature:signature
+    };
+}
+
+exports.calcStatusSignature = function(userId, messageType, statusTime) {
+    var md5 = crypto.createHash('md5');
+    var content = userId+messageType+statusTime;
+    md5.update(content);
+    return md5.digest('hex');
+}
+

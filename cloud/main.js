@@ -2,96 +2,103 @@
 // For example:
 var name = require('cloud/name.js');
 require('cloud/app.js');
-var myutils = require('cloud/utils.js');
+var qiniu = require('qiniu');
+var common = require('cloud/common.js');
 
-//融云appkey
-var rongCloudAppKey = '25wehl3uw655w';
-var rongCloudAppSecret = 'XC8BtPoSdBHu';
+//初始化avos相关参数，并每隔1小时更新一次数据
+var globalParam = require('cloud/function/avosInitialize.js');
+globalParam.initializeAvosData();
 
+/*
+	require hook & function files
+ */
+
+require('cloud/hook/Like.js');
+require('cloud/hook/News.js');
+require('cloud/hook/NewsComment.js');
+require('cloud/hook/DynamicNews.js');
+require('cloud/hook/DynamicComment.js');
+require('cloud/hook/ClanUser.js');
+require('cloud/hook/Clan.js');
+require('cloud/hook/_Followee.js');
+require('cloud/hook/Activity.js');
+require('cloud/hook/ActivityComment.js');
+require('cloud/hook/ActivityUser.js');
+
+require('cloud/function/imInterface.js');
+require('cloud/function/dynamicWrapper.js');
+require('cloud/function/newsWrapper.js');
+require('cloud/function/recommend.js');
+require('cloud/function/search.js');
+require('cloud/function/clan.js');
+require('cloud/function/statusWrapper.js');
+require('cloud/function/activityWrapper.js');
+require('cloud/function/imWrapper.js');
+require('cloud/function/clanWrapper.js');
+require('cloud/function/followeeWrapper.js');
+require('cloud/function/sahalaScript.js');
+
+/** 测试返回多个class数据
+ *
+ */
 AV.Cloud.define("hello", function(request, response) {
-	response.success("Hello world," + request.params.userid);
+	response.success('test');
 });
 
-/**
- * 获取融云token接口
- * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求
+/**  获取七牛云存储token
+ *  云函数名：getQiniuToken
+ *  参数：'bucketName',空间名，若没传，则默认为 'hoopeng'
  */
-AV.Cloud.define('getimtoken', function(req, res){
-	var ret = {
-		status:"success"
-	};
-
-	myutils.printObject();
-	var dumpOutput = myutils.dumpObj(req,'request','1', 3);
-	console.log(dumpOutput);
-
-	var userobjid = req.params.userid;
-	if (userobjid ==  undefined) {
-		res.error('userid is expected!');
-		return;
+AV.Cloud.define('getQiniuToken', function(req, res){
+	var bucketName = req.params.bucketName;
+	console.log("bucketName param is %s", bucketName);
+	if (!bucketName) {
+		bucketName = "hoopeng";
 	}
 
-	console.log("userid:%s", userobjid);
+	//七牛的AK和SK
+	qiniu.conf.ACCESS_KEY = 'bGJ2PX1QjaSuy4Y9AaX-WgcKoGzIIFHXmVBqWHMt';
+	qiniu.conf.SECRET_KEY = '7PHdOXp912l54TYzG2P7Mmqw-AALLZ3Kaamv4885';
+	var qiniuExpireTimeSecond = 7*24*3600;    //七牛过期时间，以秒为单位
 
-	//根据id查询用户表
-	var hpUser = AV.Object.extend("_User");
-	var query = new AV.Query(hpUser);
-	query.get(userobjid, {
-		success:function(userObj) {
-			var username = userObj.get('nickname');
-			var icon = userObj.get('icon');
+	function uptoken(bucketname) {
+		var putPolicy = new qiniu.rs.PutPolicy(bucketname);
+		//putPolicy.callbackUrl = callbackUrl;
+		//putPolicy.callbackBody = callbackBody;
+		//putPolicy.returnUrl = returnUrl;
+		//putPolicy.returnBody = returnBody;
+		//putPolicy.asyncOps = asyncOps;
+		putPolicy.expires = qiniuExpireTimeSecond;  //7天过期
+		return putPolicy.token();
+	}
 
-			//融云校验信息
-			var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
-			var nonce = Math.floor(Math.random()*100000); // 获取随机数。
-			var nowTime = new Date();
-			var timestamp = Math.floor(nowTime/1000); // 获取时间戳。
+	var retObj = {
+		expire: qiniuExpireTimeSecond,
+		token:uptoken(bucketName)
+	}
 
-			var sourcedata = appSecret + nonce.toString() + timestamp.toString();
-			var signature = myutils.SHA1(sourcedata); //生成签名
-
-			console.log("nonce:%d timestamp:%d singature:%s source:%s", nonce, timestamp, signature, sourcedata);
-
-			//通过avcloud发送HTTP的post请求
-			AV.Cloud.httpRequest({
-				method: 'POST',
-				url: 'https://api.cn.rong.io/user/getToken.json',
-				headers: {
-					'App-Key': rongCloudAppKey,
-					'Nonce': nonce,
-					'Timestamp': timestamp,
-					'Signature': signature
-				},
-				body: {
-					userId:userobjid,
-					name:username,
-					portraitUri:icon
-				},
-				success: function(httpResponse) {
-					console.log(myutils.dumpObj(httpResponse, 'httpresponse', 'mark', 5));
-					console.log(httpResponse.text);
-
-					res.success(httpResponse.data);
-				},
-				error: function(httpResponse) {
-					var errmsg = 'Request failed with response code ' + httpResponse.status;
-					console.log(errmsg);
-					res.error(errmsg);
-				}
-			});
-		},
-		error:function(object,error) {
-			// The object was not retrieved successfully.
-			// error is a AV.Error with an error code and description.
-			console.log(error);
-
-			var errmsg = 'query object fail:' + error.code;
-
-			res.error(errmsg);
-		}
-	});
+	res.success(retObj);
 });
 
+/*
+ /**	在用户注册成功后，做一些处理
+ *
+ AV.Cloud.afterSave('_User', function(request){
+ var nickname = request.object.get('nickname');
+ var invite_id = request.object.get('invite_id');
+ console.info('_User afterSave:id:%s nickname:%s invite_id:%d', request.object.id, nickname, invite_id);
+ if (nickname==undefined || nickname=='') {	//注册的时候没有带nickname，则需要为其补充一个
+ }
+ });
+ */
+
+/*
+AV.Cloud.afterDelete('_User', function(request){
+	console.info("enter afterDelete");
+});
+*/
+
+/*
 AV.Cloud.beforeSave("TestReview", function(request, response){
 	if (request.object.get("stars") < 1) {
 		response.error("you cannot give less than one star");
@@ -133,3 +140,4 @@ AV.Cloud.afterSave("News", function(request) {
 		}
 	});
 });
+*/

@@ -1,8 +1,8 @@
 {
 
-    "applicationName" : "hoopeng",
-    "applicationId": "z6g1g10012kcbv4x9kwpxywiz3g3hus6d5oeotnh47f8vdq5",
-    "applicationKey": "zkbi6vcmpnz2qlcm7yyt4lyhrvoa08ag62yfrtc1igqvsx98",
+    "applicationName" : "hoopengTest",
+    "applicationId": "j3hcadoeln0qtw2b9ccc0tsyiwyxjj9k1qbixgzfjc7163fq",
+    "applicationKey": "7tsnockxq4jb2ff3ofacq9o4knsxcolldb4nq74o0z54kicc",
     "global": {
         "avVersion": "0.2.0",
         "qiniu":"6.1.3",
