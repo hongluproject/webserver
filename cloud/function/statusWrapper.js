@@ -56,17 +56,26 @@ AV.Cloud.define('getStatus', function(req, res) {
         for (var i in results) {
             var postUser = results[i].get('source');
             if (postUser) {
+                postUser = postUser._toFullJSON();
                 results[i].set('source', _.pick(postUser, pickUserKeys));
             }
 
             var clan = results[i].get('clan');
             if (clan) {
+                clan = clan._toFullJSON();
                 results[i].set('clan', _.pick(clan, pickClanKeys));
             }
 
             var activity = results[i].get('activity');
             if (activity) {
+                activity = activity._toFullJSON();
                 results[i].set('activity', _.pick(activity, pcickActivityKeys));
+            }
+
+            var dynamic = results[i].get('dynamicNews');
+            if (dynamic) {
+                dynamic = dynamic._toFullJSON();
+                results[i].set('dynamicNews', dynamic);
             }
         }
 
