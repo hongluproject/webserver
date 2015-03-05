@@ -132,6 +132,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     res.success([]);
                     return;
                 }
+
                 date2 = new Date();
                 console.info("userid:%s dynamic finding use time:%d ms", userId, date2.getTime()-date1.getTime());
                 //获取所有动态objectId，再查询该用户对这些动态是否点过赞
@@ -169,6 +170,11 @@ AV.Cloud.define('getDynamic', function(req,res){
                 //将所有动态返回，添加isLike，记录点赞状态
                 for (var i in statusReturn) {
                     var currDynamic = statusReturn[i].data.dynamicNews;
+                    var user_id = currDynamic.get('user_id');
+                    currDynamic = currDynamic._toFullJSON();
+                    currDynamic.user_id = user_id._toFullJSON();
+                    statusReturn[i].data.dynamicNews = currDynamic;
+
                     if (likeTarget[currDynamic.objectId] == true)	//添加点赞状态字段
                         currDynamic.isLike = true;
                     else
