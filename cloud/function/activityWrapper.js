@@ -121,3 +121,92 @@ AV.Cloud.define('quitActivity', function(req, res) {
         res.error('取消活动加入失败!');
     });
 });
+
+
+
+
+
+
+/** 取消加入活动
+ * @params {
+ *  userId: String 用户ID
+ *  activityId : String 用户ID
+ *  userGroup:[{"realName":"\u96ea\u677e","idcard":"321111198306182318","phone":"15955159604"},{"realName":"\u96f7\u4e91\u6d4b\u8bd5","idcard":"321111198306182318","phone":"15955159603"}]} * }
+ *
+ *  */
+AV.Cloud.define('signUpActivity', function(req, res) {
+    var userId = req.params.userId;
+    var teamId = req.params.teamId;
+    var activityId = req.params.activityId;
+    var userGroup = req.params.userGroup;
+    if (!userId || !activityId) {
+        res.error('请输入参数！');
+        return;
+    }
+    console.info('signUpActivity param, userId:%s activityId:%s "userGroup:%s', userId, activityId,userGroup);
+
+
+
+    var addTeamMemberAndAddSignUpUser = function(userGroup,userId,ActivityId){
+        var ActivitySignUpUser = AV.Object.extend("ActivitySignUpUser");
+        var activitySignUpUser = new ActivitySignUpUser();
+        activitySignUpUser.set("realName", userGroup.realName);
+        activitySignUpUser.set("phone", userGroup.mobilePhoneNumber);
+        activitySignUpUser.set('userId', AV.Object.createWithoutData('_User', userId));
+        activitySignUpUser.set('activityId', AV.Object.createWithoutData('Activity', activityId));
+        activitySignUpUser.save().then(function(success){
+            if(teamId){
+                var ActivityTeamMembers = AV.Object.extend("ActivityTeamMembers");
+                var activityTeamMembers = new ActivityTeamMembers();
+                activityTeamMembers.set('userId', AV.Object.createWithoutData('_User', userId));
+                activityTeamMembers.set('teamId', AV.Object.createWithoutData('ActivityTeam', teamId));
+                activityTeamMembers.save();
+            }
+        },function(error){
+
+        });
+    }
+
+    var addUserAndAddActivityMembers = function(userGroup){
+        for (var k=0; k<userGroup.length; k++) {
+            (function(i){
+                //查找已注册过的用户如果没有则帮助注册
+                var UserClass = AV.Object.extend("_User");
+                var userQuery = new AV.Query(UserClass);
+                userQuery.select('mobilePhoneNumber');
+                //todo 没有填写phone
+                userQuery.equalTo('mobilePhoneNumber', userGroup[i].phone);
+                userQuery.first({
+                    success: function(result) {
+                        if(!result){
+                            var user = new AV.User();
+                            user.set("nickname", userGroup[i].realName);
+                            user.set("username", userGroup[i].phone);
+                            user.set("password", "123456");
+                            user.set("mobilePhoneNumber", userGroup[i].phone);
+                            user.signUp(null, {
+                                success: function(userResult) {
+                                    addTeamMemberAndAddSignUpUser(userGroup[i],userResult.id,activityId);
+                                },
+                                error: function(error) {
+                                    console.log(error);
+                                }
+                            });
+                        }
+                        else{
+                            addTeamMemberAndAddSignUpUser(userGroup[i],result.id,activityId);
+                        }
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                })
+            })(k);
+        }
+    }
+
+
+    addUserAndAddActivityMembers(userGroup);
+
+
+});
