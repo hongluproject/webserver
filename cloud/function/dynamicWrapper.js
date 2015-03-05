@@ -139,7 +139,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                 var dynamicIdArray = [];
                 for (var i=0; i<statuses.length; i++) {
                     if (statuses[i].data.dynamicNews && statuses[i].data.source) {
-                        dynamicIdArray.push(statuses[i].data.dynamicNews.objectId);
+                        dynamicIdArray.push(statuses[i].data.dynamicNews.id);
                     } else {
                         statuses[i] = undefined;
                     }
