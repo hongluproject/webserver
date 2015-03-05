@@ -169,6 +169,11 @@ AV.Cloud.define('getDynamic', function(req,res){
                 //将所有动态返回，添加isLike，记录点赞状态
                 for (var i in statusReturn) {
                     var currDynamic = statusReturn[i].data.dynamicNews;
+                    var user_id = currDynamic.get('user_id');
+                    currDynamic = currDynamic._toFullJSON();
+                    currDynamic.user_id = user_id._toFullJSON();
+                    statusReturn[i].data.dynamicNews = currDynamic;
+                    
                     if (likeTarget[currDynamic.objectId] == true)	//添加点赞状态字段
                         currDynamic.isLike = true;
                     else
