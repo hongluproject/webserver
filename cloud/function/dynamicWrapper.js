@@ -391,7 +391,7 @@ AV.Cloud.define('getComments', function(req,res) {
             var postUser = results[i].get('user_id');
             if (postUser) {
                 var userInfo = {
-                    icon:postUser.get('icon'),
+                    icon:postUser.get('icon') || "",
                     nickname:postUser.get('nickname')
                 };
                 if (commentType==1) {
@@ -405,7 +405,7 @@ AV.Cloud.define('getComments', function(req,res) {
             var replyUser = results[i].get('reply_userid');
             if (replyUser) {
                 var userInfo = {
-                    icon:replyUser.get('icon'),
+                    icon:replyUser.get('icon') || "",
                     nickname:replyUser.get('nickname')
                 };
                 results[i].set('append_replyinfo', userInfo);
