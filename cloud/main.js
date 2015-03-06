@@ -24,6 +24,7 @@ require('cloud/hook/_Followee.js');
 require('cloud/hook/Activity.js');
 require('cloud/hook/ActivityComment.js');
 require('cloud/hook/ActivityUser.js');
+require('cloud/hook/_User.js');
 
 require('cloud/function/imInterface.js');
 require('cloud/function/dynamicWrapper.js');
