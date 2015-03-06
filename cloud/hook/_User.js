@@ -10,7 +10,7 @@ AV.Cloud.afterUpdate('_User', function(request) {
 
     if (userIcon || nickName) {
         var rcParam = myutils.getRongCloudParam();
-        console.info("getimtoken:nonce:%d timestamp:%d singature:%s", rcParam.nonce, rcParam.timestamp, rcParam.signature);
+        console.info("refreshUser:nonce:%d timestamp:%d singature:%s", rcParam.nonce, rcParam.timestamp, rcParam.signature);
 
         var bodyParam = {userId:userObj.id};
         if (userIcon) {

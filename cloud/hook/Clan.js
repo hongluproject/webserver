@@ -3,6 +3,7 @@
  */
 
 var clanParam = require('cloud/common.js').clanParam;
+var myutils = require('cloud/utils.js');
 
 /** 用户创建部落的前的一些判断
  *
@@ -79,6 +80,45 @@ AV.Cloud.afterDelete('Clan', function(req){
             userResult.remove('clanids', clanId);
             userResult.remove('createdClanIds', clanId);
             userResult.save();
+        }
+    });
+});
+
+
+/* 用户修改部落信息后：如果名称发生变更，将对应融云保存的群组名称也同步更新
+*
+ */
+AV.Cloud.afterUpdate('Clan', function(req){
+    var clanObj = req.object;
+    if (!clanObj.get('title')) {
+        return;
+    }
+
+    var rcParam = myutils.getRongCloudParam();
+    console.info("refreshClan:nonce:%d timestamp:%d singature:%s",
+        rcParam.nonce, rcParam.timestamp, rcParam.signature);
+    var reqBody = {
+        groupId:clanObj.id,
+        groupName:clanObj.get('title')
+    };
+    console.info('Clan afterUpdate request body:', reqBody);
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/refresh.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: reqBody,
+        success: function(httpResponse) {
+            console.info('refreshRCGroup:rongcloud response is '+httpResponse.text);
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('refreshRCGroup:'+errmsg);
         }
     });
 });
