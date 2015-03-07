@@ -127,7 +127,7 @@ AV.Cloud.define('quitActivity', function(req, res) {
 
 
 
-/** 取消加入活动
+/** 添加报名
  * @params {
  *  userId: String 用户ID
  *  activityId : String 用户ID
@@ -208,5 +208,45 @@ AV.Cloud.define('signUpActivity', function(req, res) {
 
     addUserAndAddActivityMembers(userGroup);
 
+
+});
+
+
+
+
+
+/** 生成订单
+ * @params {
+ *  userId: String 用户ID
+ *  activityId: String 活动ID
+ * }
+ */
+AV.Cloud.define('makeStatementAccount', function(req, res) {
+    var userId = req.params.userId;
+    var activityId = req.params.activityId;
+    var payMode = req.params.payMode;
+    var goodId = req.params.goodId;
+    var accountStatus =  req.params.goodId;
+
+    //获取时间戳
+    var timestamp = (Date.parse(new Date()))/1000;
+    var rand4Number =   function s4(){
+        result = '';
+        var data = [0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G']
+        for(var i=0;i<4;i++){ //产生20位就使i<20
+            r=Math.floor(Math.random()*16); //16为数组里面数据的数量，目的是以此当下标取数组data里的值！
+            result+=data[r]; //输出20次随机数的同时，让rrr加20次，就是20位的随机字符串了。
+        }
+        return result;
+    }
+    var StatementAccount = AV.Object.extend("statementAccount");
+    var statementAccount = new StatementAccount();
+    statementAccount.set('payMode', payMode);
+    statementAccount.set('bookNumber', rand4Number()+timestamp);
+    statementAccount.set('userId',  AV.Object.createWithoutData('_User', userId));
+    statementAccount.set('activityId',  AV.Object.createWithoutData('Activity', activityId));
+    statementAccount.set('goodId', AV.Object.createWithoutData('ActivityTeam', goodId));
+    statementAccount.set('accountStatus', accountStatus);
+    statementAccount.save();
 
 });
