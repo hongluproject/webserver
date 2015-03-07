@@ -224,9 +224,11 @@ AV.Cloud.define('signUpActivity', function(req, res) {
 AV.Cloud.define('makeStatementAccount', function(req, res) {
     var userId = req.params.userId;
     var activityId = req.params.activityId;
-    var payMode = req.params.payMode;
+    var payMode = req.params.payMode||1;
+    var accountStatus =  req.params.accountStatus||1;
+
+
     var goodId = req.params.goodId;
-    var accountStatus =  req.params.goodId;
 
     //获取时间戳
     var timestamp = (Date.parse(new Date()))/1000;
