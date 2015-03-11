@@ -135,6 +135,7 @@ AV.Cloud.define("getRecommend",function(req, res){
             var query = new AV.Query(Followee);
             query.select('followee');
             query.equalTo('user',AV.User.createWithoutData('_User', userid));
+            query.limit(1000);
             query.find().then(function(result){
                 for (var i = 0; result && i < result.length; i++) {
                     selfFriendsObj.push(AV.User.createWithoutData('_User', result[i].get("followee").id));

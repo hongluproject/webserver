@@ -251,7 +251,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
                 statementAccount.set('payMode', payMode);
                 statementAccount.set('bookNumber', timestamp+rand4Number());
                 statementAccount.set('userId',  AV.Object.createWithoutData('_User', userId));
-                statementAccount.set('activityId',  activityId);
+                statementAccount.set('activityId',  AV.Object.createWithoutData('Activity', activityId));
                 statementAccount.set('goodId', AV.Object.createWithoutData('Goods', goodId));
                 statementAccount.set('accountStatus', accountStatus);
                 statementAccount.save(null, {
@@ -312,3 +312,51 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     });
 });
 
+/*
+    取消报名：函数名 cancelSignupActivity
+    @param {
+     userId: objectId   取消报名的用户ID
+     activityId:objectId 对应活动ID
+    }
+
+    处理流程：
+    1、先判断是否已过退款日期，若已过，则禁止退款
+    2、查找对应的订单，修改订单状态为‘申请退款中’
+
+ */
+AV.Cloud.define('cancelSignupActivity', function(req, res){
+    var userId = req.params.userId;
+    var activityId = req.params.activityId;
+    if (!userId || !activityId) {
+        return res.error('请传入用户和活动信息！');
+    }
+
+    var query = new AV.Query('statementAccount');
+    query.include('activityId');
+    query.select('accountStatus', 'activitiId');
+    query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+    query.equalTo('userId', AV.User.createWithoutData('_User', userId));
+    query.find().then(function(result){
+        if (!result) {
+            return res.error('未查到对应的订单！');
+        }
+        var activity = result.get('activityId');
+        if (!activity) {
+            return res.error('对应的活动不存在！');
+        }
+        var currDate = new Date();
+        var paymentDeadTime = activity.get('payment_dead_time');
+        if (paymentDeadTime && currDate>paymentDeadTime) {
+            return res.error('已过退款时间！');
+        }
+
+        result.set('accountStatus', 3); //将订单状态改为申请退款中
+        result.save().then(function(result){
+            res.success();
+        }, function(err){
+            res.error('修改订单状态失败:', err);
+        });
+    }, function(err){
+        res.error('查询订单失败:', err);
+    });
+});
