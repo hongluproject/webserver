@@ -129,29 +129,23 @@ AV.Cloud.define('quitActivity', function(req, res) {
 
 /** 添加报名
  * @params {
- *  userId: String 用户ID
- *  activityId : String 用户ID
- *  userGroup:[{"realName":"\u96ea\u677e","idcard":"321111198306182318","phone":"15955159604"},{"realName":"\u96f7\u4e91\u6d4b\u8bd5","idcard":"321111198306182318","phone":"15955159603"}]} * }
+ *  userId: objectId 用户ID
+ *  activityId : objectId 用户ID
+ *  teamId: objectId 团队ID
+ *  userGroup:[ {"realName":"\u96ea\u677e","idcard":"321111198306182318","phone":"15955159604"},
+*               {"realName":"\u96f7\u4e91\u6d4b\u8bd5","idcard":"321111198306182318","phone":"15955159603"}
+ *          ]
+ *  payMode:Integer 在线支付方式(支付宝。微信)  1：支付宝 2：微信
+ *  accountStatus:Interger 订单状态：1待支付  2已支付 3退款  4取消
  *
  *  */
 AV.Cloud.define('signUpActivity', function(req, res) {
-    var userId = req.params.userId;
-    var teamId = req.params.teamId;
-    var activityId = req.params.activityId;
-    var userGroup = req.params.userGroup;
-    if (!userId || !activityId) {
-        res.error('请输入参数！');
-        return;
-    }
-    console.info('signUpActivity param, userId:%s activityId:%s "userGroup:%s', userId, activityId,userGroup);
-
-
-
+    //找到有哪些用户未注册，对未注册的用户先注册
     var addTeamMemberAndAddSignUpUser = function(userGroup,userId,ActivityId){
         var ActivitySignUpUser = AV.Object.extend("ActivitySignUpUser");
         var activitySignUpUser = new ActivitySignUpUser();
         activitySignUpUser.set("realName", userGroup.realName);
-        activitySignUpUser.set("phone", userGroup.mobilePhoneNumber);
+        activitySignUpUser.set("phone", userGroup.phone);
         activitySignUpUser.set('userId', AV.Object.createWithoutData('_User', userId));
         activitySignUpUser.set('activityId', AV.Object.createWithoutData('Activity', activityId));
         activitySignUpUser.save().then(function(success){
@@ -163,73 +157,82 @@ AV.Cloud.define('signUpActivity', function(req, res) {
                 activityTeamMembers.save();
             }
         },function(error){
-
+            console.error('addTeamMemberAndAddSignUpUser error:', error);
         });
     }
 
-    var addUserAndAddActivityMembers = function(userGroup){
-        for (var k=0; k<userGroup.length; k++) {
-            (function(i){
-                //查找已注册过的用户如果没有则帮助注册
-                var UserClass = AV.Object.extend("_User");
-                var userQuery = new AV.Query(UserClass);
-                userQuery.select('mobilePhoneNumber');
-                //todo 没有填写phone
-                userQuery.equalTo('mobilePhoneNumber', userGroup[i].phone);
-                userQuery.first({
-                    success: function(result) {
-                        if(!result){
-                            var user = new AV.User();
-                            user.set("nickname", userGroup[i].realName);
-                            user.set("username", userGroup[i].phone);
-                            user.set("password", "123456");
-                            user.set("mobilePhoneNumber", userGroup[i].phone);
-                            user.signUp(null, {
-                                success: function(userResult) {
-                                    addTeamMemberAndAddSignUpUser(userGroup[i],userResult.id,activityId);
-                                },
-                                error: function(error) {
-                                    console.log(error);
-                                }
-                            });
-                        }
-                        else{
-                            addTeamMemberAndAddSignUpUser(userGroup[i],result.id,activityId);
-                        }
+    //取得用户传入的参数
+    var userId = req.params.userId;
+    var teamId = req.params.teamId;
+    var activityId = req.params.activityId;
+    var userGroup = JSON.parse(req.params.userGroup);
+    if (!userId || !activityId) {
+        res.error('请输入参数！');
+        return;
+    }
+    var payMode = req.params.payMode||1;
+    var accountStatus =  req.params.accountStatus||1;
+    var _ = AV._;
+
+    console.info('signUpActivity param, userId:%s activityId:%s payMode:%d accountStatus:%d "userGroup:',
+        userId, activityId, payMode, accountStatus, userGroup);
+
+    //团队所有报名成员手机号码列表
+    var groupUserPhoneList = [];
+    var groupUserMap = {};
+    for (var i in userGroup) {
+        groupUserPhoneList.push(userGroup[i].phone);
+        groupUserMap[userGroup[i].phone] = userGroup[i];
+    }
+
+    //根据提供的手机号码，找到已经注册的用户
+    var UserClass = AV.Object.extend("_User");
+    var userQuery = new AV.Query(UserClass);
+    userQuery.select('mobilePhoneNumber');
+    userQuery.containedIn('mobilePhoneNumber', groupUserPhoneList);
+    userQuery.find().then(function(results){
+        var signedUserPhoneList = [];
+        for (var i in results) {    //标注已经报名状态
+            var currPhone = results[i].get('mobilePhoneNumber');
+            groupUserMap[currPhone].signed = true;
+            groupUserMap[currPhone].userId = results[i].id;
+        }
+
+        for (var k in groupUserMap) {
+            var userItem = groupUserMap[k];
+            if (userItem.signed) {
+                //已注册，直接加入team表
+                addTeamMemberAndAddSignUpUser(userItem, userItem.userId, activityId);
+            } else {
+                //对未注册的用户，先注册，然后加入team表
+                var user = new AV.User();
+                user.set("nickname", userItem.realName);
+                user.set("username", userItem.phone);
+                //默认注册密码，为手机号后6位
+                var defaultPwd = userItem.phone.substring(userItem.phone.length-6);
+                user.set("password", defaultPwd);
+                user.set("mobilePhoneNumber", userItem.phone);
+                user.signUp(null, {
+                    success: function(userResult) {
+                        //注册完成，再加入team表中
+                        addTeamMemberAndAddSignUpUser(userItem, userResult.id, activityId);
+
+                        //短信告知该手机用户，需要调用雪松提供的接口
                     },
                     error: function(error) {
                         console.log(error);
                     }
-                })
-            })(k);
+                });
+            }
         }
-    }
 
-
-    addUserAndAddActivityMembers(userGroup);
-
-
-});
-
-
-
-
-
-/** 生成订单
- * @params {
- *  userId: String 用户ID
- *  activityId: String 活动ID
- * }
- */
-AV.Cloud.define('makeStatementAccount', function(req, res) {
-    var userId = req.params.userId;
-    var activityId = req.params.activityId;
-    var payMode = req.params.payMode||1;
-    var accountStatus =  req.params.accountStatus||1;
-    var goodsClass = AV.Object.extend("Goods");
-    var goodsQuery = new AV.Query('Goods');
-     goodsQuery.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
-     goodsQuery.first({
+        return AV.Promise.as();
+    }).then(function(){
+        //最后创建订单
+        var goodsClass = AV.Object.extend("Goods");
+        var goodsQuery = new AV.Query('Goods');
+        goodsQuery.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+        goodsQuery.first({
             success:function (result){
                 var goodId = result.id;
                 //获取时间戳
@@ -252,17 +255,60 @@ AV.Cloud.define('makeStatementAccount', function(req, res) {
                 statementAccount.set('goodId', AV.Object.createWithoutData('Goods', goodId));
                 statementAccount.set('accountStatus', accountStatus);
                 statementAccount.save(null, {
-                    success: function (date) {
-                        res.success(date);
-                     },
+                    success: function (Order) {
+                        //将订单号返回给APP
+                        res.success({orderNo:Order.get('bookNumber')});
+                    },
                     error: function (date,error) {
-                       console.log(error);return;
+                        console.log(error);
+                        res.error('创建订单失败：', error);
                     }
                 });
             },
-         error: function(error) {
-             console.log(error);
-         }
+            error: function(error) {
+                console.log(error);
+                res.error('创建订单失败：', error);
+            }
 
-     })
+        });
+    });
 });
+
+/** 获取活动详情
+ *  @params {
+ *    activityId: objectId 活动ID
+ *  }
+ */
+AV.Cloud.define('getActivityDetail', function(req, res){
+    var activityId = req.params.activityId;
+    if (!activityId) {
+        return res.error('请传入活动ID！');
+    }
+
+    var queryActivity = new AV.Query('Activity');
+    queryActivity.include('user_id');
+    queryActivity.notEqualTo('removed', true);
+    queryActivity.equalTo('objectId', activityId);
+    queryActivity.first().then(function(activity){
+        if (!activity) {
+            return res.error('没有找到对应的活动！');
+        }
+
+        var userObj = activity.get('user_id');
+        activity.set('user_info', {
+            nickname:userObj.get('nickname'),
+            icon:userObj.get('icon')
+        });
+
+        //简化user_id的返回内容
+        var _ = AV._;
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        activity.set('user_id', _.pick(userObj._toFullJSON(), pickUserKeys));
+
+        res.success(activity);
+    }, function(err){
+        res.error('获取活动失败:', err);
+    });
+});
+

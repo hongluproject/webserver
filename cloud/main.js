@@ -9,6 +9,8 @@ var common = require('cloud/common.js');
 var globalParam = require('cloud/function/avosInitialize.js');
 globalParam.initializeAvosData();
 
+console.info('appId:%s', AV.applicationId);
+
 /*
 	require hook & function files
  */

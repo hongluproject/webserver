@@ -347,3 +347,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
 
 
 }
+
+exports.isSahalaDevEnv = function() {
+    return (AV.applicationId == 'bwc6za4i2iq5m7kxbqmi6h31sp21wjcs2zxsns15q9tbqthq');
+}

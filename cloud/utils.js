@@ -2,6 +2,7 @@
  * Created by gary on 2014/11/15.
  */
 var crypto = require('crypto');
+var common = require('cloud/common');
 
 exports.printObject = function() {
     console.log("hehe");
@@ -224,6 +225,12 @@ exports.getRongCloudParam = function() {
     //融云appkey & secret
     var rongCloudAppKey = 'pwe86ga5er6m6';
     var rongCloudAppSecret = 'ScUoRd65VLv';
+
+    //如果是DEV环境，则需要用融云的测试key
+    if (common.isSahalaDevEnv()) {
+        rongCloudAppKey = '4z3hlwrv3fl9t';
+        rongCloudAppSecret = 'NmT0nxJblVO05i';
+    }
 
     //融云校验信息
     var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。

@@ -29,6 +29,7 @@ AV.Cloud.define('updateClanParam', function(req, res){
 
 AV.Cloud.define('updateClanForRC', function(req, res){
     var userId = req.params.userId;
+    var updateType = req.params.updateType || 1;    //1:添加 2:删除
     var queryClanUser = new AV.Query('ClanUser');
     queryClanUser.include('clan_id');
     queryClanUser.limit(1000);
@@ -39,6 +40,9 @@ AV.Cloud.define('updateClanForRC', function(req, res){
         results.forEach(function(clanUser){
             var userObj = clanUser.get('user_id');
             var clanObj = clanUser.get('clan_id');
+            if (!userObj || !clanObj) {
+                return;
+            }
             //加入融云组群
             AV.Cloud.run('imAddToGroup',{
                 userid:userObj.id,
