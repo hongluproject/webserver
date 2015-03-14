@@ -22,29 +22,32 @@ AV.Cloud.define('getStatus', function(req, res) {
     var queryOr = [];
     //query newLike addFriend newComment newLike
     var queryMsgArray1 = ['newLike', 'addFriend', 'newComment', 'refuseToJoinClan',
-        'addToClan', 'removeFromClan', 'quitClan', 'joinActivity', 'allowToJoinClan', 'refuseToJoinClan'];
+        'addToClan', 'removeFromClan', 'quitClan', 'joinActivity', 'allowToJoinClan', 'refuseToJoinClan',
+        'allowToJoinClan', 'quitActivity', 'refundSuccess'];
     var query1 = AV.Status.inboxQuery(userObj);
     query1.containedIn('messageType', queryMsgArray1);
     query1.notEqualTo('source', userObj);   //不包含自己发送的消息
-    query1.equalTo('targetUser', userObj);   //目标用户是自己
+//    query1.equalTo('targetUser', userObj);   //目标用户是自己
     queryOr.push(query1);
 
-    var queryMsgArray2 = ['newPost', 'sysMessage'];
+    var queryMsgArray2 = ['newPost', 'sysMessage', 'updateActivity', 'cancelActivity'];
     var query2 = AV.Status.inboxQuery(userObj);
     query2.containedIn('messageType', queryMsgArray2);
     query2.notEqualTo('source', userObj);   //不包含自己发送的消息
     queryOr.push(query2);
 
+    /*
     var query3 = AV.Status.inboxQuery(userObj);
     query3.equalTo('messageType', 'newComment');
     query3.notEqualTo('source', userObj);   //不包含自己发送的消息
     query3.equalTo('replyUser', userObj);   //回复评论的用户是自己
     queryOr.push(query3);
+    */
 
     var query = new AV.InboxQuery(AV.Status);
     query._owner = userObj;
     query._orQuery(queryOr);
-    query.include('source', 'clan', 'activity');
+    query.include('source', 'clan', 'activity', 'statementAccount');
     query.limit(limit);
     query.maxId(maxId);
     var date1 = new Date();

@@ -27,7 +27,7 @@ AV.Cloud.define('imGetToken', function(req, res){
             var icon = userObj.get('icon');
 
             var rcParam = myutils.getRongCloudParam();
-            console.info("getimtoken:nonce:%d timestamp:%d singature:%s", rcParam.nonce, rcParam.timestamp, rcParam.signature);
+            console.info("getimtoken:", rcParam);
 
             //通过avcloud发送HTTP的post请求
             AV.Cloud.httpRequest({

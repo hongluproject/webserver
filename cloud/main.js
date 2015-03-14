@@ -44,8 +44,17 @@ require('cloud/function/sahalaScript.js');
 /** 测试返回多个class数据
  *
  */
-AV.Cloud.define("hello", function(request, response) {
-	response.success('test');
+AV.Cloud.define("hello", function(req, res) {
+	var query = new AV.Query('ttt');
+	query.get('54b5e9fde4b06e1f62998127').then(function(result){
+		console.info('enter then...');
+		var nickname = result.get('nickname');
+		console.info('nickname is %s', nickname);
+		res.success(result);
+	}, function(err){
+		res.error('12'+err.message);
+	})
+//	res.success('test');
 });
 
 /**  获取七牛云存储token

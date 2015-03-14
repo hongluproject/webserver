@@ -248,25 +248,18 @@ AV.Cloud.define("joinClan", function (req, res) {
     }
     var query = new AV.Query('Clan');
     query.include("founder_id.level");
-    query.get(clanid, {
-        success: function (clan) {
-            if (!clan) {
-                console.info('部落不存在:%s', clan.id);
-                res.error('部落不存在!');
-                return;
-            }
-
-            if (isClanFull(clan)) {
-                res.error('部落人员已满!');
-                return;
-            }
-        },
-        error: function (error) {
-            console.error('beforeSave ClanUser query error:', error);
-            res.error('部落不存在！');
+    query.get(clanid).then(function (clan) {
+        if (!clan) {
+            console.info('部落不存在:%s', clan.id);
+            res.error('部落不存在!');
+            return;
         }
 
-    }).then(function (clan) {
+        if (isClanFull(clan)) {
+            res.error('部落人员已满!');
+            return;
+        }
+
         var joinMode = clan.get('join_mode');
         switch (joinMode)
         {
@@ -315,6 +308,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                 });
                 break;
         }
+    }, function(err){
+        console.error('加入部落失败:', err);
+        res.error('加入部落失败:', err?err.message:'');
     });
 });
 

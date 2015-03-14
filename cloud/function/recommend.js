@@ -189,3 +189,48 @@ AV.Cloud.define("getRecommend",function(req, res){
     }
     getRecommendUser();
 });
+
+/** 获取推荐的活动
+ * 函数名：getRecommendActivity
+ * 参数：{
+ *  userId:用户ID，若未当前登陆用户，可不传
+ *  tags:用户所关注标签，若未当前登陆用户，可不传
+ * }
+ * 返回：
+ * [{ActivityRecommend 1, ActivityRecommend 2,...}]
+ */
+AV.Cloud.define('getRecommendActivity', function(req, res){
+    var userId = req.params.userId;
+    if (!userId && req.user && req.user.id) {
+        userId = req.user.id;
+    }
+    var tags = req.params.tags;
+    if (!tags && req.user) {
+        tags = req.user.get('tags');
+    }
+
+    var retVal = [];
+    var query = new AV.Query('ActivityRecommend');
+    query.include('activityId');
+    query.limit(5);
+    query.descending('updatedAt');
+    query.find().then(function(results){
+        if (!results) {
+            res.success();
+            return;
+        }
+
+        results.forEach(function(item){
+            var activity = item.get('activityId');
+            item = item._toFullJSON();
+            item.activityId = activity._toFullJSON();
+
+            retVal.push(item);
+        });
+
+        res.success(retVal);
+    }, function(err){
+        console.error('getRecommendActivity error:', err);
+        res.error('查询推荐活动失败:'+err?err.message:'');
+    });
+});

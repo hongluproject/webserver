@@ -55,5 +55,24 @@ AV.Cloud.afterSave('ActivityUser', function(req){
 });
 
 
+AV.Cloud.afterDelete('ActivityUser', function(req){
+    var ActivityObj = req.object.get('activity_id');
+    var userObj = req.object.get('user_id');
+
+    var query = new AV.Query('Activity');
+    query.select('user_id');
+    query.get(ActivityObj.id).then(function(result){
+        if (!result) {
+            return;
+        }
+
+        //通知到对应活动的Founder，告知有人退出了活动
+        var activityFounder = result.get('user_id');
+        query = new AV.Query('_User');
+        query.equalTo('objectId', activityFounder.id);
+        common.sendStatus('quitActivity', userObj, activityFounder, query, {activity:ActivityObj});
+    });
+
+});
 
 

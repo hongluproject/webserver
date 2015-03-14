@@ -214,24 +214,59 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
 
 }
 
-function postRCMessage (fromUserId, toUserId, content, messageType,objectId,replyUserId) {
+/**
+ * 发送融云系统消息s
+ * @param fromUserId：消息发起者
+ * @param toUserId：消息接收者
+ * @param content：消息内容
+ * @param messageType：扩展内容，消息类型
+ * @param objectId：扩展类型，对应消息类型的objectId
+ * @param replyUserId：回复动态评论的用户
+ * @param title:图文消息标题
+ * @param imgUrl:图像消息图像
+ */
+function postRCMessage (fromUserId, toUserId, content, messageType,objectId,title,imgUrl) {
     var rcParam = utils.getRongCloudParam();
     //通过avcloud发送HTTP的post请求
 
+    var bImgText = content&&title&&imgUrl;
     var toUsers = [];
-    if (replyUserId) {
-        toUsers.push(replyUserId);
+    if (toUserId) {
+        toUsers = toUsers.concat(toUserId);
     }
-    if (fromUserId != toUserId) {
-        toUsers.push(toUserId);
-    }
-    var extra ="{" + "\\\"type\\\":\\\""+ messageType +"\\\"" + ",\\\"objectId\\\":" + "\\\"" + objectId + "\\\"" + "}";
-    var   body= {
-        fromUserId:fromUserId,
-        toUserId:toUsers,
-        objectName:"RC:TxtMsg",
-        content:'{"content":"' + content + '",' + '"extra":"' + extra + '"}'
+    var   body;
+    if (bImgText) {
+        body = {
+            fromUserId: fromUserId,
+            toUserId: toUsers,
+            objectName: "RC:ImgTextMsg",
+            content: JSON.stringify({
+                title:title,
+                imageUrl:imgUrl,
+                content: content,
+                extra: JSON.stringify({
+                    type: messageType,
+                    objectId: objectId
+                })
+            })
+        }
+
+    } else {
+        body = {
+            fromUserId: fromUserId,
+            toUserId: toUsers,
+            objectName: "RC:TxtMsg",
+            content: JSON.stringify({
+                content: content,
+                extra: JSON.stringify({
+                    type: messageType,
+                    objectId: objectId
+                })
+            })
+        }
     };
+
+    console.info('rongcloud request body:%s', querystring.stringify(body));
 
     AV.Cloud.httpRequest({
         method: 'POST',
@@ -248,8 +283,8 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,repl
             delete httpResponse.data.code;
         },
         error: function(httpResponse) {
-            var errmsg = 'Request failed with response code ' + httpResponse.status;
-            console.error('postRCMessage:'+errmsg);
+            console.error('postRCMessage:Request failed with response code %d,errmsg:%s',
+                httpResponse.status, httpResponse.text);
         }
     });
 }
@@ -266,17 +301,23 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         addToClan:"加入了部落",
         quitClan:'用户退出部落',
         joinActivity:"加入了活动",
-        refuseToJoinClan  :"拒绝加入部落",
-        allowToJoinClan :"允许加入部落"
+        refuseToJoinClan:"拒绝您加入部落",
+        allowToJoinClan:"允许您加入部落",
+        quitActivity:"退出报名",
+        updateActivity:"更新活动信息",
+        cancelActivity:"取消活动",
+        refundSuccess:"退款成功"
     };
 
 
+    var toRcUsers = [];
     var status = new AV.Status(null, messageObj[messageType]);
     status.data.source = sourceUser._toPointer();
     status.query = query;
     status.set('messageType', messageType);
     if (targetUser) {
-        status.set('targetUser', targetUser._toPointer());
+        toRcUsers = toRcUsers.concat(targetUser.id);
+//        status.set('targetUser', targetUser._toPointer());
     }
 
     status.set('messageSignature', utils.calcStatusSignature(sourceUser.id,messageType,new Date()));
@@ -290,6 +331,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             status.set('dynamicNews', extendProp.dynamicNews._toPointer());
             if (extendProp.replyUser) {
                 status.set('replyUser', extendProp.replyUser._toPointer());
+                toRcUsers = toRcUsers.concat(extendProp.replyUser);
             }
             break;
         case 'removeFromClan':
@@ -298,7 +340,13 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             status.set('clan', extendProp.clan._toPointer());
             break;
         case 'joinActivity':
+        case 'quitActivity':
+        case 'updateActivity':
+        case 'cancelActivity':
             status.set('activity', extendProp.activity._toPointer());
+            break;
+        case 'refundSuccess':
+            status.set('statementAccount', extendProp.statementAccount._toPointer());
             break;
     }
     if (messageType=='newPost' || messageType=='newQuestion') {
@@ -322,15 +370,19 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             if (!AV.User.current()) {
                 process.domain._currentUser=null;
             }
-            if( messageType=='newLike'||
+            if( messageType=='addFriend' ||
+                messageType=='newLike'||
                 messageType=='newComment'||
                 messageType=='joinActivity'||
                 messageType=='refuseToJoinClan' ||
                 messageType=='allowToJoinClan' ||
-                messageType=='removeFromClan'){
+                messageType=='removeFromClan' ||
+                messageType=='quitActivity' ||
+                messageType=='updateActivity' ||
+                messageType=='cancelActivity' ||
+                messageType=='refundSuccess') {
                //fromUserId, toUserId, content, messageType,objectId
-                var replyUserId = extendProp.replyUser?extendProp.replyUser.id:undefined;
-                postRCMessage(sourceUser.id,targetUser.id,messageObj[messageType],messageType,status.id,replyUserId);
+                postRCMessage(sourceUser.id,toRcUsers,messageObj[messageType],messageType,status.id);
              }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {
@@ -350,4 +402,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
 
 exports.isSahalaDevEnv = function() {
     return (AV.applicationId == 'bwc6za4i2iq5m7kxbqmi6h31sp21wjcs2zxsns15q9tbqthq');
+}
+
+exports.isOnlinePay = function(payType) {
+    return (payType == 2);
 }
