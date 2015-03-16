@@ -11,9 +11,10 @@ AV.Cloud.define("getSearch",function(req,res){
     var User = AV.Object.extend("_User");
     var News = AV.Object.extend("News");
     var Tag = AV.Object.extend("Tag");
+    var Activity = AV.Object.extend("Activity");
 
 
-    //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
+    //type  3 资讯 ,1 动态,2 问答,4 部落,5 人,6 活动
     var  type = req.params.type.toString();
     var  userId = req.params.userId;
     var  kw  = req.params.kw;
@@ -177,8 +178,40 @@ AV.Cloud.define("getSearch",function(req,res){
     };
 
 
+
+     var getActivity = function(){
+         var retVal = [];
+         var query = new AV.Query(Activity);
+        query.limit(limit);
+        if(tagId){
+            query.equalTo("tags", tagId);
+        }else {
+            query.contains("content", kw);
+        }
+        query.skip(skip);
+        query.descending('createdAt');
+         query.find().then(function(results){
+             if (!results) {
+                 res.success();
+                 return;
+             }
+             results.forEach(function(activity){
+                 var retItem = {};
+                 retItem.activity = activity._toFullJSON();
+                 retItem.extra = {
+                     friendJoin:0
+                 };
+
+                 retVal.push(retItem);
+             });
+
+             res.success(retVal);
+         });
+    };
+
+
     var switchTab  = function(type, res){
-        //type  3 资讯 ,1 动态,2 问答,4 部落,5 人
+        //type  3 资讯 ,1 动态,2 问答,4 部落,5 人 ,6活动
         switch(type)
         {
             case "3":
@@ -195,6 +228,9 @@ AV.Cloud.define("getSearch",function(req,res){
                 break;
             case "5":
                 getUser();
+                break;
+            case "6":
+                getActivity();
                 break;
             default:
                 console.error('未知的查询类型:'+type);
