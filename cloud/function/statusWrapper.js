@@ -47,7 +47,7 @@ AV.Cloud.define('getStatus', function(req, res) {
     var query = new AV.InboxQuery(AV.Status);
     query._owner = userObj;
     query._orQuery(queryOr);
-    query.include('source', 'clan', 'activity', 'statementAccount');
+    query.include('source', 'clan', 'activity', 'StatementAccount');
     query.limit(limit);
     query.maxId(maxId);
     var date1 = new Date();

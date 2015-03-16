@@ -251,7 +251,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             return result;
         }
 
-        var StatementAccount = AV.Object.extend("statementAccount");
+        var StatementAccount = AV.Object.extend("StatementAccount");
         var statementAccount = new StatementAccount();
         statementAccount.set('payMode', payMode);
         statementAccount.set('bookNumber', timestamp+rand4Number());
@@ -400,7 +400,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
 
         if (!bHasSignup) {
             //若用户还未加入活动，则查询订单状态
-            var query = new AV.Query('statementAccount');
+            var query = new AV.Query('StatementAccount');
             query.select('accountStatus', 'bookNumber');
             query.equalTo('userId', AV.User.createWithoutData('_User', userId));
             query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
@@ -584,7 +584,7 @@ AV.Cloud.define('cancelActivity', function(req, res){
 
         if (common.isOnlinePay(payType)) {
             //如果是线上支付，则将该活动下所有已支付订单，改为‘申请退款’状态
-            query = new AV.Query('statementAccount');
+            query = new AV.Query('StatementAccount');
             query.equalTo('activityId', activity._toPointer());
             query.equalTo('accountStatus', 2);
             query.limit(500);
@@ -633,7 +633,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
     }
     var user, activity, order;
 
-    var query = new AV.Query('statementAccount');
+    var query = new AV.Query('StatementAccount');
     query.include('signupId');
     query.equalTo('bookNumber', bookNo);
     query.first().then(function(result){
@@ -808,7 +808,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
     console.info('getStatementDetail params,bookNo:%s bGetSignup:%d', bookNo, bGetSignup);
 
     var statement, activity, signup;
-    var query = new AV.Query('statementAccount');
+    var query = new AV.Query('StatementAccount');
     query.include('activityId');
     if (bGetSignup) {
         query.include('signupId');
@@ -883,7 +883,7 @@ AV.Cloud.define('getOrderList', function(req, res){
         return;
     }
 
-    var query = new AV.Query('statementAccount');
+    var query = new AV.Query('StatementAccount');
     query.equalTo('userId', AV.Object.createWithoutData('_User', userId));
     query.skip(skip);
     query.limit(limit);

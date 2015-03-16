@@ -346,7 +346,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
             status.set('activity', extendProp.activity._toPointer());
             break;
         case 'refundSuccess':
-            status.set('statementAccount', extendProp.statementAccount._toPointer());
+            status.set('StatementAccount', extendProp.statementAccount._toPointer());
             break;
     }
     if (messageType=='newPost' || messageType=='newQuestion') {
