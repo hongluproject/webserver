@@ -1,29 +1,43 @@
 var common = require('cloud/common.js');
+var myutils = require('cloud/utils');
 
 AV.Cloud.afterSave('Activity', function(request) {
     var ActivityObj = request.object;
     var ActivityId = ActivityObj.id;
+    var activityName = ActivityObj.get('title');
     ActivityObj.set('share_url', 'https://hoopeng.avosapps.com/activity/' + ActivityId);
     ActivityObj.save();
 
-    var query = new AV.Query('Goods');
-    query.equalTo('activityId', AV.Object.createWithoutData('Activity', ActivityId));
-    query.count({
-        success: function(count){
-            if(count == 0){
-                var Goods = AV.Object.extend('Goods');
-                var goods = new Goods();
-                goods.set('activityId', AV.Object.createWithoutData('Activity', ActivityId));
-                goods.save();
-            }
-            return;
-         },
-        error: function(err){
-            console.info("save goods error "+ err);
+    //创建融云聊天室
+    var rcParam = myutils.getRongCloudParam();
+    console.info('Activity afterSave:rong cloud param:%s', JSON.stringify(rcParam));
+
+    var body = {};
+    var key = 'chatroom[' + ActivityId + ']';
+    body[key] = activityName;
+
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/chatroom/create.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify(body),
+        success: function(httpResponse) {
+            console.info('create chatroom:rong cloud response is '+httpResponse.text);
+            if (httpResponse.data.code == 200)
+                console.info('创建聊天室成功');
+            else
+                console.error('创建聊天室失败,code='+httpResponse.data.code);
+        },
+        error: function(httpResponse) {
+            console.error('create chatroom failed,errCode:%d errMsg:%s', httpResponse.status, httpResponse.text);
         }
     });
-
-
 });
 
 AV.Cloud.afterUpdate('Activity', function(req){

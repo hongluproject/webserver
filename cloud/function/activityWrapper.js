@@ -79,7 +79,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
         res.success();
     }, function(error) {
         console.error('joinActivity error:', error);
-        res.error('加入活动失败:%s', error?error.message:'');
+        res.error('加入活动失败:'+error?error.message:'');
     });
 });
 
@@ -178,6 +178,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     var bAddToActivityUser = false;
     var orderNo;
     var activity;
+    var signupUserObj;
 
     console.info('signUpActivity param, userId:%s activityId:%s payMode:%d accountStatus:%d "userGroup:',
         userId, activityId, payMode, accountStatus, userGroup);
@@ -211,12 +212,16 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         var payType = activity.get('pay_type');
         if (!common.isOnlinePay(payType)) {
             bAddToActivityUser = true;
+            accountStatus = 2;
         }
 
         //进入生成订单流程
         var userItem = userGroup[0];
         var ActivitySignUpUser = AV.Object.extend("ActivitySignUpUser");
         var activitySignUpUser = new ActivitySignUpUser();
+        if (userItem.sex) {
+            activitySignUpUser.set('sex', userItem.sex);
+        }
         activitySignUpUser.set("realName", userItem.realName);
         activitySignUpUser.set("phone", userItem.phone);
         if (userItem.idcard) {
@@ -232,6 +237,8 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         activitySignUpUser.set('activityId', AV.Object.createWithoutData('Activity', activityId));
         return activitySignUpUser.save();
     }).then(function(result){
+        signupUserObj = result;
+
         //获取时间戳
         var timestamp = (Date.parse(new Date()))/1000;
         var rand4Number =   function s4(){
@@ -259,6 +266,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             var userItem = userGroup[0];
             var ActivityUser = AV.Object.extend('ActivityUser');
             var activityUser = new ActivityUser();
+            activityUser.set('sex', userItem.sex);
             activityUser.set('real_name', userItem.realName);
             activityUser.set('phone', userItem.phone);
             if (userItem.idcard) {
@@ -270,8 +278,8 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             if (userItem.passportCard) {
                 activityUser.set('passport_card', userItem.passportCard);
             }
-            activityUser.set('userId', AV.Object.createWithoutData('_User', userId));
-            activityUser.set('activityId', AV.Object.createWithoutData('Activity', activityId));
+            activityUser.set('user_id', AV.Object.createWithoutData('_User', userId));
+            activityUser.set('activity_id', AV.Object.createWithoutData('Activity', activityId));
             activityUser.set('order_id', result._toPointer());
             return activityUser.save();
         } else {
@@ -284,7 +292,8 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         }
         res.success({orderNo:orderNo});
     }, function(err){
-        res.error('生成订单失败:%s', err?err.message:'');
+        console.error('生成订单失败:', err);
+        res.error('生成订单失败:'+err?err.message:'');
     });
 });
 
@@ -298,6 +307,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
  *          signupUsers: array 已报名用户列表
  *          hasSignup: bool 当前用户是否已经报名
  *          accountStatus:Integer 当前订单状态
+ *          bookNuber:string 订单编号
  *      }
  *  }
  */
@@ -309,11 +319,11 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     }
     var currActivity;
     var founderUserId;
+    var payType = 1;
     var extraData = {};
 
     var queryActivity = new AV.Query('Activity');
     queryActivity.include('user_id');
-    queryActivity.notEqualTo('removed', true);
     queryActivity.equalTo('objectId', activityId);
     queryActivity.first().then(function(activity){
         if (!activity) {
@@ -321,6 +331,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         }
         currActivity = activity;
 
+        payType = activity.get('pay_type');
         var userObj = activity.get('user_id');
         activity.set('user_info', {
             nickname:userObj.get('nickname'),
@@ -390,7 +401,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         if (!bHasSignup) {
             //若用户还未加入活动，则查询订单状态
             var query = new AV.Query('statementAccount');
-            query.select('accountStatus');
+            query.select('accountStatus', 'bookNumber');
             query.equalTo('userId', AV.User.createWithoutData('_User', userId));
             query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
             query.descending('createdAt');
@@ -405,6 +416,10 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         if (result) {   //返回订单状态
 //            currActivity.set('accountStatus', result.get('accountStatus'));
             extraData.accountStatus = result.get('accountStatus');
+            if (!common.isOnlinePay(payType)) {
+                extraData.accountStatus = 2;
+            }
+            extraData.bookNumber = result.get('bookNumber');
         }
 
         res.success({
@@ -412,7 +427,8 @@ AV.Cloud.define('getActivityDetail', function(req, res){
             extra:extraData
         });
     }, function(err){
-        res.error('获取活动失败:', err);
+        console.error('获取活动失败:', err);
+        res.error('获取活动失败:'+err?err.message:'');
     });
 });
 
@@ -493,6 +509,15 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
  * @params {
  *  activityId: objectId 活动ID
  *  userId: objectId 发起操作的用户ID，若为当前登陆用户，可不传
+ *  cancelReason:string 取消活动原因
+ * }
+ *
+ * @return
+ * {
+ *  activity:{  //返回activity发生变化的字段
+ *      removed:bool ,true or false
+ *      activityUpdateNotice:cancelReason
+ *    }
  * }
  *
  * 处理流程：
@@ -502,10 +527,16 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
  */
 AV.Cloud.define('cancelActivity', function(req, res){
     var activityId = req.params.activityId;
+    var cancelReason = req.params.cancelReason;
     var joinUsers = [];     //所有加入活动的ids
     var payType;            //支付方式
     var activityFounder;    //活动发起人
     var activity;           //活动
+
+    if (!activity || !cancelReason) {
+        res.error('请传入相关参数！');
+        return;
+    }
 
     var query = new AV.Query('Activity');
     query.get(activityId).then(function(result){
@@ -516,9 +547,14 @@ AV.Cloud.define('cancelActivity', function(req, res){
         activity = result;
         activityFounder = result.get('user_id');
         payType = result.get('pay_type');
+        if (cancelReason) {
+            result.set('activityUpdateNotice', cancelReason);
+        }
         result.set('removed', true);
         return result.save();
     }).then(function(result){
+        cancelReason = result?result.get('activityUpdateNotice'):'';
+
         //找到所有参与活动的人
         query = new AV.Query('ActivityUser');
         query.limit(500);
@@ -527,7 +563,12 @@ AV.Cloud.define('cancelActivity', function(req, res){
         return query.find();
     }).then(function(results){
         if (!results) {
-            res.success();
+            res.success({
+                activity:{
+                    removed:true,
+                    activityUpdateNotice:cancelReason
+                }
+            });
             return;
         }
 
@@ -546,6 +587,7 @@ AV.Cloud.define('cancelActivity', function(req, res){
             query = new AV.Query('statementAccount');
             query.equalTo('activityId', activity._toPointer());
             query.equalTo('accountStatus', 2);
+            query.limit(500);
             return query.find();
         } else {
             return AV.Promise.as();
@@ -558,10 +600,15 @@ AV.Cloud.define('cancelActivity', function(req, res){
             });
         }
 
-        res.success();
+        res.success({
+            activity:{
+                removed:true,
+                activityUpdateNotice:cancelReason
+            }
+        });
     }, function(err){
         console.error('活动取消失败：', err);
-        res.error('活动取消失败:%s', err?err.message:'');
+        res.error('活动取消失败:'+err?err.message:'');
     });
 });
 
@@ -622,7 +669,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
         activityUser.set('real_name', signupInfo.get('realName'));
         activityUser.set('phone', signupInfo.get('phone'));
         activityUser.set('idcard', signupInfo.get('idcard'));
-        activityUser.set('SignIn', 1);
+        activityUser.set('signIn', 1);
         activityUser.set('passport_card', signupInfo.get('passportCard'));
         activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
         activityUser.set('user_id', user._toPointer());
@@ -635,6 +682,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
         activity.save();
         res.success();
     }, function(err){
+        console.error('处理订单完成失败:', err);
         res.error('处理订单完成失败:', err?err.message:'');
     });
 });
@@ -696,7 +744,8 @@ AV.Cloud.define('getActivityUsers', function(req, res){
 
         res.success(retVal);
     }, function(err){
-        res.error(err);
+        console.error('处理订单完成失败:', err);
+        res.error('获取活动用户失败：'+err?err.message:'');
     });
 });
 
@@ -756,6 +805,8 @@ AV.Cloud.define('getStatementDetail', function(req, res){
     var bookNo = req.params.bookNo;
     var bGetSignup = req.params.getSignup || false;
 
+    console.info('getStatementDetail params,bookNo:%s bGetSignup:%d', bookNo, bGetSignup);
+
     var statement, activity, signup;
     var query = new AV.Query('statementAccount');
     query.include('activityId');
@@ -775,13 +826,9 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         var payType = activity.get('pay_type');
         var accountStatus = result.get('accountStatus');
         var serialNumber = result.get('serialNumber');
-        if (!serialNumber) {
-            res.error('订单号不存在！');
-            return;
-        }
         var url = 'http://pay.imsahala.com/api/ping/retrieve?ch_id='+serialNumber;
         console.info('pingxx url:%s', url);
-        if (common.isOnlinePay(payType) && accountStatus == 1) {
+        if (common.isOnlinePay(payType) && serialNumber && accountStatus == 1) {
             //线上支付&订单处于未支付状态，去支付平台同步查询订单实际状态
             return AV.Cloud.httpRequest({
                 method: 'GET',
@@ -920,7 +967,10 @@ AV.Cloud.define('getActivityList', function(req, res){
  *  参数：
  *      userId: objectId 用户ID，若未当前登录用户，可不传
  *  返回：
- *      success or error
+ *      {
+ *          canCreate: bool  true or false
+ *          errMsg: 不能创建原因
+ *      }
  */
 AV.Cloud.define('canCreateActivity', function(req, res) {
     var userId = req.params.userId;
@@ -932,14 +982,22 @@ AV.Cloud.define('canCreateActivity', function(req, res) {
     query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
     query.first().then(function(result){
         if (!result) {
-            res.error('您不是酋长，不能发布活动！');
+            res.success({
+                canCreate:false,
+                errMsg:'您不是酋长，不能发布活动！'
+            });
             return;
         }
 
-        res.success();
+        res.success({
+            canCreate:true
+        });
     }, function(err){
         console.error('canCreateActivity query error:', err);
-        res.error('创建活动失败:'+err?err.message:'');
+        res.success({
+            canCreate:false,
+            errMsg:'创建活动失败:'+err?err.message:''
+        });
     });
 }) ;
 
@@ -961,18 +1019,18 @@ AV.Cloud.define('signinActivity', function(req, res){
     var query = new AV.Query('ActivityUser');
     query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
     query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
-    query.select('SignIn', 'activity_id');
+    query.select('signIn', 'activity_id');
     query.first().then(function(result){
        if (!result) {
            res.error('您尚未报名！');
            return;
        }
 
-        var bHasSignin = result.get('SignIn')>0?true:false;
+        var bHasSignin = result.get('signIn')>0?true:false;
         if (!bHasSignin) {  //若未签到过，修改签到状态
             var activity = result.get('activity_id');
 
-            result.set('SignIn', 1);
+            result.set('signIn', 1);
             result.save();
 
             if (activity) { //对应活动的签到人数+1
