@@ -335,7 +335,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         var userObj = activity.get('user_id');
         activity.set('user_info', {
             nickname:userObj.get('nickname'),
-            icon:userObj.get('icon')
+            icon:userObj.get('icon')||''
         });
         //简化user_id的返回内容
         var _ = AV._;
@@ -371,7 +371,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);
-            query.include('user_id');
+            query.include('user_id', 'order_id');
             return query.find();
         }
 
@@ -384,6 +384,11 @@ AV.Cloud.define('getActivityDetail', function(req, res){
                 if (user) {
                     if (user.id == userId) {
                         bHasSignup = true;
+                        var orderObj = item.get('order_id');
+                        if (orderObj) {
+                            extraData.accountStatus = orderObj.get('accountStatus')||1;
+                            extraData.bookNumber = orderObj.get('bookNumber')||'';
+                        }
                     }
                     signupUsers.push({
                         nickname:user.get('nickname')||'',
@@ -392,10 +397,8 @@ AV.Cloud.define('getActivityDetail', function(req, res){
                 }
             });
 
-//            currActivity.set('signupUsers', signupUsers);
             extraData.signupUsers = signupUsers;
         }
-//        currActivity.set('hasSignup', bHasSignup);
         extraData.hasSignup = bHasSignup;
 
         if (!bHasSignup) {
@@ -414,7 +417,6 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         }
     }).then(function(result){
         if (result) {   //返回订单状态
-//            currActivity.set('accountStatus', result.get('accountStatus'));
             extraData.accountStatus = result.get('accountStatus');
             if (!common.isOnlinePay(payType)) {
                 extraData.accountStatus = 2;
@@ -721,7 +723,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
             var user = item.get('user_id');
             var userInfo = {
                 nickname:user.get('nickname'),
-                icon:user.get('icon')
+                icon:user.get('icon')||''
             };
             item.set('user_info', userInfo);
             var order = item.get('order_id');

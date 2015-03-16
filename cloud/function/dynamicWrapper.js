@@ -438,7 +438,7 @@ AV.Cloud.define('postComment', function(req, res){
             commentObj.set('newsid', AV.Object.createWithoutData('News', sourceId));
             commentObj.set('append_userinfo', {
                 nickname:userNickname,
-                icon:userIcon
+                icon:userIcon||''
             });
             break;
         case 2:
@@ -447,7 +447,7 @@ AV.Cloud.define('postComment', function(req, res){
             commentObj.set('activity_id', AV.Object.createWithoutData('Activity', sourceId));
             commentObj.set('user_info', {
                 nickname:userNickname,
-                icon:userIcon
+                icon:userIcon||''
             });
             break;
         case 3:
@@ -456,7 +456,7 @@ AV.Cloud.define('postComment', function(req, res){
             commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', sourceId));
             commentObj.set('user_info', {
                 nickname:userNickname,
-                icon:userIcon
+                icon:userIcon||''
             });
             break;
         default:
@@ -469,7 +469,7 @@ AV.Cloud.define('postComment', function(req, res){
         commentObj.set('reply_userid', AV.User.createWithoutData('_User', replyUserId));
         commentObj.set('append_replyinfo', {
             nickname:replyUserNickname,
-            icon:replyUserIcon
+            icon:replyUserIcon||''
         });
     }
     commentObj.save().then(function(comment){
