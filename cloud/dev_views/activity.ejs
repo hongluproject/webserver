@@ -69,6 +69,9 @@
             </dd>
         </dl>
 
+
+        <% if(duration) { %>
+
         <dl class="cf">
             <dd>
                 <p class="name">活动天数</p>
@@ -77,6 +80,7 @@
                 </p>
             </dd>
         </dl>
+        <% } %>
 
         <dl class="cf">
             <dd>
@@ -117,6 +121,8 @@
             </dd>
         </dl>
 
+
+        <% if (comment_count){%>
         <dl class="cf">
             <dd>
                 <p class="name">评论数目</p>
@@ -125,6 +131,7 @@
                 </p>
             </dd>
         </dl>
+    <% }%>
 
     </div>
     <!--评论结束-->
