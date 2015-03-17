@@ -189,23 +189,32 @@ app.get('/activity/:objId', function(req,res) {
 
     var query = new AV.Query('Activity');
     query.include('user_id');
-    query.get(activityId).then(function(activityResult) {
-        if (!activityResult) {
+    query.get(activityId, {
+        success: function(activityResult) {
+            if (!activityResult) {
+                console.error('activity %s has not found!', activityId);
+                res.writeHead(404);
+                res.end();
+                return;
+            }
+
+            var tags = activityResult.get('tags');
+            var tagsName = [];
+            for (var i in tags) {
+                var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+                tagsName.push(tagName?tagName:'');
+            }
+            activityResult.set('tagsName', tagsName);
+            res.render('activity', {activity:activityResult});
+        },
+        error: function(error) {
             console.error('activity %s has not found!', activityId);
             res.writeHead(404);
             res.end();
             return;
         }
-
-        var tags = activityResult.get('tags');
-        var tagsName = [];
-        for (var i in tags) {
-            var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
-            tagsName.push(tagName?tagName:'');
-        }
-        activityResult.set('tagsName', tagsName);
-        res.render('activity', {activity:activityResult});
     });
+
 });
 
 /**
