@@ -902,7 +902,7 @@ AV.Cloud.define('getOrderList', function(req, res){
 
             item = item._toFullJSON();
             item.activityId = activity._toFullJSON();
-            retVal.push(item._toFullJSON());
+            retVal.push(item);
         });
 
         res.success(retVal);
@@ -981,7 +981,7 @@ AV.Cloud.define('canCreateActivity', function(req, res) {
     }
 
     var query = new AV.Query('Clan');
-    query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+    query.equalTo('founder_id', AV.User.createWithoutData('_User', userId));
     query.first().then(function(result){
         if (!result) {
             res.success({

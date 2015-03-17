@@ -72,18 +72,26 @@ AV.Cloud.define('getDynamic', function(req,res){
         var likeQuery = new AV.Query(likeClass);
         likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
         likeQuery.containedIn('external_id', dynamicIdArray);
-        likeQuery.find().then(function(likes) {
+        return likeQuery.find().then(function(likes) {
             for (var i in likes) {
                 likeTarget[likes[i].get('external_id')] = true;
             }
 
             addLikeTarget(dynamics, likeTarget);
 
-            response.success(dynamics);
+            if (response) {
+                response.success(dynamics);
+            }
+
+            return AV.Promise.as(dynamics);
         }, function(error) {
             console.error('query dynamic like failed:', error);
             addLikeTarget(dynamics, likeTarget);
-            response.success(dynamics);
+            if (response) {
+                response.success(dynamics);
+            }
+
+            return AV.Promise.as(dynamics);
         });
 
     }
@@ -334,6 +342,50 @@ AV.Cloud.define('getDynamic', function(req,res){
             }, function(error) {
                 console.error('getDynamic commentDynamic failed:', error);
                 res.success([]);
+            });
+            break;
+
+        case 'activityDynamic': // 活动相关动态
+            var userId = req.params.userId;
+            if (!userId && req.user) {
+                userId = req.user.id;
+            }
+            var activityId = req.params.activityId;
+            if (!userId || !activityId) {
+                res.error('缺少必备参数！');
+                return;
+            }
+            var limit = req.params.limit || 20;
+            var skip = req.params.skip || 0;
+            var retVal = {};
+
+            var query = new AV.Query('Activity');
+            query.get(activityId).then(function(result){
+                retVal.activity = result;
+
+                //查询活动相关动态
+                query = new AV.Query('DynamicNews');
+                query.include('user_id');
+                query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+                query.limit(limit);
+                query.skip(skip);
+                return query.find();
+            }).then(function(results){
+
+                return addLikesAndReturn(req, results);
+            }).then(function(dynamics){
+                if (dynamics) {
+                    retVal.dynamics = [];
+                    dynamics.forEach(function(dynamic){
+                        retVal.dynamics.push(dynamic._toFullJSON());
+                    });
+                }
+
+                res.success(retVal);
+            }, function(err){
+                console.error('activityDynamic error:', err);
+
+                res.error('获取活动相关动态失败:'+err?err.message:'');
             });
             break;
     }
