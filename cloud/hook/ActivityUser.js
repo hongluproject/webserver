@@ -42,7 +42,7 @@ AV.Cloud.afterSave('ActivityUser', function(req){
     var query = new AV.Query('_User');
     query.get(userObj.id).then(function(user) {
         var queryActivity = new AV.Query('Activity');
-        queryActivity.select('user_id', 'joinUsers');
+        queryActivity.select('user_id', 'joinUsers', 'title');
         queryActivity.get(ActivityObj.id, {
             success:function(activity) {
                 if (!activity) {
@@ -52,6 +52,13 @@ AV.Cloud.afterSave('ActivityUser', function(req){
                 activity.increment('current_num');
                 activity.addUnique('joinUsers', userObj.id);
                 activity.save();
+
+                //加入融云组群
+                AV.Cloud.run('imAddToGroup',{
+                    userid:userObj.id,
+                    groupid:activity.id,
+                    groupname:activity.get('title')
+                });
 
                 var founderId = activity.get('user_id').id;
                 var query = new AV.Query('_User');
@@ -80,6 +87,12 @@ AV.Cloud.afterDelete('ActivityUser', function(req){
         result.increment('current_num', -1);
         result.remove('joinUsers', userObj.id);
         result.save();
+
+        //从融云群组里面退出
+        AV.Cloud.run('imQuitGroup',{
+            userid:userObj.id,
+            groupid:ActivityObj.id
+        });
 
         //通知到对应活动的Founder，告知有人退出了活动
         var activityFounder = result.get('user_id');
