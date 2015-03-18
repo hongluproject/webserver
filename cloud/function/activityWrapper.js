@@ -917,6 +917,9 @@ AV.Cloud.define('getOrderList', function(req, res){
  *  参数：
  *      userId:objectId 用户ID，若为当前登录用户，可不传
  *      tags:array 用户标签，若为当前登录用户，可不传
+ *      skip:Integer 本次查询偏移
+ *      limit:Integer  本次查询数量
+ *      activityType:'mainpage'：首页  'mine':我的活动
  *  返回:
  *      [
  *          {
@@ -938,30 +941,77 @@ AV.Cloud.define('getActivityList', function(req, res){
     }
     var skip = req.params.skip || 0;
     var limit = req.params.limit || 20;
+    var activityType = req.params.activityType || 'mainpage';
     var retVal = [];
 
-    var query = new AV.Query('Activity');
-    query.limit(limit);
-    query.skip(skip);
-    query.descending('createdAt');
-    query.find().then(function(results){
-        if (!results) {
-            res.success();
-            return;
-        }
+    switch (activityType) {
+        case 'mainpage':
+            var query = new AV.Query('Activity');
+            query.limit(limit);
+            query.skip(skip);
+            query.descending('createdAt');
+            query.find().then(function(results){
+                if (!results) {
+                    res.success();
+                    return;
+                }
 
-        results.forEach(function(activity){
-            var retItem = {};
-            retItem.activity = activity._toFullJSON();
-            retItem.extra = {
-                friendJoin:0
-            };
+                results.forEach(function(activity){
+                    var retItem = {};
+                    retItem.activity = activity._toFullJSON();
+                    retItem.extra = {
+                        friendJoin:0
+                    };
 
-            retVal.push(retItem);
-        });
+                    retVal.push(retItem);
+                });
 
-        res.success(retVal);
-    });
+                res.success(retVal);
+            }, function(err){
+                res.error('查询活动失败:'+err?err.message:'');
+            });
+            break;
+
+        case 'mine':
+            var queryOr = [];
+            var query = new AV.Query('Activity');
+            query.equalTo('user_id', AV.Object.createWithoutData('_User', userId));
+            queryOr.push(query);
+
+            /*
+            var innerQuery = new AV.Query('ActivityUser');
+            innerQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            query = new AV.Query('Activity');
+            query.notEqualTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.matchesQuery('user_id', innerQuery);
+            queryOr.push(query);
+            */
+
+            query = AV.Query.or.apply(null, queryOr);
+            query.find().then(function(results){
+                if (!results) {
+                    res.success();
+                    return;
+                }
+
+                results.forEach(function(activity){
+                    var retItem = {};
+                    retItem.activity = activity._toFullJSON();
+                    retItem.extra = {
+                        friendJoin:0
+                    };
+
+                    retVal.push(retItem);
+                });
+
+                res.success(retVal);
+            }, function(err){
+                res.error('查询活动失败:'+err?err.message:'');
+            });
+            break;
+
+    }
+
 });
 
 /** 判断是否能够创建活动

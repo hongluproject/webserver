@@ -3,6 +3,7 @@
  */
 
 var myutils = require('cloud/utils.js');
+var querystring = require('querystring');
 
 /**
  * 获取融云token接口
@@ -39,11 +40,11 @@ AV.Cloud.define('imGetToken', function(req, res){
                     'Timestamp': rcParam.timestamp,
                     'Signature': rcParam.signature
                 },
-                body: {
-                    userId:userobjid,
-                    name:username,
-                    portraitUri:icon
-                },
+                body: querystring.stringify({
+                            userId:userobjid,
+                            name:username,
+                            portraitUri:icon
+                        }),
                 success: function(httpResponse) {
                     console.info('getimtoken:rongcloud response is '+httpResponse.text);
 
@@ -162,11 +163,11 @@ AV.Cloud.define('imAddToGroup', function(request, response){
                     'Timestamp': rcParam.timestamp,
                     'Signature': rcParam.signature
                 },
-                body: {
-                    userId:userid,
-                    groupId:groupid,
-                    groupName:groupname
-                },
+                body: querystring.stringify({
+                            userId:userid,
+                            groupId:groupid,
+                            groupName:groupname
+                        }),
                 success: function(httpResponse) {
                     console.info('imAddToGroup:rong cloud response is '+httpResponse.text);
                     if (httpResponse.data.code == 200)
@@ -234,10 +235,10 @@ AV.Cloud.define('imQuitGroup', function(request, response){
                     'Timestamp': rcParam.timestamp,
                     'Signature': rcParam.signature
                 },
-                body: {
-                    userId:userid,
-                    groupId:groupid
-                },
+                body: querystring.stringify({
+                            userId:userid,
+                            groupId:groupid
+                        }),
                 success: function(httpResponse) {
                     console.info('imQuitGroup:rong cloud response is '+httpResponse.text);
                     if (httpResponse.data.code == 200)
@@ -293,10 +294,10 @@ AV.Cloud.define('imDismissGroup', function(request, response){
             'Timestamp': rcParam.timestamp,
             'Signature': rcParam.signature
         },
-        body: {
-            userId:userid,
-            groupId:groupid
-        },
+        body: querystring.stringify({
+                    userId:userid,
+                    groupId:groupid
+                }),
         success: function(httpResponse) {
             console.info('imDismissGroup:rong cloud response is '+httpResponse.text);
             if (httpResponse.data.code == 200)
