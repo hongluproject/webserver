@@ -946,7 +946,27 @@ AV.Cloud.define('getActivityList', function(req, res){
 
     switch (activityType) {
         case 'mainpage':
-            var query = new AV.Query('Activity');
+
+            var activityClass = AV.Object.extend('Activity');
+            if(req.user.get('actual_position')){
+                var userGeoPoint = req.user.get('actual_position');
+            }
+            var queryOr = []
+            if (tags) {
+                var tagOr = null;
+                for(var i=0;i<tags.length;i++){
+                    var tagOr = new AV.Query(activityClass);
+                    tagOr.equalTo("tags", tags[i]);
+                    queryOr.push(tagOr);
+                }
+                var query= AV.Query.or.apply(null, queryOr);
+            }else{
+                var query= new AV.Query(activityClass);
+            }
+            if (userGeoPoint)
+                query.near("position", userGeoPoint);
+            var searchDate=new Date();
+            query.greaterThan('dead_time',searchDate);
             query.limit(limit);
             query.skip(skip);
             query.descending('createdAt');
