@@ -660,7 +660,9 @@ AV.Cloud.define('paymentComplete', function(req, res){
         return query.first();
     }).then(function(result){
         if (result) {
-            res.success();
+            res.success({
+                paid:true
+            });
             return;
         }
 
@@ -682,7 +684,9 @@ AV.Cloud.define('paymentComplete', function(req, res){
 
         activity.increment('curr_num');
         activity.save();
-        res.success();
+        res.success({
+                paid:true
+            });
     }, function(err){
         console.error('处理订单完成失败:', err);
         res.error('处理订单完成失败:', err?err.message:'');
