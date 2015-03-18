@@ -993,21 +993,24 @@ AV.Cloud.define('getActivityList', function(req, res){
             break;
 
         case 'mine':
+            if (!userId) {
+                res.error('请传入用户信息！');
+                break;
+            }
             var queryOr = [];
             var query = new AV.Query('Activity');
             query.equalTo('user_id', AV.Object.createWithoutData('_User', userId));
             queryOr.push(query);
 
-            /*
-            var innerQuery = new AV.Query('ActivityUser');
-            innerQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
             query = new AV.Query('Activity');
-            query.notEqualTo('user_id', AV.User.createWithoutData('_User', userId));
-            query.matchesQuery('user_id', innerQuery);
+            query.notEqualTo('user_id', AV.Object.createWithoutData('_User', userId));
+            query.equalTo('joinUsers', userId);
             queryOr.push(query);
-            */
 
             query = AV.Query.or.apply(null, queryOr);
+            query.limit(limit);
+            query.skip(skip);
+            query.descending('createdAt');
             query.find().then(function(results){
                 if (!results) {
                     res.success();

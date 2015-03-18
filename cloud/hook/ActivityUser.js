@@ -42,9 +42,16 @@ AV.Cloud.afterSave('ActivityUser', function(req){
     var query = new AV.Query('_User');
     query.get(userObj.id).then(function(user) {
         var queryActivity = new AV.Query('Activity');
-        queryActivity.select('user_id');
+        queryActivity.select('user_id', 'joinUsers');
         queryActivity.get(ActivityObj.id, {
             success:function(activity) {
+                if (!activity) {
+                    return;
+                }
+
+                activity.addUnique('joinUsers', userObj.id);
+                activity.save();
+
                 var founderId = activity.get('user_id').id;
                 var query = new AV.Query('_User');
                 query.equalTo('objectId', founderId);
@@ -58,13 +65,19 @@ AV.Cloud.afterSave('ActivityUser', function(req){
 AV.Cloud.afterDelete('ActivityUser', function(req){
     var ActivityObj = req.object.get('activity_id');
     var userObj = req.object.get('user_id');
+    if (!ActivityObj || !userObj) {
+        return;
+    }
 
     var query = new AV.Query('Activity');
-    query.select('user_id');
+    query.select('user_id', 'joinUsers');
     query.get(ActivityObj.id).then(function(result){
         if (!result) {
             return;
         }
+
+        result.remove('joinUsers', userObj.id);
+        result.save();
 
         //通知到对应活动的Founder，告知有人退出了活动
         var activityFounder = result.get('user_id');
