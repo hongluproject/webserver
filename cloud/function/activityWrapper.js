@@ -71,9 +71,6 @@ AV.Cloud.define('joinActivity', function(req, res) {
             returnActivityUser.save();
         }
 
-        //更新当前报名人数
-        activityResult.increment('current_num', userCount);
-        activityResult.save();
        // common.postRCMessage(likeUser.id,postUser.id,'点赞了你的动态','newLike',dynamic.id);
 
         res.success();
@@ -110,11 +107,6 @@ AV.Cloud.define('quitActivity', function(req, res) {
 
         //删除这些数据
         AV.Object.destroyAll(activityUserResults);
-
-        //当前参加活动的人数递减
-        var activity = AV.Object.createWithoutData('Activity', activityId);
-        activity.increment('current_num', -activityUserResults.length);
-        activity.save();
 
         res.success();
     }, function(error) {
