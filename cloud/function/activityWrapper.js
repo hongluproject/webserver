@@ -398,10 +398,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
             query.descending('createdAt');
             return query.first();
         } else {
-            res.success({
-                activity:currActivity,
-                extra:extraData
-            });
+            return AV.Promise.as();
         }
     }).then(function(result){
         if (result) {   //返回订单状态
