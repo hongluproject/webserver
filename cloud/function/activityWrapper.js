@@ -953,6 +953,9 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.limit(limit);
             query.skip(skip);
             query.descending('createdAt');
+            query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
+            'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
+            'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price', 'hasSignupUsers');
             query.find().then(function(results){
                 if (!results) {
                     res.success();
@@ -987,7 +990,7 @@ AV.Cloud.define('getActivityList', function(req, res){
 
             query = new AV.Query('Activity');
             query.notEqualTo('user_id', AV.Object.createWithoutData('_User', userId));
-            query.equalTo('signupUsers', userId);
+            query.equalTo('hasSignupUsers', userId);
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);

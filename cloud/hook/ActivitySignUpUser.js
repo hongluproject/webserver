@@ -10,13 +10,13 @@ AV.Cloud.afterSave('ActivitySignUpUser', function(req) {
     }
 
     var query = new AV.Query('Activity');
-    query.select('signupUsers');
+    query.select('hasSignupUsers');
     query.get(activityObj.id).then(function(activity){
        if (!activity) {
            return;
        }
 
-        activity.addUnique('signupUsers', userObj.id);
+        activity.addUnique('hasSignupUsers', userObj.id);
         activity.save();
     });
 });
