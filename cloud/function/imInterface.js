@@ -5,6 +5,62 @@
 var myutils = require('cloud/utils.js');
 var querystring = require('querystring');
 
+/** 通过群组ID获取群组名称
+ *  函数名：imGetGroupnameFromId
+ *  参数：
+ *      groupId:objectId 群组ID
+ *  返回：
+ *      {
+ *          groupType:string 'clan':部落 'activity':活动
+ *          id:objectId 部落 or 活动ID
+ *          name:string 名称
+ *          icon:string 头像
+ *      }
+ *  处理流程：
+ *      1、先查询Clan表，看对应ID的object是否存在。
+ *      2、若1失败，再查询Activity表。
+ */
+AV.Cloud.define('imGetGroupnameFromId', function(req, res){
+   var groupId = req.params.groupId;
+    if (!groupId) {
+        res.error('请传入ID！');
+        return;
+    }
+
+    var query = new AV.Query('Clan');
+    query.select('title', 'icon');
+    query.equalTo('objectId', groupId);
+    query.first().then(function(clan){
+        if (clan) {
+            res.success({
+                type:'clan',
+                id:groupId,
+                name:clan.get('title')||'',
+                icon:clan.get('icon')||''
+            })
+        } else {
+            query = new AV.Query('Activity');
+            query.select('title', 'index_thumb_image');
+            query.equalTo('objectId', groupId);
+            return query.first();
+        }
+    }).then(function(activity){
+        if (activity) {
+            res.success({
+                type:'activity',
+                id:groupId,
+                name:activity.get('title')||'',
+                icon:activity.get('index_thumb_image')
+            });
+        } else {
+            res.error('未找到群组名称！');
+        }
+    }, function(err){
+       console.error('getGroupnameFromId error:', err);
+        res.error('获取群组名称失败:'+err?err.message:'');
+    });
+});
+
 /**
  * 获取融云token接口
  * @userobjid   用户objectid，通过该ID获取到用户信息，再向融云发起获取token请求

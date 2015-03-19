@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/30.
  */
 var common = require('cloud/common');
+var querystring = require('querystring');
 
 /** 加入活动，可批量提交
  * @params:
@@ -473,10 +474,24 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
         order = result.get('order_id');
         activityFounder = activity.get('user_id');
 
+        var chargeId = order.get('serialNumber');
         var payType = activity.get('pay_type');
         if (payType == 2) { //如果为线上支付，则先改为申请退款
             order.set('accountStatus', 3); //将订单状态改为申请退款中
             order.save();
+
+            if (chargeId) {
+                var url = 'http://pay.imsahala.com/api/ping/refund?'+querystring.stringify({
+                        ch_id:chargeId,
+                        description:'用户申请退款'
+                    });
+                console.info('申请退款URL：%s', url);
+                //通知PHP server修改订单状态
+                AV.Cloud.httpRequest({
+                    method: 'GET',
+                    url: url
+                });
+            }
         }
 
         //删除对应的ActivityUser记录
@@ -615,6 +630,12 @@ AV.Cloud.define('paymentComplete', function(req, res){
         res.error('请传入订单号');
         return;
     }
+    var timePaid = req.params.timePaid;
+    if (timePaid) {
+        timePaid = new Date(parseInt(timePaid) * 1000);
+    }
+    var transactionNo = req.params.transactionNo;
+
     var user, activity, order;
 
     var query = new AV.Query('StatementAccount');
@@ -629,7 +650,12 @@ AV.Cloud.define('paymentComplete', function(req, res){
         order = result;
         //订单状态改为已支付
         result.set('accountStatus', 2);
-        result.set('paidTime', new Date());
+        if (timePaid) {
+            result.set('paidTime', timePaid);
+        }
+        if (transactionNo) {
+            result.set('transactionNo', transactionNo);
+        }
         return result.save();
     }).then(function(result){
         activity = result.get('activityId');
@@ -826,12 +852,18 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         if (result) {
             console.info(result.text);
             result = JSON.parse(result.text);
-            if (result.paid) {
-                statement.set('accountStatus', 2);
-                if (result.time_paid) {
-                    statement.set('paidTime', new Date(result.time_paid*1000));
+            if (result) {
+                if (result.paid) {  //是否完成支付
+                    statement.set('accountStatus', 2);
+                    if (result.time_paid) { //支付时间
+                        statement.set('paidTime', new Date(result.time_paid*1000));
+                    }
+                    if (result.transaction_no) {    //第三方支付的交易流水号
+                        statement.set('transactionNo', result.transaction_no);
+                    }
+
+                    statement.save();
                 }
-                statement.save();
             }
         }
 
@@ -1164,5 +1196,37 @@ AV.Cloud.define('signinActivity', function(req, res){
     }, function(err){
         console.error('签到失败:',err);
         res.error('签到失败:', err?err.message:'');
+    });
+});
+
+/*
+    取消订单
+    函数名：  cancelOrder
+    参数：
+        orderNo:string 订单号
+    返回：
+        success or fail
+ */
+AV.Cloud.define('cancelOrder', function(req, res){
+    var orderNo = req.params.orderNo;
+    if (!orderNo) {
+        res.error('请传入订单信息！');
+        return;
+    }
+
+    var query = new AV.Query('StatementAccount');
+    query.equalTo('bookNumber', orderNo);
+    query.first().then(function(order){
+        var currAccountStatus = order.get('accountStatus');
+        if (currAccountStatus == 1) {
+            order.set('accountStatus', 6);
+            order.save();
+            res.success();
+        } else {
+            res.error('当前订单状态不允许取消！');
+        }
+    }, function(err){
+        console.error('cancelOrder error:', err);
+        res.error('取消订单失败：', err?err.message:'');
     });
 });
