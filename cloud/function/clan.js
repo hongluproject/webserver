@@ -246,68 +246,80 @@ AV.Cloud.define("joinClan", function (req, res) {
         res.error("传入的参数有误");
         return;
     }
-    var query = new AV.Query('Clan');
-    query.include("founder_id.level");
-    query.get(clanid).then(function (clan) {
-        if (!clan) {
-            console.info('部落不存在:%s', clan.id);
-            res.error('部落不存在!');
+
+    //首先判断用户是否已经加入了部落
+    var query = new AV.Query('ClanUser');
+    query.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanid));
+    query.equalTo('user_id', AV.User.createWithoutData('_User', userid));
+    query.first().then(function(clanUser){
+        if (clanUser) {
+            res.error('您已经加入部落！');
             return;
         }
 
-        if (isClanFull(clan)) {
-            res.error('部落人员已满!');
-            return;
-        }
+        var query = new AV.Query('Clan');
+        query.include("founder_id.level");
+        query.get(clanid).then(function (clan) {
+            if (!clan) {
+                console.info('部落不存在:%s', clan.id);
+                res.error('部落不存在!');
+                return;
+            }
 
-        var joinMode = clan.get('join_mode');
-        switch (joinMode)
-        {
-            case 1:
-                addClanUser(userid, clanid, function(success) {
-                    if (!success) {
-                        res.error('加入部落失败');
-                    }
-                    else {
-                        res.success();
-                    }
-                });
-                break;
-            case 2:
-                var query = new AV.Query('ClanReviewUser');
-                query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
-                query.equalTo("clan_id", AV.Object.createWithoutData("ClanUser", clanid, false));
-                query.count().then(function(count){
-                    if(count>0){
-                        res.success('已申请过部落');
-                        return;
-                    }else{
-                        var query = new AV.Query('_User');
-                        query.get(userid, {
-                            success: function (fromUser) {
-                                addReviewClanUser(userid, clanid, function(success) {
-                                    if (success) {
-                                       common.postRCMessage(userid, clan.get("founder_id").id,
+            if (isClanFull(clan)) {
+                res.error('部落人员已满!');
+                return;
+            }
+
+            var joinMode = clan.get('join_mode');
+            switch (joinMode)
+            {
+                case 1:
+                    addClanUser(userid, clanid, function(success) {
+                        if (!success) {
+                            res.error('加入部落失败');
+                        }
+                        else {
+                            res.success();
+                        }
+                    });
+                    break;
+                case 2:
+                    var query = new AV.Query('ClanReviewUser');
+                    query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
+                    query.equalTo("clan_id", AV.Object.createWithoutData("ClanUser", clanid, false));
+                    query.count().then(function(count){
+                        if(count>0){
+                            res.success('已申请过部落');
+                            return;
+                        }else{
+                            var query = new AV.Query('_User');
+                            query.get(userid, {
+                                success: function (fromUser) {
+                                    addReviewClanUser(userid, clanid, function(success) {
+                                        if (success) {
+                                            common.postRCMessage(userid, clan.get("founder_id").id,
                                                 fromUser.get("nickname")+"请求加入部落"+clan.get("title"),'requestJoinClan',clanid
-                                                );
-                                        res.success('已经发送申请');
-                                    }
-                                    else {
-                                        res.error('加入部落失败');
-                                    }
-                                });
-                            },
-                            error: function (error) {
-                                res.error('用户不存在!');
-                            }
-                        })
-                        return;
-                    }
-                },function(error){
-                    res.error('申请部落失败');
-                });
-                break;
-        }
+                                            );
+                                            res.success('已经发送申请');
+                                        }
+                                        else {
+                                            res.error('加入部落失败');
+                                        }
+                                    });
+                                },
+                                error: function (error) {
+                                    res.error('用户不存在!');
+                                }
+                            })
+                            return;
+                        }
+                    },function(error){
+                        res.error('申请部落失败');
+                    });
+                    break;
+            }
+        });
     }, function(err){
         console.error('加入部落失败:', err);
         res.error('加入部落失败:', err?err.message:'');

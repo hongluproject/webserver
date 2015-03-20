@@ -404,9 +404,6 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     }).then(function(result){
         if (result) {   //返回订单状态
             extraData.accountStatus = result.get('accountStatus');
-            if (!common.isOnlinePay(payType)) {
-                extraData.accountStatus = 2;
-            }
             extraData.bookNumber = result.get('bookNumber');
         }
 
@@ -476,7 +473,7 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
 
         var chargeId = order.get('serialNumber');
         var payType = activity.get('pay_type');
-        if (payType == 2) { //如果为线上支付，则先改为申请退款
+        if (common.isOnlinePay(payType)) { //如果为线上支付，则先改为申请退款
             order.set('accountStatus', 3); //将订单状态改为申请退款中
             order.save();
 
@@ -492,6 +489,9 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
                     url: url
                 });
             }
+        } else {
+            order.set('accountStatus', 5);  //改为退出活动状态
+            order.save();
         }
 
         //删除对应的ActivityUser记录
