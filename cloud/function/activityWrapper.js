@@ -3,6 +3,7 @@
  */
 var common = require('cloud/common');
 var querystring = require('querystring');
+var pingpp = require('pingpp');
 
 /** 加入活动，可批量提交
  * @params:
@@ -841,29 +842,28 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         console.info('pingxx url:%s', url);
         if (common.isOnlinePay(payType) && serialNumber && accountStatus == 1) {
             //线上支付&订单处于未支付状态，去支付平台同步查询订单实际状态
+            return pingpp(common.pingxxAppKey).charges.retrieve(serialNumber);
+            /*
             return AV.Cloud.httpRequest({
                 method: 'GET',
                 url: url
             });
+            */
         } else {
             return AV.Promise.as();
         }
     }).then(function(result){
         if (result) {
-            console.info(result.text);
-            result = JSON.parse(result.text);
-            if (result) {
-                if (result.paid) {  //是否完成支付
-                    statement.set('accountStatus', 2);
-                    if (result.time_paid) { //支付时间
-                        statement.set('paidTime', new Date(result.time_paid*1000));
-                    }
-                    if (result.transaction_no) {    //第三方支付的交易流水号
-                        statement.set('transactionNo', result.transaction_no);
-                    }
-
-                    statement.save();
+            if (result.paid) {  //是否完成支付
+                statement.set('accountStatus', 2);
+                if (result.time_paid) { //支付时间
+                    statement.set('paidTime', new Date(result.time_paid*1000));
                 }
+                if (result.transaction_no) {    //第三方支付的交易流水号
+                    statement.set('transactionNo', result.transaction_no);
+                }
+
+                statement.save();
             }
         }
 

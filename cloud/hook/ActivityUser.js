@@ -6,6 +6,9 @@ var common = require('cloud/common.js');
 /** 判断活动人数是否已经超过上限
  *
  */
+
+/*
+暂时不对 ActivityUser 做beforeSave，因为前端均调用云函数，在写数据前前已经判断
 AV.Cloud.beforeSave('ActivityUser', function(req, res) {
     console.info('enter ActivityUser beforeSave');
     var activityId = req.object.get('activity_id').id;
@@ -34,6 +37,7 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
         res.error(error);
     });
 });
+*/
 
 
 AV.Cloud.afterSave('ActivityUser', function(req){

@@ -407,3 +407,6 @@ exports.isSahalaDevEnv = function() {
 exports.isOnlinePay = function(payType) {
     return (payType == 2);
 }
+
+exports.pingxxAppId = 'app_e18iHKa1KyPKa584';
+exports.pingxxAppKey = 'sk_live_q1aX98rz9ev1af9GKGb5W90K';

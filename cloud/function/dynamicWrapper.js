@@ -376,8 +376,14 @@ AV.Cloud.define('getDynamic', function(req,res){
             }).then(function(dynamics){
                 if (dynamics) {
                     retVal.dynamics = [];
+                    var _ = AV._;
                     dynamics.forEach(function(dynamic){
-                        retVal.dynamics.push(dynamic._toFullJSON());
+                        dynamic = dynamic._toFullJSON();
+                        var user_id = dynamic.user_id;
+                        if (!user_id.__type) {  //增加返回'__type'字段
+                            user_id.__type = 'Object';
+                        }
+                        retVal.dynamics.push(dynamic);
                     });
                 }
 
