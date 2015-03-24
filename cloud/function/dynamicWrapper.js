@@ -106,7 +106,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                  maxId:N default is zero
              }
              */
-            var userId = req.params.userId;
+            var userId = req.params.userId || (req.user?req.user.id:undefined);
             if (!userId) {
                 res.error('缺少用户信息！');
                 return;
@@ -128,9 +128,8 @@ AV.Cloud.define('getDynamic', function(req,res){
             var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User',userId));
             var statusReturn = [];
             query.include('dynamicNews');
-//            query.include('source');
+            query.include('source');
             query.include('dynamicNews.user_id');
-            query.containedIn('messageType', ['newPost', 'newQuestion']);
             query.limit(limit);
             query.maxId(maxId);
             query.exists('dynamicNews');
@@ -140,6 +139,8 @@ AV.Cloud.define('getDynamic', function(req,res){
                     res.success([]);
                     return;
                 }
+
+                console.info("count:%d limit:%d", statuses.length, limit);
 
                 date2 = new Date();
                 console.info("userid:%s dynamic finding use time:%d ms", userId, date2.getTime()-date1.getTime());

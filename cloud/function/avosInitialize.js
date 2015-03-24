@@ -12,6 +12,7 @@ exports.initializeAvosData = function() {
 
         //拉取所有的标签列表
         var queryTags = new AV.Query('Tag');
+        queryTags.equalTo('status', 1);
         queryTags.limit = 1000;
         queryTags.find(function(tagResults) {
             globalObj.hpTags = {};

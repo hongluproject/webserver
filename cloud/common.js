@@ -309,15 +309,15 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         refundSuccess:"退款成功"
     };
 
-
     var toRcUsers = [];
     var status = new AV.Status(null, messageObj[messageType]);
     status.data.source = sourceUser._toPointer();
     status.query = query;
+    status.inboxType = exports.inboxtypeFromMessageType(messageType);
     status.set('messageType', messageType);
     if (targetUser) {
         toRcUsers = toRcUsers.concat(targetUser.id);
-//        status.set('targetUser', targetUser._toPointer());
+        status.set('targetUser', targetUser._toPointer());
     }
 
     status.set('messageSignature', utils.calcStatusSignature(sourceUser.id,messageType,new Date()));
@@ -351,6 +351,18 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
     }
     if (messageType=='newPost' || messageType=='newQuestion') {
         //将此消息发送给所有我的关注者（粉丝），让他们可以看到我的动态
+        AV.Status.sendStatusToFollowers(status).then(function(status){
+            //发布状态成功，返回状态信息
+            console.info("%s 发布动态给粉丝成功!", sourceUser.id);
+            console.dir(status);
+        }, function(err){
+            //发布失败
+            console.error("%s 发布动态给粉丝失败!", sourceUser.id);
+            console.dir(err);
+        });
+
+        //再向 dynamic 发送一次
+        status.inboxType = 'dynamic';
         AV.Status.sendStatusToFollowers(status).then(function(status){
             //发布状态成功，返回状态信息
             console.info("%s 发布动态给粉丝成功!", sourceUser.id);
@@ -410,3 +422,33 @@ exports.isOnlinePay = function(payType) {
 
 exports.pingxxAppId = 'app_e18iHKa1KyPKa584';
 exports.pingxxAppKey = 'sk_live_q1aX98rz9ev1af9GKGb5W90K';
+
+exports.inboxtypeFromMessageType = function(messageType) {
+    switch (messageType) {
+        case 'addFriend':
+            return 'friend';
+
+        case 'newPost':
+            return 'default';
+
+        case 'newLike':
+        case 'newComment':
+            return 'dynamic';
+
+        case 'removeFromClan':
+        case 'addToClan':
+        case 'quitClan':
+        case 'refuseToJoinClan':
+        case 'allowToJoinClan':
+            return 'clan';
+
+        case 'quitActivity':
+        case 'updateActivity':
+        case 'cancelActivity':
+        case 'refundSuccess':
+            return 'activity';
+
+        default:
+            return 'system';
+  }
+}

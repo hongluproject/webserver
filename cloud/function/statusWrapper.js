@@ -21,14 +21,14 @@ var common = require('cloud/common.js');
  *
  */
 AV.Cloud.define('getStatus', function(req, res) {
-    var userId = req.params.userId;
+    var userId = req.params.userId || (req.user?req.user.id:undefined);
     if (!userId) {
         res.error('缺少用户信息！');
         return;
     }
     var limit = req.params.limit || 20;
     var maxId = req.params.maxId || 0;
-    var messageType = req.params.messageType;  //dynamic friend clan activity
+    var inboxType = req.params.messageType || 'default';  //dynamic friend clan activity
 
     //保留的user keys
     var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
@@ -37,31 +37,8 @@ AV.Cloud.define('getStatus', function(req, res) {
     //保留的activity keys
     var pcickActivityKeys = ['objectId','__type', 'title', "className"];
 
-    var queryMsgForDynamic = ['newLike', 'newComment', 'newPost'];
-    var queryMsgForFriend = ['addFriend'];
-    var queryMsgForClan = ['refuseToJoinClan', 'addToClan', 'removeFromClan', 'quitClan',
-        'refuseToJoinClan', 'allowToJoinClan'];
-    var queryMsgForActivity = ['joinActivity', 'quitActivity', 'refundSuccess', 'updateActivity', 'cancelActivity'];
-    var queryMsg;
-
-    switch(messageType) {
-        case 'dynamic':
-            queryMsg = queryMsgForDynamic;
-            break;
-        case 'friend':
-            queryMsg = queryMsgForFriend;
-            break;
-        case 'clan':
-            queryMsg = queryMsgForClan;
-            break;
-        default :
-            queryMsg = queryMsgForDynamic.concat(queryMsgForFriend, queryMsgForActivity, queryMsgForClan);
-            break;
-    }
-
     var userObj = AV.User.createWithoutData('_User', userId);
-    var query = AV.Status.inboxQuery(userObj);
-    query.containedIn('messageType', queryMsg);
+    var query = AV.Status.inboxQuery(userObj, inboxType);
     query.notEqualTo('source', userObj);   //不包含自己发送的消息
     query.include('source', 'clan', 'activity', 'StatementAccount');
     query.limit(limit);

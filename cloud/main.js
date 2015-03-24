@@ -46,10 +46,52 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var pingpp = require('pingpp')(common.pingxxAppKey);
-	pingpp.charges.retrieve('ch_0C4GeHuDCejPGWrrXPjvv9SC').then(function(result){
-		console.dir(result);
-		res.success(result);
+	/*
+	var followeeId = req.params.followee;
+	var query = new AV.Query('_User');
+	query.equalTo('objectId', req.user.id);
+
+	for (var i=0; i<2; i++) {
+		common.sendStatus('addFriend1', AV.User.createWithoutData('_User',followeeId), req.user, query);
+	}
+
+	return;
+	*/
+
+	var maxId = req.params.maxId || 0;
+	var limit = req.params.limit || 100;
+	var queryOr = [];
+	var queryMsg = ['addFriend', 'addFriend1', 'addFriend2'];
+	var userObj = req.user;
+	var query;
+	queryMsg.forEach(function(msgItem){
+		query = AV.Status.inboxQuery(userObj, msgItem);
+		query.notEqualTo('source', userObj);   //不包含自己发送的消息
+		query.find(function(results){
+			results.forEach(function(result){
+				console.dir(result);
+				//console.info('inboxType:%s messageId:%d', result.inboxType, result.messageId);
+			})
+		})
+		queryOr.push(query);
+	});
+
+	return;
+
+	query = new AV.InboxQuery(AV.Status);
+	query._owner = userObj;
+	query._orQuery(queryOr);
+	query.include('source', 'clan', 'activity', 'statementAccount');
+	query.limit(limit);
+	query.maxId(maxId);
+	query.find().then(function(results){
+		results.forEach(function(result){
+			console.dir(result);
+		});
+		res.success(results);
+		console.info(results.length);
+	}, function(err){
+		res.error(err);
 	});
 });
 
