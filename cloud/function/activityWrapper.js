@@ -533,7 +533,7 @@ AV.Cloud.define('cancelActivity', function(req, res){
     var activityFounder;    //活动发起人
     var activity;           //活动
 
-    if (!activity || !cancelReason) {
+    if (!activityId || !cancelReason) {
         res.error('请传入相关参数！');
         return;
     }

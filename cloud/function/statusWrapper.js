@@ -3,6 +3,23 @@
  */
 var common = require('cloud/common.js');
 
+/** 查询消息流
+ *  函数名：getStatus
+ *  参数：
+ *      limit、skip：查询返回条数和偏移
+ *      maxId:当前查询最大ID
+ *      messageType:查询消息类型，
+ *          'dynamic'  动态相关消息
+ *          'friend'    好友相关消息
+ *          'clan'      部落相关消息
+ *          'activity'  活动相关消息
+ *          若不传，则返回以上所有消息
+ *  返回：
+ *      [
+ *          {Status Class Object}
+ *      ]
+ *
+ */
 AV.Cloud.define('getStatus', function(req, res) {
     var userId = req.params.userId;
     if (!userId) {
@@ -11,6 +28,8 @@ AV.Cloud.define('getStatus', function(req, res) {
     }
     var limit = req.params.limit || 20;
     var maxId = req.params.maxId || 0;
+    var messageType = req.params.messageType;  //dynamic friend clan activity
+
     //保留的user keys
     var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
     //保留的clan keys
@@ -18,38 +37,36 @@ AV.Cloud.define('getStatus', function(req, res) {
     //保留的activity keys
     var pcickActivityKeys = ['objectId','__type', 'title', "className"];
 
+    var queryMsgForDynamic = ['newLike', 'newComment', 'newPost'];
+    var queryMsgForFriend = ['addFriend'];
+    var queryMsgForClan = ['refuseToJoinClan', 'addToClan', 'removeFromClan', 'quitClan',
+        'refuseToJoinClan', 'allowToJoinClan'];
+    var queryMsgForActivity = ['joinActivity', 'quitActivity', 'refundSuccess', 'updateActivity', 'cancelActivity'];
+    var queryMsg;
+
+    switch(messageType) {
+        case 'dynamic':
+            queryMsg = queryMsgForDynamic;
+            break;
+        case 'friend':
+            queryMsg = queryMsgForFriend;
+            break;
+        case 'clan':
+            queryMsg = queryMsgForClan;
+            break;
+        default :
+            queryMsg = queryMsgForDynamic.concat(queryMsgForFriend, queryMsgForActivity, queryMsgForClan);
+            break;
+    }
+
     var userObj = AV.User.createWithoutData('_User', userId);
-    var queryOr = [];
-    //query newLike addFriend newComment newLike
-    var queryMsgArray1 = ['newLike', 'addFriend', 'newComment', 'refuseToJoinClan',
-        'addToClan', 'removeFromClan', 'quitClan', 'joinActivity', 'allowToJoinClan', 'refuseToJoinClan',
-        'allowToJoinClan', 'quitActivity', 'refundSuccess'];
-    var query1 = AV.Status.inboxQuery(userObj);
-    query1.containedIn('messageType', queryMsgArray1);
-    query1.notEqualTo('source', userObj);   //不包含自己发送的消息
-//    query1.equalTo('targetUser', userObj);   //目标用户是自己
-    queryOr.push(query1);
-
-    var queryMsgArray2 = ['newPost', 'sysMessage', 'updateActivity', 'cancelActivity'];
-    var query2 = AV.Status.inboxQuery(userObj);
-    query2.containedIn('messageType', queryMsgArray2);
-    query2.notEqualTo('source', userObj);   //不包含自己发送的消息
-    queryOr.push(query2);
-
-    /*
-    var query3 = AV.Status.inboxQuery(userObj);
-    query3.equalTo('messageType', 'newComment');
-    query3.notEqualTo('source', userObj);   //不包含自己发送的消息
-    query3.equalTo('replyUser', userObj);   //回复评论的用户是自己
-    queryOr.push(query3);
-    */
-
-    var query = new AV.InboxQuery(AV.Status);
-    query._owner = userObj;
-    query._orQuery(queryOr);
+    var query = AV.Status.inboxQuery(userObj);
+    query.containedIn('messageType', queryMsg);
+    query.notEqualTo('source', userObj);   //不包含自己发送的消息
     query.include('source', 'clan', 'activity', 'StatementAccount');
     query.limit(limit);
     query.maxId(maxId);
+
     var date1 = new Date();
     var _ = AV._;
     query.find().then(function(results) {
@@ -87,35 +104,6 @@ AV.Cloud.define('getStatus', function(req, res) {
         console.error(err);
         res.error(err);
     });
-
-    /*
-    var queryMsgArray = ['newPost', 'addFriend',
-        'newComment', 'newLike', 'addToClan', 'removeFromClan', 'joinActivity', 'sysMessage'];
-    //查询事件流，获取用户关注的所有动态
-    var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User', userId));
-    query.include('source');
-    query.containedIn('messageType', queryMsgArray);    //查询指定的消息类型
-    query.notEqualTo('source', AV.User.createWithoutData('_User', userId));   //不包含自己发送的消息
-    query.limit(limit);
-    query.maxId(maxId);
-    var date1 = new Date();
-    query.find().then(function(results) {
-        var date2 = new Date();
-        console.info('query user status use time:%dms', date2.getTime()-date1.getTime());
-        //去掉source中多余的信息，只保留APP需要的字段
-        for (var i in results) {
-            var postUser = results[i].get('source');
-
-            for (var k in postUser) {
-                if (returnUserItem[k] != 1) {
-                    delete postUser[k];
-                }
-            }
-        }
-
-        res.success(results);
-    });
-    */
 
 });
 
