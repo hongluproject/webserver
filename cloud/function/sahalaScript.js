@@ -73,7 +73,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
     }
 
     res.success({
-        code:rand6Number()
+        invitationCode:rand6Number()
     });
 
 
@@ -90,7 +90,7 @@ AV.Cloud.define('validateInvitationCode', function(req, res){
     //生成邀请码
 
     res.success({
-        status:true
+        invitationCodeStatus:true
     });
 
 });
