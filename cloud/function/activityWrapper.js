@@ -711,6 +711,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
     var skip = req.params.skip || 0;
     var limit = req.params.limit || 20;
     var retVal = [];
+    var _ = AV._;
 
     if (!activityId) {
         res.error('请传入活动信息！');
@@ -729,6 +730,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
             return;
         }
 
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type", "actual_position"];
         results.forEach(function(item) {
             var user = item.get('user_id');
             var userInfo = {
@@ -750,6 +752,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
             }
 
             item = item._toFullJSON();
+            item.user_id = _.pick(user._toFullJSON(), pickUserKeys);
 
             retVal.push(item);
         })
@@ -1229,4 +1232,132 @@ AV.Cloud.define('cancelOrder', function(req, res){
         console.error('cancelOrder error:', err);
         res.error('取消订单失败：', err?err.message:'');
     });
+});
+
+/**
+ * 根据订单号生成支付订单信息
+ * 参数：
+ *  orderNo:撒哈拉支付流水号
+ *  channel:支付方式  alipay（默认） or wx，
+ *  amount:支付金额，单位为分
+ *  subject:商品名称
+ *  describe:商品描述
+ * 返回：
+ * {
+ *  chargeId:pingxx charge id
+ * }
+ */
+AV.Cloud.define('newChargeWithOrder', function(req, res){
+    var orderNo = req.params.orderNo;
+    var channel = req.params.channel || 'alipay';   //支付渠道：alipay, wx, upacp, bfb
+    var amount = req.params.amount || 0;
+    var subject = req.params.subject;   //商品名称
+    var describe = req.params.describe; //商品描述
+    var statement;
+
+    if (!orderNo) {
+        res.error('请传入订单号！');
+        return;
+    }
+
+    var query = new AV.Query('StatementAccount');
+    query.select('bookNumber', 'serialNumber');
+    query.equalTo('bookNumber', orderNo);
+    query.first().then(function(result){
+        if (!result) {
+            res.error('没有查到对应的订单！');
+            return;
+        }
+
+        statement = result;
+        return pingpp(common.pingxxAppKey).charges.create({
+            order_no:  orderNo,
+            app:       {id: common.pingxxAppId},
+            channel:   channel,
+            amount:    parseInt(amount),
+            client_ip: req.remoteAddress || '10.0.0.1',
+            currency:  "cny",
+            subject:   subject,
+            body:      describe
+        });
+    }).then(function(charge){
+        if (!charge) {
+            res.error('生成订单失败！');
+            return;
+        }
+        statement.set('serialNumber', charge.id);
+        statement.set('amount', charge.amount);
+        switch (channel) {
+            case 'wx':
+                statement.set('payMode', 2);
+                break;
+            case 'alipay':
+            default:
+                statement.set('payMode', 1);
+                break;
+        }
+        return statement.save();
+    }).then(function(statement){
+        res.success({
+            chargeId:statement.get('serialNumber')
+        });
+    }, function(err){
+        console.error(err);
+        res.error('生成订单失败:'+err?err.message:'');
+    });
+
+
+});
+
+/*
+    订单退款
+    函数名：
+        orderRefund
+    参数：
+        orderId:objectId  订单objectId
+        chargeId:string     pingxx的chargeId
+        amount:Integer      退款金额
+ */
+AV.Cloud.define('orderRefund', function(req, res){
+    var orderId = req.params.orderId;
+    var chargeId = req.params.chargeId;
+    var amount = req.params.amount || 0;
+
+    if (!orderId || !chargeId || !amount) {
+        res.error('缺少必要参数！');
+        return;
+    }
+
+    var query = new AV.Query('StatementAccount');
+    query.select('refundId');
+    query.equalTo('objectId', orderId);
+    query.first().then(function(statementObj){
+        if (!statementObj) {
+            res.error('订单不存在！');
+            return;
+        }
+
+        pingpp(common.pingxxAppKey).charges.createRefund(
+            chargeId,
+            { amount: parseInt(amount), description: "活动退款" }
+        ).then(function(refund){
+                if (!refund) {
+                    res.error('fail!');
+                    return;
+                }
+
+                //refund id回写到statement表中，根据该ID查询后续状态
+                statementObj.set('refundId', refund.id);
+                statementObj.set('accountStatus', 3);
+                statementObj.save();
+
+                res.success({
+                    refundId:refund.id
+                });
+            }, function(err){
+                console.error('orderRefund failed:', err);
+                res.error('创建退款失败：'+err?err.message:'');
+            });
+    });
+
 });

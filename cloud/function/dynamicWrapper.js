@@ -127,6 +127,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             //查询事件流，获取用户关注的所有动态
             var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User',userId));
             var statusReturn = [];
+            query.equalTo('messageType', 'newPost');
             query.include('dynamicNews');
             query.include('source');
             query.include('dynamicNews.user_id');

@@ -4,6 +4,8 @@ var name = require('cloud/name.js');
 require('cloud/app.js');
 var qiniu = require('qiniu');
 var common = require('cloud/common.js');
+var myutils = require('cloud/utils');
+var querystring = require('querystring');
 
 //初始化avos相关参数，并每隔1小时更新一次数据
 var globalParam = require('cloud/function/avosInitialize.js');
@@ -46,6 +48,9 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
+	console.info('remote peer address:%s', req.remoteAddress);
+	res.success();
+	return;
 	/*
 	var followeeId = req.params.followee;
 	var query = new AV.Query('_User');
@@ -57,7 +62,73 @@ AV.Cloud.define("hello", function(req, res) {
 
 	return;
 	*/
+	var activityId = req.params.activityId;
+	var activityName = req.params.activityName;
 
+	//创建融云聊天室，用于实时导航
+	var rcParam = myutils.getRongCloudParam();
+	console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
+
+	var body = {};
+	var chatroomId = 'chatroom:' + activityId;
+	var key = 'chatroom[' + chatroomId + ']';
+	body[key] = activityName;
+	//通过avcloud发送HTTP的post请求
+	AV.Cloud.httpRequest({
+		method: 'POST',
+		url: 'https://api.cn.rong.io/chatroom/create.json',
+		headers: {
+			'App-Key': rcParam.appKey,
+			'Nonce': rcParam.nonce,
+			'Timestamp': rcParam.timestamp,
+			'Signature': rcParam.signature
+		},
+		body: querystring.stringify(body),
+		success: function(httpResponse) {
+			console.info('create chatroom:rong cloud response is '+httpResponse.text);
+			if (httpResponse.data.code == 200)
+				console.info('创建聊天室成功');
+			else
+				console.error('创建聊天室失败,code='+httpResponse.data.code);
+		},
+		error: function(httpResponse) {
+			console.error('create chatroom failed,errCode:%d errMsg:%s', httpResponse.status, httpResponse.text);
+		}
+	});
+
+	//查询融云聊天室，用于实时导航
+	var rcParam = myutils.getRongCloudParam();
+	console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
+
+	var body = {};
+	body['chatroomId'] = chatroomId;
+	//通过avcloud发送HTTP的post请求
+	AV.Cloud.httpRequest({
+		method: 'POST',
+		url: 'https://api.cn.rong.io/chatroom/query.json',
+		headers: {
+			'App-Key': rcParam.appKey,
+			'Nonce': rcParam.nonce,
+			'Timestamp': rcParam.timestamp,
+			'Signature': rcParam.signature
+		},
+		body: querystring.stringify(body),
+		success: function(httpResponse) {
+			console.dir(httpResponse);
+			console.info('query chatroom:rong cloud response is '+httpResponse.text);
+			if (httpResponse.data.code == 200)
+				console.info('查询聊天室成功');
+			else
+				console.error('查询聊天室失败,code='+httpResponse.data.code);
+
+			res.success(httpResponse.data);
+		},
+		error: function(httpResponse) {
+			console.error('create chatroom failed,errCode:%d errMsg:%s', httpResponse.status, httpResponse.text);
+		}
+	});
+
+	/*
 	var maxId = req.params.maxId || 0;
 	var limit = req.params.limit || 100;
 	var queryOr = [];
@@ -93,6 +164,7 @@ AV.Cloud.define("hello", function(req, res) {
 	}, function(err){
 		res.error(err);
 	});
+	*/
 });
 
 /**  获取七牛云存储token

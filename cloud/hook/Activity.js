@@ -1,5 +1,6 @@
 var common = require('cloud/common.js');
 var myutils = require('cloud/utils');
+var querystring = require('querystring');
 
 AV.Cloud.afterSave('Activity', function(request) {
     var ActivityObj = request.object;

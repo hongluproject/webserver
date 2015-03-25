@@ -274,13 +274,97 @@ var name = req.body.name;
 	}
 });
 
-/* test code
-var queryUser = new AV.Query('_User');
-queryUser.get('54abc651e4b0154cef59f695').then(function(user){
-    user.unset('clanids');
-    user.save();
+/** pingxx交易异步通知
+ *  post request body
+ *  {
+ *      pingxx charge object
+ *  }
+ */
+app.post('/api/ping/notify', function(req, res){
+    console.info('pingxx notify data:', req.body);
+
+    var resp = function (ret, http_code) {
+        http_code = typeof http_code == "undefined" ? 200 : http_code;
+        res.writeHead(http_code, {
+            "Content-Type": "text/plain;charset=utf-8"
+        });
+        res.end(ret);
+    }
+
+    var order;
+    var notifyType = req.body.object;
+    var query = new AV.Query('StatementAccount');
+    query.include('signupId');
+    switch(notifyType) {
+        case 'charge':
+            query.equalTo('serialNumber', req.body.id);
+            break;
+
+        case 'refund':
+            query.equalTo('refundNumber', req.body.id);
+            break;
+
+        default:
+            resp('fail');
+            return;
+    }
+    query.first().then(function(result){
+        if (!result) {
+            resp('fail');
+            return;
+        }
+
+        order = result;
+
+        if (notifyType == 'charge') {
+            if (req.body.paid) {
+                // 支付完成，改写数据库支付状态、以及支付时间
+                order.set('accountStatus', 2);
+                order.set('paidTime', new Date(req.body.time_paid*1000));
+                order.set('transactionNo', req.body.transaction_no);
+            }
+        } else if (notifyType == 'refund') {
+            if (req.body.refunded) {
+                //交易成功，回写账户当前支付状态
+                order.set('accountStatus', 4);
+            }
+        }
+
+        order.save();
+
+        //先检测该记录是否已经存在,将该用户加入活动报名列表
+        var user = order.get('userId');
+        var activity = order.get('activityId');
+        query = new AV.Query('ActivityUser');
+        query.equalTo('user_id', user);
+        query.equalTo('activity_id', activity);
+        query.first().then(function(activityUser){
+            if (activityUser) {
+                console.info('用户已加入活动列表!');
+                return;
+            }
+
+            //若不存在，添加AcvitityUser数据
+            var signupInfo = order.get('signupId');
+            var ActivityUser = AV.Object.extend('ActivityUser');
+            var activityUser = new ActivityUser();
+            activityUser.set('sex', signupInfo.get('sex'));
+            activityUser.set('real_name', signupInfo.get('realName'));
+            activityUser.set('phone', signupInfo.get('phone'));
+            activityUser.set('idcard', signupInfo.get('idcard'));
+            activityUser.set('signIn', 1);
+            activityUser.set('passport_card', signupInfo.get('passportCard'));
+            activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
+            activityUser.set('user_id', user._toPointer());
+            activityUser.set('activity_id', activity._toPointer());
+            activityUser.set('order_id', order._toPointer());
+            activityUser.save();
+        });
+
+        resp('success');
+    });
+
 });
-*/
 
 // This line is required to make Express respond to http requests.
 app.listen({"static":{maxAge:2592000000}});

@@ -183,5 +183,22 @@ AV.Cloud.define('getInvitationInfo', function(req, res){
 
 });
 
+AV.Cloud.define('queryPingXX', function(req, res){
+    var chargeId = req.params.chargeId;
+    var refundId = req.params.refundId;
+    var queryType = req.params.queryType || 'charge';
+    var pingpp = require('pingpp');
 
+    if (queryType == 'charge') {
+        pingpp(common.pingxxAppKey).charges.retrieve(chargeId).then(function(charge){
+            res.success(charge);
+        });
+    } else if (queryType == 'refund') {
+        pingpp(common.pingxxAppKey).charges.retrieveRefund(chargeId, refundId).then(function(charge){
+            res.success(charge);
+        });
+    } else {
+        res.error();
+    }
+});
 
