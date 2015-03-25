@@ -111,7 +111,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
 
 
 AV.Cloud.define('validateInvitationCode', function(req, res){
-    invitationCode = req.params.validateInvitationCode;
+    var invitationCode = req.params.invitationCode;
     var InvitationCode = AV.Object.extend("InvitationCode");
     var query = new AV.Query(InvitationCode);
     query.equalTo("invitationCode",invitationCode);
@@ -142,3 +142,46 @@ AV.Cloud.define('validateInvitationCode', function(req, res){
     });
 
 });
+
+
+
+
+AV.Cloud.define('getInvitationInfo', function(req, res){
+    var invitationCode = req.params.invitationCode;
+    var InvitationCode = AV.Object.extend("InvitationCode");
+    var query = new AV.Query(InvitationCode);
+    query.equalTo("invitationCode",invitationCode);
+    //一周内
+    var today=new Date();
+    var t=today.getTime()-1000*60*60*24*7;
+    var searchDate=new Date(t);
+    query.greaterThan('createdAt',searchDate);
+    query.descending("createdAt");
+    query.first({
+        success: function(object) {
+            if(object){
+                var optionId = null;
+                if(object.get('option') == 1){
+                    optionId =  object.get('clanId').id;
+                }else{
+                    optionId =  object.get('activityId').id;
+                }
+                res.success({
+                     "option":object.get('option'),
+                     "optionId":optionId
+                });
+            }else{
+                res.error('error');
+            }
+        },
+        error: function(error) {
+            res.error('error');
+        }
+    });
+
+
+
+});
+
+
+
