@@ -71,7 +71,11 @@ AV.Cloud.define('getInvitationCode', function(req, res){
         }
         return result;
     }
-    res.success(rand6Number());;
+
+    res.success({
+        code:rand6Number()
+    });
+
 
 });
 
@@ -85,6 +89,8 @@ AV.Cloud.define('validateInvitationCode', function(req, res){
     //userId
     //生成邀请码
 
-    res.success(true);;
+    res.success({
+        status:true
+    });
 
 });
