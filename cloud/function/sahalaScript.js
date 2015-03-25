@@ -58,10 +58,13 @@ AV.Cloud.define('updateClanForRC', function(req, res){
 
 
 AV.Cloud.define('getInvitationCode', function(req, res){
-    //option   操作
-    //optionId
-    //userId
-    //生成邀请码
+    var option = req.params.option;
+    var optionId = req.params.optionId;
+    var userId =  req.params.userId;
+    if (!option||!optionId||!userId) {
+        res.error('亲亲参数输入错误了');
+        return;
+    }
     var rand6Number =   function s6(){
         var result = '';
         var data = [0,1,2,3,4,5,6,7,8,9,'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
@@ -72,25 +75,70 @@ AV.Cloud.define('getInvitationCode', function(req, res){
         return result;
     }
 
-    res.success({
-        invitationCode:rand6Number()
-    });
-
-
+    var randNumber =  rand6Number();
+    var InvitationCode = AV.Object.extend("InvitationCode");
+    var invitationCode = new InvitationCode();
+    invitationCode.set("userId", AV.Object.createWithoutData("_User", userId, false));
+    invitationCode.set("invitationCode", randNumber);
+   if(option == 1){
+       invitationCode.set("clanId", AV.Object.createWithoutData("Clan", optionId, false));
+       invitationCode.set("option", 1);
+       invitationCode.save(null, {
+           success: function () {
+               res.success({
+                   invitationCodeStatus:randNumber
+               });
+           },
+           error: function () {
+               res.error('亲亲又报错了');
+           }
+       });
+   }else if(option == 2){
+       invitationCode.set("activityId", AV.Object.createWithoutData("Activity", optionId, false));
+       invitationCode.set("option", 2);
+       invitationCode.save(null, {
+           success: function () {
+               res.success({
+                   invitationCodeStatus:randNumber
+               });
+           },
+           error: function () {
+               res.error('亲亲又报错了');
+           }
+       });
+   }
 });
 
 
-
-
-
 AV.Cloud.define('validateInvitationCode', function(req, res){
-    //option   操作
-    //optionId
-    //userId
-    //生成邀请码
+    invitationCode = req.params.validateInvitationCode;
+    var InvitationCode = AV.Object.extend("InvitationCode");
+    var query = new AV.Query(InvitationCode);
+    query.equalTo("invitationCode",invitationCode);
 
-    res.success({
-        invitationCodeStatus:true
+    //一周内
+    var today=new Date();
+    var t=today.getTime()-1000*60*60*24*7;
+    var searchDate=new Date(t);
+    query.greaterThan('createdAt',searchDate);
+    query.descending("createdAt");
+    query.first({
+        success: function(object) {
+            if(object){
+                res.success({
+                    invitationCodeStatus:true
+                });
+            }else{
+                res.success({
+                    invitationCodeStatus:false
+                });
+            }
+        },
+        error: function(error) {
+            res.success({
+                invitationCodeStatus:false
+            });
+        }
     });
 
 });
