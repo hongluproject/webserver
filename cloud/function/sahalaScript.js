@@ -59,7 +59,7 @@ AV.Cloud.define('updateClanForRC', function(req, res){
 
 AV.Cloud.define('getInvitationCode', function(req, res){
     //option   操作
-    //activityId
+    //optionId
     //userId
     //生成邀请码
     var rand6Number =   function s6(){
@@ -85,7 +85,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
 
 AV.Cloud.define('validateInvitationCode', function(req, res){
     //option   操作
-    //activityId
+    //optionId
     //userId
     //生成邀请码
 
