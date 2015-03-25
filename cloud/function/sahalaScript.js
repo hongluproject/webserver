@@ -86,7 +86,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
        invitationCode.save(null, {
            success: function () {
                res.success({
-                   invitationCodeStatus:randNumber
+                   invitationCode:randNumber
                });
            },
            error: function () {
@@ -99,7 +99,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
        invitationCode.save(null, {
            success: function () {
                res.success({
-                   invitationCodeStatus:randNumber
+                   invitationCode:randNumber
                });
            },
            error: function () {
