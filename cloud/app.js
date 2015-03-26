@@ -274,7 +274,7 @@ var name = req.body.name;
 	}
 });
 
-/** pingxx交易异步通知
+/** pingxx交易异步通知（暂时不作用，由雪松那边的后台接收异步通知）
  *  post request body
  *  {
  *      pingxx charge object
