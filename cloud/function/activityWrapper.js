@@ -1235,17 +1235,17 @@ AV.Cloud.define('cancelOrder', function(req, res){
 });
 
 /**
- * 根据订单号生成支付订单信息
- * 参数：
- *  orderNo:撒哈拉支付流水号
- *  channel:支付方式  alipay（默认） or wx，
- *  amount:支付金额，单位为分
- *  subject:商品名称
- *  describe:商品描述
- * 返回：
- * {
- *  chargeId:pingxx charge id
- * }
+    根据订单号生成支付订单信息
+    函数名：newChargeWithOrder
+    orderNo:撒哈拉支付流水号
+    channel:支付方式  alipay（默认） or wx，
+    amount:支付金额，单位为分
+    subject:商品名称
+    describe:商品描述
+    返回：
+    {
+        chargeId:pingxx charge id
+    }
  */
 AV.Cloud.define('newChargeWithOrder', function(req, res){
     var orderNo = req.params.orderNo;
@@ -1253,7 +1253,7 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
     var amount = req.params.amount || 0;
     var subject = req.params.subject;   //商品名称
     var describe = req.params.describe; //商品描述
-    var statement;
+    var statement, charge;
 
     if (!orderNo) {
         res.error('请传入订单号！');
@@ -1280,11 +1280,13 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             subject:   subject,
             body:      describe
         });
-    }).then(function(charge){
-        if (!charge) {
+    }).then(function(result){
+        if (!result) {
             res.error('生成订单失败！');
             return;
         }
+        charge = result;
+
         statement.set('serialNumber', charge.id);
         statement.set('amount', charge.amount);
         switch (channel) {
@@ -1298,9 +1300,7 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
         }
         return statement.save();
     }).then(function(statement){
-        res.success({
-            chargeId:statement.get('serialNumber')
-        });
+        res.success(charge);
     }, function(err){
         console.error(err);
         res.error('生成订单失败:'+err?err.message:'');
