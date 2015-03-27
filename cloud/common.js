@@ -290,7 +290,21 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,titl
 }
 exports.postRCMessage= postRCMessage;
 
+/**
+ * 发送消息流，并且通过融云实时发送消息
+ * @param messageType
+ * @param sourceUser:AVObject
+ * @param targetUser:array, [objectId 1, objectId 2] / AVObject
+ * @param query for send status users query condition
+ * @param extendProp {
+ *      dynamicNews: AVObject for dynamicNews,
+ *      replyUser: AVObject for reply user,
+ *      clan:   AVObject for clan
+ *      activity: AVObject for activity
+ * }
+ */
 exports.sendStatus = function(messageType, sourceUser, targetUser, query, extendProp) {
+    var _ = AV._;
     var messageObj = {
         addFriend:"把您加为好友",
         removeFromClan:"被酋长移出了部落",
@@ -316,9 +330,16 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
     status.inboxType = exports.inboxtypeFromMessageType(messageType);
     status.set('messageType', messageType);
     if (targetUser) {
-        toRcUsers = toRcUsers.concat(targetUser.id);
-        status.set('targetUser', targetUser._toPointer());
+        if (_.isObject(targetUser)) {
+            toRcUsers = toRcUsers.concat(targetUser.id);
+            status.set('targetUser', targetUser._toPointer());
+        } else {
+            toRcUsers = toRcUsers.concat(targetUser);
+        }
     }
+
+    //去掉重复的用户
+    toRcUsers = _.uniq(toRcUsers);
 
     status.set('messageSignature', utils.calcStatusSignature(sourceUser.id,messageType,new Date()));
     switch (messageType) {
@@ -451,4 +472,14 @@ exports.inboxtypeFromMessageType = function(messageType) {
         default:
             return 'system';
   }
+}
+
+exports.sliceString = function(str, unicodeLen) {
+    var bufSubject = new Buffer(str);
+    if (bufSubject.length > unicodeLen) {
+        bufSubject = bufSubject.slice(0, unicodeLen);
+        str = bufSubject.toString();
+    }
+
+    return str;
 }

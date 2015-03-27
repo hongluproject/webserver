@@ -16,6 +16,7 @@ AV.Cloud.afterSave('DynamicComment', function(request){
         return;
     }
     console.dir(dynamicObj);
+    var targetUser;
 
     //get dynamic object first
     var queryDynamic = new AV.Query('DynamicNews');
@@ -35,18 +36,22 @@ AV.Cloud.afterSave('DynamicComment', function(request){
                 return;
             }
 
+            targetUser = postUser;
             //向动态发布者发送事件流，告知他的动态被 commentUser 评论了
             var query = new AV.Query('_User');
             if (replyUser) {
                 var userIds = [replyUser.id];
                 if (postUser.id != commentUser.id) {
                     userIds.push(postUser.id);
+                } else {
+                    //回复的是自己的评论，则不向自己发送
+                    targetUser = null;
                 }
                 query.containedIn('objectId', userIds);
             } else {
                 query.equalTo('objectId', postUser.id);
             }
-            common.sendStatus('newComment', commentUser, postUser, query, {dynamicNews:dynamicObj,replyUser:replyUser});
+            common.sendStatus('newComment', commentUser, targetUser, query, {dynamicNews:dynamicObj,replyUser:replyUser});
         }
     })
 });

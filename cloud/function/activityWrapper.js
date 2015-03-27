@@ -909,6 +909,7 @@ AV.Cloud.define('getOrderList', function(req, res){
     query.limit(limit);
     query.include('activityId');
     query.select('payMode', 'serialNumber', 'accountStatus', 'bookNumber', 'activityId', 'payTime');
+    query.descending('createdAt');
     query.find().then(function(result){
        if (!result) {
            res.success([]);
@@ -1269,6 +1270,7 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             return;
         }
 
+
         statement = result;
         return pingpp(common.pingxxAppKey).charges.create({
             order_no:  orderNo,
@@ -1277,8 +1279,8 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             amount:    parseInt(amount),
             client_ip: req.remoteAddress || '10.0.0.1',
             currency:  "cny",
-            subject:   subject,
-            body:      describe
+            subject:   common.sliceString(subject, 32),
+            body:      common.sliceString(describe, 128)
         });
     }).then(function(result){
         if (!result) {

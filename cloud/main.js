@@ -48,8 +48,21 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	console.info('remote peer address:%s', req.remoteAddress);
-	res.success();
+	var pingpp = require('pingpp')(common.pingxxAppKey);
+	pingpp.charges.createRefund(
+		"ch_LGuvnT1CqLyHbzDK4GOiLmrP",
+		{ amount: 1, description: "测试退款" },
+		function(err, refund) {
+			// YOUR CODE
+			if (err) {
+				console.error(err);
+				res.error(err);
+			} else {
+				console.dir(refund);
+				res.success(refund);
+			}
+		}
+	);
 	return;
 	/*
 	var followeeId = req.params.followee;

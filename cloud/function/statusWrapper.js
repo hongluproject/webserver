@@ -110,8 +110,8 @@ AV.Cloud.define('getFriendList', function(req, res) {
                 continue;
             }
             var returnUser = AV.User.createWithoutData('_User', currUser.id);
-            returnUser.set('nickname', currUser.get('nickname'));
-            returnUser.set('icon', currUser.get('icon'));
+            returnUser.set('nickname', currUser.get('nickname')||'');
+            returnUser.set('icon', currUser.get('icon')||'');
             returnUser.set('clanids', currUser.get('clanids'));
             if (userId == findFriendId) {
                 returnUser.set('isFriend', true);
