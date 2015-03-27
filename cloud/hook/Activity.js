@@ -7,7 +7,8 @@ AV.Cloud.afterSave('Activity', function(request) {
     var ActivityId = ActivityObj.id;
     var activityName = ActivityObj.get('title');
     var userObj = ActivityObj.get('user_id');
-    ActivityObj.set('share_url', 'https://hoopeng.avosapps.com/activity/' + ActivityId);
+    var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/activity/':'http://api.imsahala.com/activity/';
+    ActivityObj.set('share_url', urlPath.concat(ActivityId));
     ActivityObj.save();
 
     //将活动发布者，自动加入聊天群组

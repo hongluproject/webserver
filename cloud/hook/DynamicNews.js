@@ -61,7 +61,8 @@ AV.Cloud.afterSave('DynamicNews', function(request){
 
                     var DynamicObj = request.object;
                     var DynamicObjId = DynamicObj.id;
-                    DynamicObj.set('share_url', 'https://hoopeng.avosapps.com/dynamic/' + DynamicObjId);
+                    var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';
+                    DynamicObj.set('share_url', urlPath.concat(DynamicObjId));
                     if (clanids.length > 0) {
                         DynamicObj.set('clan_ids', clanids);
                     }
