@@ -169,3 +169,42 @@ AV.Cloud.define('getUserInfo', function(req,res){
         res.success(userReturn);
     });
 });
+
+/*
+    检测当前用户是否有经过实名认证
+    函数名：getRealNameAuthentication
+    返回：
+    {
+        realNameAuthentication:true or false
+    }
+ */
+AV.Cloud.define('getRealNameAuthentication', function(req, res){
+    var currUser = req.user;
+    if (!currUser) {
+        res.success({
+            realNameAuthentication:false
+        });
+        return;
+    }
+
+    var query = new AV.Query('_User');
+    query.select('realNameAuthentication');
+    query.get(currUser.id, function(result){
+        if (result) {
+            res.success({
+                realNameAuthentication:result.get('realNameAuthentication') || false
+            });
+        } else {
+            res.success({
+                realNameAuthentication:false
+            });
+        }
+
+    }, function(err){
+        console.error('getRealNameAuthentication error:', err);
+        res.success({
+            realNameAuthentication:false
+        });
+    });
+
+});
