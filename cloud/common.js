@@ -463,6 +463,7 @@ exports.inboxtypeFromMessageType = function(messageType) {
         case 'allowToJoinClan':
             return 'clan';
 
+        case 'joinActivity':
         case 'quitActivity':
         case 'updateActivity':
         case 'cancelActivity':
