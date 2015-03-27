@@ -30,11 +30,11 @@ AV.Cloud.define('canCreateClan', function(req, res) {
         var nMaxCreateClan = clanParam.getMaxCreateClan(userLevel);
         var nMaxClanUsers = clanParam.getMaxClanUsers(userLevel);
 
-        console.info('current createdClan num %d,max createdClan num%d', currClanNum, nMaxCreateClan);
+        console.info('current createdClan num %d,max createdClan num %d', currClanNum, nMaxCreateClan);
 
         if (currClanNum >= nMaxCreateClan) {  //如果超过所能创建的上限，则禁止创建
             res.success({
-                canCreate:true,
+                canCreate:false,
                 maxCreateClan:nMaxCreateClan,
                 canCreateClan:nMaxCreateClan-currClanNum,
                 maxClanUsers:nMaxClanUsers
