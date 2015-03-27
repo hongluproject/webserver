@@ -186,7 +186,7 @@ AV.Cloud.define("getSearch",function(req,res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("content", kw);
+            query.contains("title", kw);
         }
         query.skip(skip);
         query.descending('createdAt');
