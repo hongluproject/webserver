@@ -1,7 +1,7 @@
 /**
  * Created by fugang on 14/12/15.
  */
-
+var common = require('cloud/common.js');
 var clanParam = require('cloud/common.js').clanParam;
 var myutils = require('cloud/utils.js');
 
@@ -57,6 +57,9 @@ AV.Cloud.afterSave('Clan', function(req) {
         userResult.save();
     });
 
+    var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/clan/':'http://api.imsahala.com/clan/';
+    clanObj.set('shareUrl', urlPath.concat(clanObj.id));
+    clanObj.save();
     //创建者信息加入到ClanUser表中
     var ClanUser = AV.Object.extend('ClanUser');
     var clanUser = new ClanUser();

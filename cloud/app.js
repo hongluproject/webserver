@@ -176,6 +176,79 @@ app.get('/dynamic/:objId', function(req, res) {
     });
 });
 
+
+
+
+
+
+/**
+ *  部落分享
+ */
+app.get('/clan/:objId', function(req,res) {
+    var clanId = req.param('objId');
+    var invitationCode = req.param('invitation_id');
+    if (!clanId) {
+        console.error('clan id has not input!');
+        res.writeHead(404);
+        res.end();
+    }
+
+
+    var query = new AV.Query('Clan');
+    query.get(clanId, {
+        success: function(clanResult) {
+            if (!clanResult) {
+                console.error('clan %s has not found!', clanId);
+                res.writeHead(404);
+                res.end();
+                return;
+            }
+
+            var tags = clanResult.get('tags');
+            var tagsName = [];
+            for (var i in tags) {
+                var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+                tagsName.push(tagName?tagName:'');
+            }
+            clanResult.set('tagsName', tagsName);
+
+
+            var InvitationCode = AV.Object.extend("InvitationCode");
+            var query = new AV.Query(InvitationCode);
+            query.equalTo("invitationCode",invitationCode);
+            query.include('userId');
+            query.descending("createdAt");
+            query.first({
+                success: function(object) {
+                    var optionUser = object.get('userId');
+                    var userName = optionUser.get('nickname');
+                    if(object){
+                        res.render('clan', {clan:clanResult,user:userName});
+                    }
+                },
+                error: function(error) {
+                    console.error('clan %s has not found!', clanId);
+                    res.writeHead(404);
+                    res.end();
+                    return;
+                }
+        });
+        },
+        error: function(error) {
+            console.error('clan %s has not found!', clanId);
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+    });
+
+});
+
+
+
+
+
+
 /**
  *  活动详情
  */

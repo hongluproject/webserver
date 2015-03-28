@@ -1,0 +1,57 @@
+@charset "utf-8";body,h1,h2,h3,h4,h5,h6,hr,p,blockquote,dl,dt,dd,ul,ol,li,pre,form,fieldset,legend,button,input,textarea,th,td{margin:0;padding:0}
+body,button,input,select,textarea{font:12px/1.5 'Microsoft Yahei','Lucida Grande',Arial,'\5b8b\4f53'}
+h1,h2,h3,h4,h5,h6{font-size:100%}
+ul,ol{list-style:none}
+iframe,img{border:0;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+i,b,s,em{font-style:normal}
+del{font-family:'\5b8b\4f53'}.clear{*zoom:1}
+.clear:after{clear:both;content:'\20';display:block}
+
+
+.download{}
+.download .top{background:url(../images/bg.jpg) no-repeat center  top; background-size: cover; padding:10% 7%; display: -webkit-flex; display: flex; -webkit-justify-content:center; justify-content:center;}
+.download .logo{flex:1; margin-right: 5%;}
+.download .logo img{max-width: 100%; max-height: 100%}
+.download .intro{flex:2;}
+.download .title{font-size: 16px; color: #000; padding:3% 0 8%;}
+.download .url{color:#666; font-size: 14px;}
+
+.download .at{padding:8%; font-size: 15px; color:#666; line-height: 1.6; white-space: nowrap;}
+.download .at p:nth-child(1){margin-bottom: 10px;}
+
+.download .btn_wrap{padding:0 5%;}
+.download .btn_wrap a{display: block; background: #36cad8; color:#fff; font-size: 18px; text-decoration: none; margin-bottom: 20px; height: 50px; line-height: 50px; border-radius: 7px;}
+.download .btn_wrap a i{display: inline-block; width:28px; height:36px; background-position: center top; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin:0 6%;}
+.download .btn_wrap a:nth-child(1) i{background-image: url(../images/android.png);}
+.download .btn_wrap a:nth-child(2) i{background-image: url(../images/apple.png);}
+
+.share{}
+.share .top{background: #36cad8; padding:5% 10%; color:#fff;}
+.share h1{font-size: 28px; text-align: center; margin-bottom: 8%;}
+.share .who{font-size: 16px; margin-bottom: 5% }
+.share .info{display: -webkit-flex; display: flex; -webkit-justify-content:center; justify-content:center; padding:5% 0;}
+.share .info .user{flex:1; margin-right: 5%;}
+.share .info .user img{max-width: 100%; max-height: 100%}
+.share .info .details{flex:2; }
+.share .info .details p:nth-child(1){font-size: 16px; padding:3% 0; margin-bottom: 10px; max-height:40px; overflow: hidden;}
+.share .info .details p:nth-child(2) i{display: inline-block; vertical-align: middle; width:18px; height:18px; background: url(../images/icon.png) no-repeat center top; background-size: contain; margin-right: 10px; }
+.share .accept{padding:10% 5%;}
+.share .accept a{display: block; background: #36cad8; color:#fff; font-size: 18px; text-decoration: none; text-align:center; margin-bottom: 20px; height: 50px; line-height: 50px; border-radius: 7px;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
