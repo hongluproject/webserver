@@ -250,11 +250,12 @@ app.get('/clan/:objId', function(req,res) {
 
 
 /**
- *  活动详情
+ *  活动分享
  */
 app.get('/activity/:objId', function(req,res) {
+    var invitationCode = req.param('invitation_id');
     var activityId = req.param('objId');
-    if (!activityId) {
+    if (!activityId||!invitationCode) {
         console.error('activity id has not input!');
         res.writeHead(404);
         res.end();
@@ -278,7 +279,27 @@ app.get('/activity/:objId', function(req,res) {
                 tagsName.push(tagName?tagName:'');
             }
             activityResult.set('tagsName', tagsName);
-            res.render('activity', {activity:activityResult});
+            var InvitationCode = AV.Object.extend("InvitationCode");
+            var query = new AV.Query(InvitationCode);
+            query.equalTo("invitationCode",invitationCode);
+            query.include('userId');
+            query.descending("createdAt");
+            query.first({
+                success: function(object) {
+                    var optionUser = object.get('userId');
+                    var userName = optionUser.get('nickname');
+                    if(object){
+                        res.render('activity', {activity:activityResult,user:userName});
+                    }
+                },
+                error: function(error) {
+                    console.error('activity %s has not found!', clanId);
+                    res.writeHead(404);
+                    res.end();
+                    return;
+                }
+            });
+
         },
         error: function(error) {
             console.error('activity %s has not found!', activityId);

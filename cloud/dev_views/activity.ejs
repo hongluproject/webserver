@@ -1,147 +1,145 @@
+<!doctype html>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>撒哈拉活动</title>
-    <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, minimal-ui" />
-    <link rel="stylesheet" type="text/css" href="/stylesheets/activity.css?2015022801">
-    <script src="/js/common.js?2015021501"></script>
+    <title>下载客户端</title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0" name="viewport" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="telephone=no" name="format-detection" />
+    <link rel="stylesheet" href="/stylesheets/page.css?2015022801" />
+    <script src="/js/jquery-1.11.2.min.js"></script>
+    <script type="application/javascript" src="http://admin.hoopeng.cn/assets/layerm/layer.m.js"></script>
 </head>
 
 <body>
-<!--页面主体开始-->
-<div class="ly_page cf">
-    <%
-        var activityUser = activity.get('user_id');
-        var icon = activityUser.get('icon');
-        if (icon) {
-            icon += '?imageView2/1/w/62/h/60';
-        } else {
-            icon = '/images/user.jpg';
-        }
-        var userName = activityUser.get('nickname');
-        var title = activity.get('title');
-        var priceInfo = activity.get('price_info');
-        var intro = activity.get('intro');
-        var activity_time = activity.get('activity_time');
-        var sport_start = activity_time.getFullYear()+"年"+(activity_time.getMonth()+1)+"月"+activity_time.getDay()+"日"+activity_time.getHours()+'时'+activity_time.getMinutes()+'分';
-        var duration = activity.get('duration');
-        var place = activity.get('place');
-        var tags = activity.get('tagsName');
-        var pay_type = activity.get('pay_type');
-        var comment_count = activity.get('comment_count');
-
-    %>
-
-    <div class="ftUser cf">
-        <h1 class="title">发起人:</h1>
-        <img src="<%=icon%>" class="img" height="62" width="60">
-        <dl class="cf">
-            <dt><%=userName%></dt>
-        </dl>
-    </div>
-    <div class="fengexian">
-    </div>
-
-    <div class="plBox" style="background: #ffffff">
-        <dl class="cf">
-            <dd>
-                <p class="name">活动主题</p>
-                <p class="info">
-                    <%=title%>
-                </p>
-            </dd>
-        </dl>
-        <dl class="cf">
-            <dd>
-                <p class="name">行程描述</p>
-                <p class="info">
-                    <%=intro%>
-                </p>
-            </dd>
-        </dl>
-
-        <dl class="cf">
-            <dd>
-                <p class="name">活动时间</p>
-                <p class="info">
-                    <%=sport_start%>
-                </p>
-            </dd>
-        </dl>
 
 
-        <% if(duration) { %>
+<%
 
-        <dl class="cf">
-            <dd>
-                <p class="name">活动天数</p>
-                <p class="info">
-                    <%=duration%>
-                </p>
-            </dd>
-        </dl>
-        <% } %>
+var title = activity.get('title');
+var tags = activity.get('tagsName');
+var index_thumb_image = activity.get('index_thumb_image');
 
-        <dl class="cf">
-            <dd>
-                <p class="name">集合地点</p>
-                <p class="info">
-                    <%=place%>
-                </p>
-            </dd>
-        </dl>
+%>
+<div class="share">
+    <div class="top">
+        <h1>SaHaLa</h1>
+        <div class="who">
+            <p><%=user%> ：</p>
+            <p>邀请你加入撒哈拉活动</p>
+        </div>
+        <div class="info">
+            <div class="user">
+                <img src="<%=index_thumb_image%>" alt="" style="width: 148px;height: 148px;">
+            </div>
+            <div class="details">
+                <p><%=title%></p>
+                <p><i></i>
 
-
-        <dl class="cf">
-            <dd>
-                <p class="name">活动标签</p>
-                <p class="info">
                     <% for (var i in tags) {%>
-                    <span class="key">[<%= tags[i] %>]</span>
+                    <%= tags[i] %>
                     <%}%>
+
+
                 </p>
-            </dd>
-        </dl>
-
-        <dl class="cf">
-            <dd>
-                <p class="name">费用说明</p>
-                <p class="info">
-                    <%=priceInfo%>
-                </p>
-            </dd>
-        </dl>
-
-        <dl class="cf">
-            <dd>
-                <p class="name">支付方式</p>
-                <p class="info">
-                    <%=pay_type%>
-                </p>
-            </dd>
-        </dl>
-
-
-        <% if (comment_count){%>
-        <dl class="cf">
-            <dd>
-                <p class="name">评论数目</p>
-                <p class="info">
-                    <%=comment_count%>
-                </p>
-            </dd>
-        </dl>
-    <% }%>
-
+            </div>
+        </div>
     </div>
-    <!--评论结束-->
+
+    <div class="accept">
+        <a id="applink" href="javascript:void(0)">接受邀请</a>
+    </div>
 </div>
-<!--页面主体结束-->
-<div class="download">
-    <a href="javascript:doClient();" style="float:left;max-width:150px;margin-left: 1px">
-        <img src="/images/download1.png"></a>
-    <a href="javascript:doClient();" style="float:right;max-width:89px;">
-        <img src="/images/download2.png"></a>
-</div>
+
+<script>
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+        var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+        if (r != null) return unescape(r[2]); return null; //返回参数值
+    }
+
+    var u = navigator.userAgent, app = navigator.appVersion;
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1; //android终端或者uc浏览器
+    var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+
+    var applink = $("#applink")[0];
+    function disableAppLink() {
+        applink.style.background = "#F7F7F7";
+        applink.href = "javascript:void(0)";
+        applink.innerText = "无效邀请码";
+        applink.style.color = '#000';
+    }
+
+    var invitationCode = getUrlParam("invitation_id");
+    if (!invitationCode) {
+        disableAppLink();
+    }
+    else {
+        var settings = {
+            type: "POST",
+            url: "https://leancloud.cn:443/1.1/functions/validateInvitationCode",
+            dataType: "json",
+            data: {"invitationCode":invitationCode},
+            error: function(XHR, textStatus, errorThrown) {
+                disableAppLink();
+            },
+            success: function(data, textStatus) {
+                if (data.result.invitationCodeStatus) {
+                    $(applink).click(function () {
+                        if (isiOS) {
+                            var page = layer.open({
+                                type: 1,
+                                content: '<div> \
+											<p align="center" style="color: #fff;font-size:18px; line-height:63px;">请长按邀请码复制</p> \
+											<p id="invite_code" style="background-color:#ffffff; color:#D7D7D7; font-size:22px; margin:0px 30px; padding:20px 0px; text-align:center;">' + invitationCode + '</p> \
+											<p align="center" style="color: #fff;font-size:14px; line-height:63px;">复制完后，打开撒哈拉APP加入活动</p> \
+							         	 </div>',
+                                style: 'width:86%; height:200px; border-style:solid; border-width:1px; background-color:#36cad8',
+                                shadeClose:true,
+                                success: function(olayer){
+                                    $("#invite_code")[0].oncopy = function () {
+                                        window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
+                                    };
+                                }
+                            });
+                        }
+                        else if (isAndroid) {
+                            var page = layer.open({
+                                type: 1,
+                                content: '<div> \
+											<p align="center" style="color: #fff; font-size:14px; margin-top: 30px;">第一步:</p> \
+											<p align="center" style="color: #fff; font-size:18px; margin-top: 20px;">请长按邀请码复制</p> \
+											<p align="center" style="padding-top:15px;width: 300px;height: 35px ;background-color: #ffffff ;border-radius: 3px;margin:0 auto;font-size: 18px;color: #727272;margin-top:15px;">' + invitationCode + '</p> \
+											<p align="center" style="color: #fff;font-size:14px; margin-top: 30px;">第二步:</p> \
+											<p id="openApp" align="center" style="padding-top:15px;width: 220px;height: 35px ;background-color: #ffffff ;border-radius: 3px;margin:0 auto;font-size: 18px;color: #36cad8;margin-top:15px;">打开撒哈拉APP</p> \
+							          	</div>',
+                                style: 'width:86%; height:340px; border-style:solid; border-width:1px; background-color:#36cad8',
+                                shadeClose:true,
+                                success: function(olayer){
+                                    $($("#openApp")[0]).click(function () {
+                                        window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
+                                    });
+                                }
+                            });
+                        }
+                        else {
+                            window.location.href = "http://www.imsahala.com";
+                        }
+                    });
+                }
+                else {
+                    disableAppLink();
+                }
+            },
+            headers: {
+                "X-AVOSCloud-Application-Id":"bwc6za4i2iq5m7kxbqmi6h31sp21wjcs2zxsns15q9tbqthq",
+                "X-AVOSCloud-Application-Key":"md7jbe3xso3061p2lnj75puu1s87494nw7al00ctu5i8ib1z"
+            }
+        };
+        $.ajax(settings);
+    }
+</script>
+
 </body>
 </html>
