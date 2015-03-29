@@ -1266,7 +1266,8 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
     }
 
     var query = new AV.Query('StatementAccount');
-    query.select('bookNumber', 'serialNumber');
+    query.select('bookNumber', 'serialNumber', 'activityId');
+    query.include('activityId');
     query.equalTo('bookNumber', orderNo);
     query.first().then(function(result){
         if (!result) {
@@ -1274,6 +1275,22 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             return;
         }
 
+        //判断活动状态：1、是否已过报名时间 2、报名人数是否已满，否则不允许付款
+        var activity = result.get('activityId');
+        if (activity) {
+            var nowTime = new Date();
+            var deadSignupTime = activity.get('dead_time');
+            if (nowTime.getTime() > deadSignupTime.getTime()) {
+                res.error('报名时间已过！');
+                return;
+            }
+            var maxUserNum = activity.get('max_num');
+            var currUserNum = activity.get('current_num');
+            if (maxUserNum && currUserNum>=maxUserNum) {
+                res.error('报名人数已满！');
+                return;
+            }
+        }
 
         statement = result;
         return pingpp(common.pingxxAppKey).charges.create({

@@ -332,7 +332,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
     if (targetUser) {
         if (_.isArray(targetUser) || _.isString(targetUser)) {
             toRcUsers = toRcUsers.concat(targetUser);
-        } else if (_.isObject(targetUser) && targetUser.id) {
+        } else if (targetUser instanceof AV.Object) {
             toRcUsers = toRcUsers.concat(targetUser.id);
             status.set('targetUser', targetUser._toPointer());
         }

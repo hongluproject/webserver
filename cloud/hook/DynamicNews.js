@@ -76,7 +76,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
                 DynamicObj.save();
             }
 
-            if (!clanObj) { //如果是在部落里面发布动态，则不同步到事件流
+            if (!clanOfDynamic) { //如果是在部落里面发布动态，则不同步到事件流
                 common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
             }
         }
