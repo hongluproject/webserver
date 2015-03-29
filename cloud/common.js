@@ -478,9 +478,16 @@ exports.inboxtypeFromMessageType = function(messageType) {
 exports.sliceString = function(str, unicodeLen) {
     var bufSubject = new Buffer(str);
     if (bufSubject.length > unicodeLen) {
-        bufSubject = bufSubject.slice(0, unicodeLen);
-        str = bufSubject.toString();
+        return bufSubject.utf8Slice(0, unicodeLen);
     }
 
     return str;
+}
+
+exports.activityGroupIdForRC = function(activityId) {
+    return 'activity-'.concat(activityId);
+}
+
+exports.naviGroupIdForRC = function(activityId) {
+    return 'chatroom-'.concat(activityId);
 }
