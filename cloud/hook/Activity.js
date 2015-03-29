@@ -23,7 +23,7 @@ AV.Cloud.afterSave('Activity', function(request) {
     console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
 
     var body = {};
-    var key = 'chatroom[' + ActivityId + ']';
+    var key = 'chatroom[chatroom-' + ActivityId + ']';
     body[key] = activityName;
     //通过avcloud发送HTTP的post请求
     AV.Cloud.httpRequest({
@@ -37,7 +37,7 @@ AV.Cloud.afterSave('Activity', function(request) {
         },
         body: querystring.stringify(body),
         success: function(httpResponse) {
-            console.info('create chatroom:rong cloud response is '+httpResponse.text);
+            console.info('create chatroom:rong cloud %s response is %s', key, httpResponse.text);
             if (httpResponse.data.code == 200)
                 console.info('创建聊天室成功');
             else
@@ -57,8 +57,9 @@ AV.Cloud.afterUpdate('Activity', function(req){
     var activityFounder = req.object.get('user_id');
 
     var query = new AV.Query('ActivityUser');
-    query.select(500);
+    query.select(1000);
     query.select('user_id');
+    query.equalTo('activity_id', activity);
     query.find().then(function(results) {
         if (!results) {
             return;
@@ -69,6 +70,11 @@ AV.Cloud.afterUpdate('Activity', function(req){
             var user = item.get('user_id');
             joinUsers.push(user.id);
         });
+
+        if (!joinUsers.length) {
+            console.info('%s 活动没有参与者，不用发消息通知。', activityId);
+            return;
+        }
 
         //通知到所有活动参与者，活动已经更新
         var query = new AV.Query('_User');

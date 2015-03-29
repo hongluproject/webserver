@@ -577,10 +577,12 @@ AV.Cloud.define('cancelActivity', function(req, res){
             joinUsers.push(user.id);
         });
 
-        //通知到所有活动参与者，活动已经取消
-        var query = new AV.Query('_User');
-        query.containedIn('objectId', joinUsers);
-        common.sendStatus('cancelActivity', activityFounder, joinUsers, query, {activity:activity});
+        if (joinUsers.length) {
+            //通知到所有活动参与者，活动已经取消
+            var query = new AV.Query('_User');
+            query.containedIn('objectId', joinUsers);
+            common.sendStatus('cancelActivity', activityFounder, joinUsers, query, {activity:activity});
+        }
 
         if (common.isOnlinePay(payType)) {
             //如果是线上支付，则将该活动下所有已支付订单，改为‘申请退款’状态
@@ -1001,6 +1003,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 results.forEach(function(activity){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
+                    retItem.activity.price = retItem.activity.price || '0.00';
                     retItem.extra = {
                         friendJoin:0
                     };
@@ -1042,6 +1045,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 results.forEach(function(activity){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
+                    retItem.activity.price = retItem.activity.price || '0.00';
                     retItem.extra = {
                         friendJoin:0
                     };

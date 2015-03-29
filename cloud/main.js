@@ -48,6 +48,7 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
+	/*
 	var pingpp = require('pingpp')(common.pingxxAppKey);
 	pingpp.charges.createRefund(
 		"ch_LGuvnT1CqLyHbzDK4GOiLmrP",
@@ -64,6 +65,7 @@ AV.Cloud.define("hello", function(req, res) {
 		}
 	);
 	return;
+	*/
 	/*
 	var followeeId = req.params.followee;
 	var query = new AV.Query('_User');
@@ -75,6 +77,7 @@ AV.Cloud.define("hello", function(req, res) {
 
 	return;
 	*/
+	/*
 	var activityId = req.params.activityId;
 	var activityName = req.params.activityName;
 
@@ -83,7 +86,7 @@ AV.Cloud.define("hello", function(req, res) {
 	console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
 
 	var body = {};
-	var chatroomId = 'chatroom:' + activityId;
+	var chatroomId = 'chatroom-' + activityId;
 	var key = 'chatroom[' + chatroomId + ']';
 	body[key] = activityName;
 	//通过avcloud发送HTTP的post请求
@@ -108,13 +111,19 @@ AV.Cloud.define("hello", function(req, res) {
 			console.error('create chatroom failed,errCode:%d errMsg:%s', httpResponse.status, httpResponse.text);
 		}
 	});
+	*/
+	//查询融云群组
+	var rcParam = myutils.getRongCloudParam();
+	console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
 
+	/*
 	//查询融云聊天室，用于实时导航
 	var rcParam = myutils.getRongCloudParam();
 	console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
 
+	var activityId = req.params.activityId;
 	var body = {};
-	body['chatroomId'] = chatroomId;
+	body['chatroomId'] = 'chatroom-'+activityId;
 	//通过avcloud发送HTTP的post请求
 	AV.Cloud.httpRequest({
 		method: 'POST',
@@ -140,6 +149,7 @@ AV.Cloud.define("hello", function(req, res) {
 			console.error('create chatroom failed,errCode:%d errMsg:%s', httpResponse.status, httpResponse.text);
 		}
 	});
+	*/
 
 	/*
 	var maxId = req.params.maxId || 0;

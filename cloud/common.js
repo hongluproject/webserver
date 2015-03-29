@@ -330,11 +330,11 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
     status.inboxType = exports.inboxtypeFromMessageType(messageType);
     status.set('messageType', messageType);
     if (targetUser) {
-        if (_.isObject(targetUser)) {
+        if (_.isArray(targetUser) || _.isString(targetUser)) {
+            toRcUsers = toRcUsers.concat(targetUser);
+        } else if (_.isObject(targetUser) && targetUser.id) {
             toRcUsers = toRcUsers.concat(targetUser.id);
             status.set('targetUser', targetUser._toPointer());
-        } else {
-            toRcUsers = toRcUsers.concat(targetUser);
         }
     }
 

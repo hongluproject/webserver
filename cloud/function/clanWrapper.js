@@ -52,3 +52,49 @@ AV.Cloud.define('canCreateClan', function(req, res) {
         res.error('查询用户信息失败!');
     });
 });
+
+/*
+    查询用户参与的部落（包含自己创建和加入的）
+    函数名：getClanJoined
+    参数：
+        无
+    返回：
+    [
+        {clan 1},
+        {clan 2}
+    ]
+ */
+AV.Cloud.define('getClanJoined', function(req, res){
+    var userId = req.user && req.user.id;
+    if (!userId) {
+        res.error('未传入用户信息');
+        return;
+    }
+
+    var _ = AV._;
+    //保留的clan keys
+    var pickClanKeys = ['objectId','__type', 'title', "className"];
+    var query = new AV.Query('ClanUser');
+    query.select('clan_id');
+    query.include('clan_id');
+    query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+    query.descending('user_level');
+    query.limit(100);
+    query.find().then(function(clans){
+        if (!clans) {
+            res.success([]);
+            return;
+        }
+
+        var retClans = [];
+        clans.forEach(function(clan){
+           var clanObj = clan.get('clan_id');
+
+            retClans.push(_.pick(clanObj._toFullJSON(), pickClanKeys));
+        });
+
+        res.success(retClans);
+    }, function(err){
+        res.error('查询部落失败:'+err?err.message:'');
+    })
+});
