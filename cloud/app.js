@@ -282,6 +282,10 @@ app.get('/activity/:objId', function(req,res) {
             var InvitationCode = AV.Object.extend("InvitationCode");
             var query = new AV.Query(InvitationCode);
             query.equalTo("invitationCode",invitationCode);
+            var today=new Date();
+            var t=today.getTime()-1000*60*60*24*7;
+            var searchDate=new Date(t);
+            query.greaterThan('createdAt',searchDate);
             query.include('userId');
             query.descending("createdAt");
             query.first({
@@ -289,7 +293,9 @@ app.get('/activity/:objId', function(req,res) {
                     var optionUser = object.get('userId');
                     var userName = optionUser.get('nickname');
                     if(object){
-                        res.render('activity', {activity:activityResult,user:userName});
+                        res.render('activity', {activity:activityResult,user:userName,invitationCodeStatus:true});
+                    }else{
+                        res.render('activity', {activity:activityResult,user:userName,invitationCodeStatus:false});
                     }
                 },
                 error: function(error) {
