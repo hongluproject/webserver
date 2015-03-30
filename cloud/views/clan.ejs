@@ -16,11 +16,9 @@
 
 
 <%
-
 var title = clan.get('title');
 var tags = clan.get('tagsName');
 var icon = clan.get('icon');
-
 %>
 <div class="share">
     <div class="top">
@@ -71,73 +69,53 @@ var icon = clan.get('icon');
         applink.style.color = '#000';
     }
 
+    var invitationCodeStatus = '<%=invitationCodeStatus %>';
     var invitationCode = getUrlParam("invitation_id");
-    if (!invitationCode) {
+    if (!invitationCodeStatus) {
         disableAppLink();
     }
     else {
-        var settings = {
-            type: "POST",
-            url: "https://leancloud.cn:443/1.1/functions/validateInvitationCode",
-            dataType: "json",
-            data: {"invitationCode":invitationCode},
-            error: function(XHR, textStatus, errorThrown) {
-                disableAppLink();
-            },
-            success: function(data, textStatus) {
-                if (data.result.invitationCodeStatus) {
-                    $(applink).click(function () {
-                        if (isiOS) {
-                            var page = layer.open({
-                                type: 1,
-                                content: '<div> \
+        $(applink).click(function () {
+            if (isiOS) {
+                var page = layer.open({
+                    type: 1,
+                    content: '<div> \
 											<p align="center" style="color: #fff;font-size:18px; line-height:63px;">请长按邀请码复制</p> \
 											<p id="invite_code" style="background-color:#ffffff; color:#D7D7D7; font-size:22px; margin:0px 30px; padding:20px 0px; text-align:center;">' + invitationCode + '</p> \
 											<p align="center" style="color: #fff;font-size:14px; line-height:63px;">复制完后，打开撒哈拉APP加入部落</p> \
 							         	 </div>',
-                                style: 'width:86%; height:200px; border-style:solid; border-width:1px; background-color:#36cad8',
-                                shadeClose:true,
-                                success: function(olayer){
-                                    $("#invite_code")[0].oncopy = function () {
-                                        window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
-                                    };
-                                }
-                            });
-                        }
-                        else if (isAndroid) {
-                            var page = layer.open({
-                                type: 1,
-                                content: '<div> \
+                    style: 'width:86%; height:200px; border-style:solid; border-width:1px; background-color:#36cad8',
+                    shadeClose:true,
+                    success: function(olayer){
+                        $("#invite_code")[0].oncopy = function () {
+                            window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
+                        };
+                    }
+                });
+            }
+            else if (isAndroid) {
+                var page = layer.open({
+                    type: 1,
+                    content: '<div> \
 											<p align="center" style="color: #fff; font-size:14px; margin-top: 30px;">第一步:</p> \
 											<p align="center" style="color: #fff; font-size:18px; margin-top: 20px;">请长按邀请码复制</p> \
 											<p align="center" style="padding-top:15px;width: 300px;height: 35px ;background-color: #ffffff ;border-radius: 3px;margin:0 auto;font-size: 18px;color: #727272;margin-top:15px;">' + invitationCode + '</p> \
 											<p align="center" style="color: #fff;font-size:14px; margin-top: 30px;">第二步:</p> \
 											<p id="openApp" align="center" style="padding-top:15px;width: 220px;height: 35px ;background-color: #ffffff ;border-radius: 3px;margin:0 auto;font-size: 18px;color: #36cad8;margin-top:15px;">打开撒哈拉APP</p> \
 							          	</div>',
-                                style: 'width:86%; height:340px; border-style:solid; border-width:1px; background-color:#36cad8',
-                                shadeClose:true,
-                                success: function(olayer){
-                                    $($("#openApp")[0]).click(function () {
-                                        window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
-                                    });
-                                }
-                            });
-                        }
-                        else {
-                            window.location.href = "http://www.imsahala.com";
-                        }
-                    });
-                }
-                else {
-                    disableAppLink();
-                }
-            },
-            headers: {
-                "X-AVOSCloud-Application-Id":"j3hcadoeln0qtw2b9ccc0tsyiwyxjj9k1qbixgzfjc7163fq",
-                "X-AVOSCloud-Application-Key":"7tsnockxq4jb2ff3ofacq9o4knsxcolldb4nq74o0z54kicc"
+                    style: 'width:86%; height:340px; border-style:solid; border-width:1px; background-color:#36cad8',
+                    shadeClose:true,
+                    success: function(olayer){
+                        $($("#openApp")[0]).click(function () {
+                            window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
+                        });
+                    }
+                });
             }
-        };
-        $.ajax(settings);
+            else {
+                window.location.href = "http://www.imsahala.com";
+            }
+        })
     }
 </script>
 

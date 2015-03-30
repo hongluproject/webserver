@@ -212,10 +212,13 @@ app.get('/clan/:objId', function(req,res) {
             }
             clanResult.set('tagsName', tagsName);
 
-
             var InvitationCode = AV.Object.extend("InvitationCode");
             var query = new AV.Query(InvitationCode);
             query.equalTo("invitationCode",invitationCode);
+            var today=new Date();
+            var t=today.getTime()-1000*60*60*24*7;
+            var searchDate=new Date(t);
+            query.greaterThan('createdAt',searchDate);
             query.include('userId');
             query.descending("createdAt");
             query.first({
@@ -223,7 +226,9 @@ app.get('/clan/:objId', function(req,res) {
                     var optionUser = object.get('userId');
                     var userName = optionUser.get('nickname');
                     if(object){
-                        res.render('clan', {clan:clanResult,user:userName});
+                        res.render('clan', {clan:clanResult,user:userName,invitationCodeStatus:true});
+                    }else{
+                        res.render('clan', {clan:clanResult,user:userName,invitationCodeStatus:false});
                     }
                 },
                 error: function(error) {
