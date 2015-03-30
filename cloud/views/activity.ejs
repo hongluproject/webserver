@@ -71,6 +71,8 @@ var index_thumb_image = activity.get('index_thumb_image');
         applink.style.color = '#000';
     }
 
+    var invitationCodeStatus = '<%=invitationCodeStatus %>';
+    var invitationCode = getUrlParam("invitation_id");
     if (!invitationCodeStatus) {
         disableAppLink();
     }
