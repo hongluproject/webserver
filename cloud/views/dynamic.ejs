@@ -30,10 +30,7 @@
             if (commentCount <= 0) {
                 commentCount = '';
             }
-            var upCount = dynamic.get('up_count');
-            if (upCount <= 0) {
-                upCount = '';
-            }
+            var upCount = dynamic.get('up_count') || '';
             var timeDisp = '';
             var timeSpace = Math.floor(((new Date()).getTime() - dynamic.createdAt.getTime())/1000/60);
             if (timeSpace >= 60) {
@@ -45,7 +42,7 @@
             } else {
                 timeDisp = timeSpace + '分钟前';
             }
-            var comments = dynamic.get('comments');
+            var comments = dynamic.get('comments') || '';
         %>
         <img src="<%= userIcon %>" width="60" height="62" class="img" />
         <dl class="cf">
