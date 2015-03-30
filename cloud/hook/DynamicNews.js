@@ -71,11 +71,12 @@ AV.Cloud.afterSave('DynamicNews', function(request){
             } else {
                 var DynamicObj = request.object;
                 var DynamicObjId = DynamicObj.id;
-                DynamicObj.set('share_url', 'https://hoopeng.avosapps.com/dynamic/' + DynamicObjId);
+                var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';
+                DynamicObj.set('share_url', urlPath.concat(DynamicObjId));
                 DynamicObj.save();
             }
 
-            if (!clanObj) { //如果是在部落里面发布动态，则不同步到事件流
+            if (!clanOfDynamic) { //如果是在部落里面发布动态，则不同步到事件流
                 common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
             }
         }

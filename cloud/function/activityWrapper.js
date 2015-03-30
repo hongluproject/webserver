@@ -186,6 +186,12 @@ AV.Cloud.define('signUpActivity', function(req, res) {
 
         activity = result;
 
+        var bRemoved = activity.get('removed') || false;
+        if (bRemoved) {
+            res.error('该活动已取消！');
+            return;
+        }
+
         //判断报名截止时间已过
         var currDate = new Date();
         var deadDate = activity.get('dead_time');
@@ -216,8 +222,12 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         if (userItem.sex) {
             activitySignUpUser.set('sex', userItem.sex);
         }
-        activitySignUpUser.set("realName", userItem.realName);
-        activitySignUpUser.set("phone", userItem.phone);
+        if (userItem.realName) {
+            activitySignUpUser.set("realName", userItem.realName);
+        }
+        if (userItem.phone) {
+            activitySignUpUser.set("phone", userItem.phone);
+        }
         if (userItem.idcard) {
             activitySignUpUser.set('idcard', userItem.idcard);
         }
@@ -231,6 +241,10 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         activitySignUpUser.set('activityId', AV.Object.createWithoutData('Activity', activityId));
         return activitySignUpUser.save();
     }).then(function(result){
+        if (!result) {
+            console.error('登记报名信息失败！');
+            return;
+        }
         signupUserObj = result;
 
         //获取时间戳
@@ -260,9 +274,15 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             var userItem = userGroup[0];
             var ActivityUser = AV.Object.extend('ActivityUser');
             var activityUser = new ActivityUser();
-            activityUser.set('sex', userItem.sex);
-            activityUser.set('real_name', userItem.realName);
-            activityUser.set('phone', userItem.phone);
+            if (userItem.sex) {
+                activityUser.set('sex', userItem.sex);
+            }
+            if (userItem.realName) {
+                activityUser.set('real_name', userItem.realName);
+            }
+            if (userItem.phone) {
+                activityUser.set('phone', userItem.phone);
+            }
             if (userItem.idcard) {
                 activityUser.set('idcard', userItem.idcard);
             }
@@ -557,7 +577,7 @@ AV.Cloud.define('cancelActivity', function(req, res){
 
         //找到所有参与活动的人
         query = new AV.Query('ActivityUser');
-        query.limit(500);
+        query.limit(1000);
         query.select('user_id');
         query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
         return query.find();
@@ -577,10 +597,12 @@ AV.Cloud.define('cancelActivity', function(req, res){
             joinUsers.push(user.id);
         });
 
-        //通知到所有活动参与者，活动已经取消
-        var query = new AV.Query('_User');
-        query.containedIn('objectId', joinUsers);
-        common.sendStatus('cancelActivity', activityFounder, joinUsers, query, {activity:activity});
+        if (joinUsers.length) {
+            //通知到所有活动参与者，活动已经取消
+            var query = new AV.Query('_User');
+            query.containedIn('objectId', joinUsers);
+            common.sendStatus('cancelActivity', activityFounder, joinUsers, query, {activity:activity});
+        }
 
         if (common.isOnlinePay(payType)) {
             //如果是线上支付，则将该活动下所有已支付订单，改为‘申请退款’状态
@@ -1001,6 +1023,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 results.forEach(function(activity){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
+                    retItem.activity.price = retItem.activity.price || '0.00';
                     retItem.extra = {
                         friendJoin:0
                     };
@@ -1042,6 +1065,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 results.forEach(function(activity){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
+                    retItem.activity.price = retItem.activity.price || '0.00';
                     retItem.extra = {
                         friendJoin:0
                     };
@@ -1262,7 +1286,8 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
     }
 
     var query = new AV.Query('StatementAccount');
-    query.select('bookNumber', 'serialNumber');
+    query.select('bookNumber', 'serialNumber', 'activityId');
+    query.include('activityId');
     query.equalTo('bookNumber', orderNo);
     query.first().then(function(result){
         if (!result) {
@@ -1270,6 +1295,27 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             return;
         }
 
+        //判断活动状态：1、是否已过报名时间 2、报名人数是否已满，否则不允许付款
+        var activity = result.get('activityId');
+        if (activity) {
+            var bRemoved = activity.get('removed') || false;
+            if (bRemoved) {
+                res.error('活动已取消！');
+                return;
+            }
+            var nowTime = new Date();
+            var deadSignupTime = activity.get('dead_time');
+            if (nowTime.getTime() > deadSignupTime.getTime()) {
+                res.error('报名时间已过！');
+                return;
+            }
+            var maxUserNum = activity.get('max_num');
+            var currUserNum = activity.get('current_num');
+            if (maxUserNum && currUserNum>=maxUserNum) {
+                res.error('报名人数已满！');
+                return;
+            }
+        }
 
         statement = result;
         return pingpp(common.pingxxAppKey).charges.create({
@@ -1279,8 +1325,8 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             amount:    parseInt(amount),
             client_ip: req.remoteAddress || '10.0.0.1',
             currency:  "cny",
-            subject:   common.sliceString(subject, 32),
-            body:      common.sliceString(describe, 128)
+            subject:   common.sliceString(subject, 30), //max unicode length is 32
+            body:      common.sliceString(describe, 126)//max unicode length is 128
         });
     }).then(function(result){
         if (!result) {
@@ -1343,5 +1389,48 @@ AV.Cloud.define('refundComplete', function(req, res){
         res.success({
             refund:true
         });
+    });
+});
+
+/*
+    活动更新
+    函数名：updateActivity
+    参数：
+        activityId:objectId  活动ID
+    返回:
+        success or error
+ */
+AV.Cloud.define('updateActivity', function(req, res){
+    var activityId = req.params.activityId;
+    if (!activityId) {
+        res.error('请传入活动信息！');
+        return;
+    }
+
+    var activity = AV.Object.createWithoutData('Activity', activityId);
+    var query = new AV.Query('ActivityUser');
+    query.limit(1000);
+    query.select('user_id');
+    query.equalTo('activity_id', activity);
+    query.find().then(function(results) {
+        if (!results) {
+            return;
+        }
+
+        var joinUsers = [];
+        results.forEach(function(item){
+            var user = item.get('user_id');
+            joinUsers.push(user.id);
+        });
+
+        if (!joinUsers.length) {
+            console.info('%s 活动没有参与者，不用发消息通知。', activityId);
+            return;
+        }
+
+        //通知到所有活动参与者，活动已经更新
+        var query = new AV.Query('_User');
+        query.containedIn('objectId', joinUsers);
+        common.sendStatus('updateActivity', activityFounder, joinUsers, query, {activity:activity});
     });
 });

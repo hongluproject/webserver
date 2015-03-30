@@ -57,10 +57,10 @@ AV.Cloud.afterSave('ActivityUser', function(req){
                 activity.addUnique('joinUsers', userObj.id);
                 activity.save();
 
-                //加入融云组群
+                //加入融云组群 for 活动聊天
                 AV.Cloud.run('imAddToGroup',{
                     userid:userObj.id,
-                    groupid:activity.id,
+                    groupid:common.activityGroupIdForRC(activity.id),
                     groupname:activity.get('title')
                 });
 
@@ -92,10 +92,10 @@ AV.Cloud.afterDelete('ActivityUser', function(req){
         result.remove('joinUsers', userObj.id);
         result.save();
 
-        //从融云群组里面退出
+        //从融云群组里面退出 for 活动聊天
         AV.Cloud.run('imQuitGroup',{
             userid:userObj.id,
-            groupid:ActivityObj.id
+            groupid:common.activityGroupIdForRC(ActivityObj.id)
         });
 
         //通知到对应活动的Founder，告知有人退出了活动

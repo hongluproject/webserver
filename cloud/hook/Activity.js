@@ -14,7 +14,7 @@ AV.Cloud.afterSave('Activity', function(request) {
     //将活动发布者，自动加入聊天群组
     AV.Cloud.run('imAddToGroup',{
         userid:userObj.id,
-        groupid:ActivityId,
+        groupid:common.activityGroupIdForRC(ActivityId),
         groupname:activityName
     });
 
@@ -23,7 +23,7 @@ AV.Cloud.afterSave('Activity', function(request) {
     console.info('imAddToChatRoom:rong cloud param:%s', JSON.stringify(rcParam));
 
     var body = {};
-    var key = 'chatroom[' + ActivityId + ']';
+    var key = 'chatroom[' + common.naviGroupIdForRC(ActivityId) + ']';
     body[key] = activityName;
     //通过avcloud发送HTTP的post请求
     AV.Cloud.httpRequest({
@@ -37,7 +37,7 @@ AV.Cloud.afterSave('Activity', function(request) {
         },
         body: querystring.stringify(body),
         success: function(httpResponse) {
-            console.info('create chatroom:rong cloud response is '+httpResponse.text);
+            console.info('create chatroom:rong cloud %s response is %s', key, httpResponse.text);
             if (httpResponse.data.code == 200)
                 console.info('创建聊天室成功');
             else
@@ -49,30 +49,4 @@ AV.Cloud.afterSave('Activity', function(request) {
     });
 
 
-});
-
-AV.Cloud.afterUpdate('Activity', function(req){
-    var activity = req.object;
-    var activityId = req.object.id;
-    var activityFounder = req.object.get('user_id');
-
-    var query = new AV.Query('ActivityUser');
-    query.select(500);
-    query.select('user_id');
-    query.find().then(function(results) {
-        if (!results) {
-            return;
-        }
-
-        var joinUsers = [];
-        results.forEach(function(item){
-            var user = item.get('user_id');
-            joinUsers.push(user.id);
-        });
-
-        //通知到所有活动参与者，活动已经更新
-        var query = new AV.Query('_User');
-        query.containedIn('objectId', joinUsers);
-        common.sendStatus('updateActivity', activityFounder, joinUsers, query, {activity:activity});
-    });
 });

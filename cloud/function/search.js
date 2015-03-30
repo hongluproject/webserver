@@ -4,6 +4,27 @@
 var common = require('cloud/common.js');
 
 
+/*
+    搜索
+    函数名：getSearch
+    参数：
+    userId: objectId 当前用户ID
+    kw: string  搜索关键字
+    tagId:objectId    搜索标签ID
+    skip:Integer 搜索偏移
+    limit:Integer 搜索返回数限制
+    type:string 搜索类型
+        3 资讯 ,1 动态,2 问答,4 部落,5 人,6 活动
+        'news'：精选
+        'dynamic'：动态
+        'clan'：部落
+        'user'：用户
+        'activity'：活动
+    返回：
+    [
+
+    ]
+ */
 AV.Cloud.define("getSearch",function(req,res){
     var currUserId = req.user?req.user.id:undefined;
     var Dynamic = AV.Object.extend("DynamicNews");
@@ -198,6 +219,7 @@ AV.Cloud.define("getSearch",function(req,res){
              results.forEach(function(activity){
                  var retItem = {};
                  retItem.activity = activity._toFullJSON();
+                 retItem.activity.price = retItem.activity.price || '0.00';
                  retItem.extra = {
                      friendJoin:0
                  };
@@ -215,21 +237,27 @@ AV.Cloud.define("getSearch",function(req,res){
         switch(type)
         {
             case "3":
+            case 'news':
                 getNews();
                 break;
             case "1":
+            case 'dynamic':
                 getDynamic();
                 break;
             case "2":
-                getAsk();
+            case 'dynamic':
+                getDynamic();
                 break;
             case "4":
+            case 'clan':
                 getClan();
                 break;
             case "5":
+            case 'user':
                 getUser();
                 break;
             case "6":
+            case 'activity':
                 getActivity();
                 break;
             default:
