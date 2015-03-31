@@ -960,7 +960,8 @@ AV.Cloud.define('getOrderList', function(req, res){
  *      tags:array 用户标签，若为当前登录用户，可不传
  *      skip:Integer 本次查询偏移
  *      limit:Integer  本次查询数量
- *      activityType:'mainpage'：首页  'mine':我的活动
+ *      clanId:objectId 部落ID，当 activityType为 clan时，需要传入。
+ *      activityType:'mainpage'：首页  'mine':我的活动  ‘clan’:部落相关活动
  *  返回:
  *      [
  *          {
@@ -983,11 +984,11 @@ AV.Cloud.define('getActivityList', function(req, res){
     var skip = req.params.skip || 0;
     var limit = req.params.limit || 20;
     var activityType = req.params.activityType || 'mainpage';
+    var clanId = req.params.clanId;
     var retVal = [];
 
     switch (activityType) {
         case 'mainpage':
-
             var activityClass = AV.Object.extend('Activity');
             if(req.user.get('actual_position')){
                 var userGeoPoint = req.user.get('actual_position');
@@ -1079,6 +1080,41 @@ AV.Cloud.define('getActivityList', function(req, res){
             });
             break;
 
+        case 'clan':
+            if (!clanId) {
+                res.error('请传入部落信息！');
+                break;
+            }
+            var query = new AV.Query('Activity');
+            query.skip(skip);
+            query.limit(limit);
+            query.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+            query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
+                'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
+                'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price', 'hasSignupUsers');
+            query.descending('createdAt');
+            query.find().then(function(results){
+                if (!results) {
+                    res.success();
+                    return;
+                }
+
+                results.forEach(function(activity){
+                    var retItem = {};
+                    retItem.activity = activity._toFullJSON();
+                    retItem.activity.price = retItem.activity.price || '0.00';
+                    retItem.extra = {
+                        friendJoin:0
+                    };
+
+                    retVal.push(retItem);
+                });
+
+                res.success(retVal);
+            }, function(err){
+                res.error('查询活动失败:'+err?err.message:'');
+            });
+            break;
     }
 
 });

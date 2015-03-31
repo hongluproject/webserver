@@ -48,6 +48,15 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
+	//count
+	var queryNews = new AV.Query('_Status');
+	queryNews.count().then(function(result){
+		console.info('query count:', result);
+		res.success(result);
+	});
+
+	return;
+
 	var userId = req.params.userId || req.user.id;
 	var activityId = req.params.activityId;
 	var activityName = req.params.activityName;
