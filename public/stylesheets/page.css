@@ -10,7 +10,7 @@ del{font-family:'\5b8b\4f53'}.clear{*zoom:1}
 
 
 .download{}
-.download .top{background:url(../images/bg.jpg) no-repeat center  top; background-size: cover; padding:10% 7%; display: -webkit-flex; display: flex; -webkit-justify-content:center; justify-content:center;}
+.download .top{background:url(../images/share/bg.jpg) no-repeat center  top; background-size: cover; padding:10% 7%; display: -webkit-flex; display: flex; -webkit-justify-content:center; justify-content:center;}
 .download .logo{flex:1; margin-right: 5%;}
 .download .logo img{max-width: 100%; max-height: 100%}
 .download .intro{flex:2;}
@@ -23,8 +23,8 @@ del{font-family:'\5b8b\4f53'}.clear{*zoom:1}
 .download .btn_wrap{padding:0 5%;}
 .download .btn_wrap a{display: block; background: #36cad8; color:#fff; font-size: 18px; text-decoration: none; margin-bottom: 20px; height: 50px; line-height: 50px; border-radius: 7px;}
 .download .btn_wrap a i{display: inline-block; width:28px; height:36px; background-position: center top; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin:0 6%;}
-.download .btn_wrap a:nth-child(1) i{background-image: url(../images/android.png);}
-.download .btn_wrap a:nth-child(2) i{background-image: url(../images/apple.png);}
+.download .btn_wrap a:nth-child(1) i{background-image: url(../images/share/android.png);}
+.download .btn_wrap a:nth-child(2) i{background-image: url(../images/share/apple.png);}
 
 .share{}
 .share .top{background: #36cad8; padding:5% 10%; color:#fff;}
@@ -35,7 +35,7 @@ del{font-family:'\5b8b\4f53'}.clear{*zoom:1}
 .share .info .user img{max-width: 100%; max-height: 100%}
 .share .info .details{flex:2; }
 .share .info .details p:nth-child(1){font-size: 16px; padding:3% 0; margin-bottom: 10px; max-height:40px; overflow: hidden;}
-.share .info .details p:nth-child(2) i{display: inline-block; vertical-align: middle; width:18px; height:18px; background: url(../images/icon.png) no-repeat center top; background-size: contain; margin-right: 10px; }
+.share .info .details p:nth-child(2) i{display: inline-block; vertical-align: middle; width:18px; height:18px; background: url(../images/share/icon.png) no-repeat center top; background-size: contain; margin-right: 10px; }
 .share .accept{padding:10% 5%;}
 .share .accept a{display: block; background: #36cad8; color:#fff; font-size: 18px; text-decoration: none; text-align:center; margin-bottom: 20px; height: 50px; line-height: 50px; border-radius: 7px;}
 
