@@ -3,6 +3,7 @@
  */
 var utils = require('cloud/utils.js');
 var common = require('cloud/common.js');
+var _ = AV._;
 
 
 /** 发布动态后，通知到所有关注我的人
@@ -76,7 +77,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
                 DynamicObj.save();
             }
 
-            if (!clanOfDynamic) { //如果是在部落里面发布动态，则不同步到事件流
+            if (_.isEmpty(clanOfDynamic)) { //如果是在部落里面发布动态，则不同步到事件流
                 common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
             }
         }

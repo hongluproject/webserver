@@ -369,3 +369,42 @@ AV.Cloud.define('imDismissGroup', function(request, response){
     });
 
 });
+
+AV.Cloud.define('imUpdateGroupInfo', function(req, res){
+    var groupId = req.params.groupId;
+    var groupName = req.params.groupName;
+    if (!groupId || !groupName) {
+        res.error('缺少必要参数！');
+        return;
+    }
+
+    var rcParam = myutils.getRongCloudParam();
+    console.info("refreshClan:nonce:%d timestamp:%d singature:%s",
+        rcParam.nonce, rcParam.timestamp, rcParam.signature);
+    var reqBody = {
+        groupId:groupId,
+        groupName:groupName
+    };
+    console.info('Clan afterUpdate request body:', reqBody);
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/refresh.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify(reqBody),
+        success: function(httpResponse) {
+            console.info('refreshRCGroup:rongcloud response is '+httpResponse.text);
+            res.success();
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('refreshRCGroup:'+errmsg);
+            res.error(errmsg);
+        }
+    });
+});

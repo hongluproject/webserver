@@ -1206,11 +1206,11 @@ AV.Cloud.define('signinActivity', function(req, res){
            return;
        }
 
-        var bHasSignin = result.get('signIn')>0?true:false;
+        var bHasSignin = (result.get('signIn')||1)>1?true:false;
         if (!bHasSignin) {  //若未签到过，修改签到状态
             var activity = result.get('activity_id');
 
-            result.set('signIn', 1);
+            result.set('signIn', 2);
             result.save();
 
             if (activity) { //对应活动的签到人数+1
