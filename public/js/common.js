@@ -31,7 +31,7 @@ function doClient() {
         window.setTimeout(function() {
             var timeOutDateTime = new Date();
             if (timeOutDateTime - loadDateTime < 2000) {
-                window.location = "https://itunes.apple.com/cn/app/id952260502?mt=8";
+                window.location = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
             } else {
                 window.close();
             }
@@ -39,12 +39,12 @@ function doClient() {
     } else if (navigator.userAgent.match(/android/i)) {
         var state = null;
         try {
-            window.location = "http://www.imsahala.com/sahala.apk";
+            window.location = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
         } catch (e) {}
         if (state) {
             window.close();
         } else {
-            window.location = "http://www.imsahala.com/sahala.apk";
+            window.location = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
         }
     }
 }
