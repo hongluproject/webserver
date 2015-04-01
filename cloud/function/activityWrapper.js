@@ -1086,9 +1086,10 @@ AV.Cloud.define('getActivityList', function(req, res){
                 break;
             }
             var query = new AV.Query('Activity');
+            query.equalTo('allow_join_type', 2);
+            query.equalTo('allow_join_data', clanId);
             query.skip(skip);
             query.limit(limit);
-            query.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
             query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
                 'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
                 'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price', 'hasSignupUsers');

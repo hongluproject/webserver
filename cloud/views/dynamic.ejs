@@ -1,11 +1,19 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title></title>
-    <link rel="stylesheet" type="text/css" href="/stylesheets/dynamic.css?2015030201">
-    <meta name="viewport" content="user-scalable=no, width=device-width, minimal-ui" />
+    <title>撒哈拉</title>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/dynamic.css?2015033101">
+    <link rel="stylesheet" type="text/css" href="/touchTouch/touchTouch.css?2015033101">
+    <script src="/js/viewport.js?201503101"></script>
     <script src="/js/jquery-1.11.2.min.js"></script>
     <script src="/js/common.js?2015021501"></script>
+    <script src="/touchTouch/touchTouch.jquery.js?2015033103"></script>
+    <script language="JavaScript">
+        $(document).ready(function(){
+            // Initialize the gallery
+            $('#thumbs a').touchTouch();
+        });
+    </script>
 </head>
 
 <body>
@@ -23,10 +31,10 @@
             var tagsName = dynamic.get('tagsName');
             var dynamicContent = dynamic.get('content')||"";
             var thumbs = dynamic.get('thumbs');
-            var voice = dynamic.get('voice');
-            var voiceDuration = dynamic.get('duration');
-            var location = dynamic.get('area');
-            var commentCount = dynamic.get('comment_count');
+            var voice = dynamic.get('voice') || '';
+            var voiceDuration = dynamic.get('duration') || 0;
+            var location = dynamic.get('area') || '';
+            var commentCount = dynamic.get('comment_count') || '';
             if (commentCount <= 0) {
                 commentCount = '';
             }
@@ -42,7 +50,7 @@
             } else {
                 timeDisp = timeSpace + '分钟前';
             }
-            var comments = dynamic.get('comments') || '';
+            var comments = dynamic.get('comments') || [];
         %>
         <img src="<%= userIcon %>" width="60" height="62" class="img" />
         <dl class="cf">
@@ -68,21 +76,21 @@
         <div class="txt">
             <%= dynamicContent %>
         </div>
-        <div class="img cf">
+        <div class="img cf" id="thumbs">
             <% for (var i in thumbs) { %>
                 <% if (thumbs.length > 1) {
                         var imageWidth = 192;
                         var imageHeigth = 192;
                         var imageView = thumbs[i] + '?imageView2/1/w/'+imageWidth+'/h/'+imageHeigth;
                 %>
-                        <a href="<%=thumbs[i]%>" target="_blank"><img src="<%=imageView%>"  /></a>
+                        <a href="<%=thumbs[i]%>"><img src="<%=imageView%>"  /></a>
                 <%} else {
                         var imageWidth = 400;
                         var imageHeigth = 296;
                         var imageView = thumbs[i] + '?imageView2/1/w/'+imageWidth+'/h/'+imageHeigth;
                 %>
 
-                        <a href="<%=thumbs[i]%>" target="_blank"><img src="<%=imageView%>" /></a>
+                        <a href="<%=thumbs[i]%>"><img src="<%=imageView%>" /></a>
                 <%}%>
             <% } %>
         </div>
