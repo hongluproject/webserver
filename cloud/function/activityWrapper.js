@@ -972,7 +972,8 @@ AV.Cloud.define('getOrderList', function(req, res){
  *          {
  *              activity: Activity Class Object
  *              extra:{
- *                  friendJoin:Integer 好友加入个数
+ *                  friendJoin:Integer 好友加入个数,
+ *                  hasSignup:bool 当前用户是否加入
  *              }
  *          }
  *      ]
@@ -995,7 +996,7 @@ AV.Cloud.define('getActivityList', function(req, res){
     switch (activityType) {
         case 'mainpage':
             var activityClass = AV.Object.extend('Activity');
-            if(req.user.get('actual_position')){
+            if(req.user && req.user.get('actual_position')){
                 var userGeoPoint = req.user.get('actual_position');
             }
             var queryOr = [];
@@ -1019,7 +1020,8 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.descending('createdAt');
             query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
             'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
-            'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price', 'hasSignupUsers');
+            'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price',
+            'joinUsers');
             query.find().then(function(results){
                 if (!results) {
                     res.success();
@@ -1030,9 +1032,12 @@ AV.Cloud.define('getActivityList', function(req, res){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
                     retItem.activity.price = retItem.activity.price || '0.00';
+                    var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:0
+                        friendJoin:0,
+                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
+                    delete retItem.activity.joinUsers;
 
                     retVal.push(retItem);
                 });
@@ -1072,9 +1077,12 @@ AV.Cloud.define('getActivityList', function(req, res){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
                     retItem.activity.price = retItem.activity.price || '0.00';
+                    var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:0
+                        friendJoin:0,
+                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
+                    delete retItem.activity.joinUsers;
 
                     retVal.push(retItem);
                 });
@@ -1097,7 +1105,8 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.limit(limit);
             query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
                 'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
-                'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price', 'hasSignupUsers');
+                'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price',
+                'joinUsers');
             query.descending('createdAt');
             query.find().then(function(results){
                 if (!results) {
@@ -1109,9 +1118,12 @@ AV.Cloud.define('getActivityList', function(req, res){
                     var retItem = {};
                     retItem.activity = activity._toFullJSON();
                     retItem.activity.price = retItem.activity.price || '0.00';
+                    var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:0
+                        friendJoin:0,
+                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
+                    delete retItem.activity.joinUsers;
 
                     retVal.push(retItem);
                 });
