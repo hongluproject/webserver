@@ -395,14 +395,9 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         });
 
     } else { //将消息发送到目标用户
-        var emptyUser = false;
-        if (!AV.User.current()) {
-            process.domain._currentUser = sourceUser;
-        }
+        var currUser = AV.User.current();
+        AV.User._currentUser = sourceUser;
         status.send().then(function(status){
-            if (!AV.User.current()) {
-                process.domain._currentUser=null;
-            }
             if( messageType=='addFriend' ||
                 messageType=='newLike'||
                 messageType=='newComment'||
@@ -419,14 +414,9 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
              }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {
-            if (!AV.User.current()) {
-                process.domain._currentUser=null;
-            }
             console.error(error);
         });
-        if (emptyUser) {
-            AV.User._currentUser = null;
-        }
+        AV.User._currentUser = currUser;
     }
 
 

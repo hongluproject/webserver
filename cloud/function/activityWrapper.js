@@ -4,6 +4,7 @@
 var common = require('cloud/common');
 var querystring = require('querystring');
 var pingpp = require('pingpp');
+var _ = AV._;
 
 /** 加入活动，可批量提交
  * @params:
@@ -168,7 +169,6 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     }
     var payMode = req.params.payMode||1;
     var accountStatus =  req.params.accountStatus||1;
-    var _ = AV._;
     var bAddToActivityUser = false;
     var orderNo;
     var activity;
@@ -205,6 +205,13 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         var maxNum = activity.get('max_num');
         if (maxNum && currNum >= maxNum) {
             res.error('报名人数已满！');
+            return;
+        }
+
+        //判断是否已经在报名列表中
+        var joinUsers = activity.get('joinUsers');
+        if (joinUsers && _.indexOf(joinUsers,userId)>=0) {
+            res.error('已经报名！');
             return;
         }
 
@@ -733,7 +740,6 @@ AV.Cloud.define('getActivityUsers', function(req, res){
     var skip = req.params.skip || 0;
     var limit = req.params.limit || 20;
     var retVal = [];
-    var _ = AV._;
 
     if (!activityId) {
         res.error('请传入活动信息！');
@@ -918,7 +924,6 @@ AV.Cloud.define('getOrderList', function(req, res){
     var skip = req.params.skip || 0;
     var limit = req.params.limit || 20;
     var retVal = [];
-    var _ = AV._;
 
     if (!userId) {
         res.error('请传入用户信息！');
