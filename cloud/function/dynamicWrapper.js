@@ -184,7 +184,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     if (hpTags) {
                         var arrayTagName = [];
                         for (var k in currDynamic.tags) {
-                            arrayTagName.push(hpTags[currDynamic.tags[k]].get('tag_name') || '');
+                            arrayTagName.push(hpTags[currDynamic.tags[k]]&&hpTags[currDynamic.tags[k]].get('tag_name') || '');
                         }
                         if (arrayTagName.length) {
                             currDynamic.tagNames = arrayTagName;
