@@ -249,7 +249,8 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         return activitySignUpUser.save();
     }).then(function(result){
         if (!result) {
-            console.error('登记报名信息失败！');
+            console.error('user %s 加入 %s 活动，登记报名信息失败！', req.user&&req.user.get('nickname'), activity.get('title'));
+            res.error('登记报名信息失败!');
             return;
         }
         signupUserObj = result;
@@ -276,6 +277,11 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         statementAccount.set('signupId', result._toPointer());
         return statementAccount.save();
     }).then(function(result){
+        if (!result) {
+            console.error('user %s 加入 %s 活动，生成订单失败！', req.user&&req.user.get('nickname'), activity.get('title'));
+            res.error('生成订单失败！');
+            return;
+        }
         orderNo = result.get('bookNumber');
         if (bAddToActivityUser) {   //直接加入到ActivityUser表中
             var userItem = userGroup[0];
@@ -309,7 +315,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     }).then(function(result){
         res.success({orderNo:orderNo});
     }, function(err){
-        console.error('生成订单失败:', err);
+        console.error('user %s 加入 %s 活动，报名失败:', req.user&&req.user.get('nickname'), activity.get('title'), err);
         res.error('生成订单失败:'+err?err.message:'');
     });
 });

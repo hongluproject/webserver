@@ -221,6 +221,12 @@ AV.Cloud.define('getRecommendActivity', function(req, res){
         }
 
         results.forEach(function(item){
+            //已经取消的活动，不在活动首页幻灯中显示
+            var bRemoved = item.get('removed') || false;
+            if (bRemoved) {
+                return;
+            }
+
             var activity = item.get('activityId');
             item = item._toFullJSON();
             item.activityId = activity._toFullJSON();
