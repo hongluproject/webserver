@@ -8,14 +8,6 @@
 AV.Cloud.define('getDynamic', function(req,res){
     function addLikesAndReturn(userId, dynamics, response) {
         var likeTarget = {};	//记录该用户点过赞的id
-        var returnUserItem = {	//动态中发布者信息，可以保留返回的字段
-            objectId:1,
-            username:1,
-            nickname:1,
-            className:1,
-            icon:1,
-            __type:1
-        };
 
         //为动态或问答加入点赞状态
         var addLikeTarget = function(dynamics, likeTarget) {
@@ -48,6 +40,16 @@ AV.Cloud.define('getDynamic', function(req,res){
                     var jValue = postUser._toFullJSON();
                     delete jValue.__type;
                     currDynamic.set('user_id', jValue);
+                }
+
+                //返回关联到的活动信息
+                var rawActivity = currDynamic.get('activityId');
+                if (rawActivity) {
+                    var activity = AV.Object.createWithoutData('Activity', rawActivity.id);
+                    activity.set('title', rawActivity.get('title'));
+                    var jValue = activity._toFullJSON();
+                    delete jValue.__type;
+                    currDynamic.set('activityId', jValue);
                 }
 
             }
@@ -131,6 +133,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             query.include('dynamicNews');
             query.include('source');
             query.include('dynamicNews.user_id');
+            query.include('dynamicNews.activityId');
             query.limit(limit);
             query.maxId(maxId);
             query.exists('dynamicNews');
@@ -175,14 +178,24 @@ AV.Cloud.define('getDynamic', function(req,res){
                     likeTarget[likes[i].get('external_id')] = true;
                 }
 
-
+                var pickActivityKeys = ['objectId','__type', 'title', "className"];
+                var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
                 var hpTags = AV.HPGlobalParam.hpTags;
+                var _ = AV._;
                 //将所有动态返回，添加isLike，记录点赞状态
                 for (var i in statusReturn) {
                     var currDynamic = statusReturn[i].data.dynamicNews;
                     var user_id = currDynamic.get('user_id');
+                    var activityId = currDynamic.get('activityId');
                     currDynamic = currDynamic._toFullJSON();
-                    currDynamic.user_id = user_id._toFullJSON();
+                    if (user_id) {
+                        currDynamic.user_id = user_id._toFullJSON();
+                        currDynamic.user_id = _.pick(currDynamic.user_id, pickUserKeys);
+                    }
+                    if (activityId) {
+                        activityId = activityId._toFullJSON();
+                        currDynamic.activityId = _.pick(activityId, pickActivityKeys);
+                    }
                     statusReturn[i].data.dynamicNews = currDynamic;
 
                     if (likeTarget[currDynamic.objectId] == true)	//添加点赞状态字段
@@ -198,13 +211,6 @@ AV.Cloud.define('getDynamic', function(req,res){
                         }
                         if (arrayTagName.length) {
                             currDynamic.tagNames = arrayTagName;
-                        }
-                    }
-
-                    //遍历user_id，去掉不需要返回的字段，减少网络传输
-                    for (var k in currDynamic.user_id) {
-                        if (returnUserItem[k] != 1) {
-                            delete currDynamic.user_id[k];
                         }
                     }
 
@@ -230,7 +236,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             var query = new AV.Query('DynamicNews');
             query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
             query.equalTo('type', parseInt(type));
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
             query.descending('createdAt');
@@ -268,7 +274,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             if (type) {
                 query.equalTo('type', parseInt(type));
             }
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
             query.descending('createdAt');
@@ -302,7 +308,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             if (favoriteIds.length > 0) {
                 query.containedIn('objectId', favoriteIds);
             }
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
             query.descending('createdAt');
@@ -331,7 +337,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             var query = new AV.Query('DynamicNews');
             query.skip(skip);
             query.limit(limit);
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.equalTo('commentUsers', userId);
             query.equalTo('type', parseInt(type));
             query.descending('createdAt');
@@ -367,7 +373,7 @@ AV.Cloud.define('getDynamic', function(req,res){
 
                 //查询活动相关动态
                 query = new AV.Query('DynamicNews');
-                query.include('user_id');
+                query.include('user_id', 'activityId');
                 query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
                 query.limit(limit);
                 query.skip(skip);
@@ -380,11 +386,19 @@ AV.Cloud.define('getDynamic', function(req,res){
                     retVal.dynamics = [];
                     var _ = AV._;
                     dynamics.forEach(function(dynamic){
+                        var user_id = dynamic.get('user_id');
+                        var activityId = dynamic.get('activityId');
+
                         dynamic = dynamic._toFullJSON();
-                        var user_id = dynamic.user_id;
-                        if (!user_id.__type) {  //增加返回'__type'字段
-                            user_id.__type = 'Object';
+                        if (activityId) {
+                            activityId.__type = 'Object';
+                            dynamic.activityId = activityId;
                         }
+                        if (user_id) {
+                            user_id.__type = 'Object';
+                            dynamic.user_id = user_id;
+                        }
+
                         retVal.dynamics.push(dynamic);
                     });
                 }
