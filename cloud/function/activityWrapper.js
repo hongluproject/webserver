@@ -244,6 +244,9 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         if (userItem.passportCard) {
             activitySignUpUser.set('passportCard', userItem.passportCard);
         }
+        if (userItem.mtp) {
+            activitySignUpUser.set('mtp', userItem.mtp);
+        }
         activitySignUpUser.set('userId', AV.Object.createWithoutData('_User', userId));
         activitySignUpUser.set('activityId', AV.Object.createWithoutData('Activity', activityId));
         return activitySignUpUser.save();
@@ -304,6 +307,9 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             }
             if (userItem.passportCard) {
                 activityUser.set('passport_card', userItem.passportCard);
+            }
+            if (userItem.mtp) {
+                activityUser.set('mtp', userItem.mtp);
             }
             activityUser.set('user_id', AV.Object.createWithoutData('_User', userId));
             activityUser.set('activity_id', AV.Object.createWithoutData('Activity', activityId));
@@ -719,6 +725,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
         activityUser.set('idcard', signupInfo.get('idcard'));
         activityUser.set('signIn', 1);
         activityUser.set('passport_card', signupInfo.get('passportCard'));
+        activityUser.set('mtp', signupInfo.get('mtp'));
         activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
         activityUser.set('user_id', user._toPointer());
         activityUser.set('activity_id', activity._toPointer());
@@ -781,6 +788,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
                     item.set('idcard', signupInfo.get('idcard'));
                     item.set('two_way_permit', signupInfo.get('twoWayPermit'));
                     item.set('passport_card', signupInfo.get('passportCard'));
+                    item.set('mtp', signupInfo.get('mtp'));
                     item.set('real_name', signupInfo.get('realName'));
                 }
             }

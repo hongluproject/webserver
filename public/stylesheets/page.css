@@ -26,7 +26,7 @@ del{font-family:'\5b8b\4f53'}.clear{*zoom:1}
 .download .btn_wrap a:nth-child(1) i{background-image: url(../images/share/android.png);}
 .download .btn_wrap a:nth-child(2) i{background-image: url(../images/share/apple.png);}
 
-.share{}
+.share{max-width: 700px;margin:0 auto}
 .share .top{background: #36cad8; padding:5% 10%; color:#fff;}
 .share h1{font-size: 28px; text-align: center; margin-bottom: 8%;}
 .share .who{font-size: 16px; margin-bottom: 5% }
