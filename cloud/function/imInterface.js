@@ -195,52 +195,36 @@ AV.Cloud.define('imAddToGroup', function(request, response){
         return;
     }
     console.info('imAddToGroup:userid:%s groupid:%s groupname:%s', userid, groupid, groupname);
+    var rcParam = myutils.getRongCloudParam();
 
-    //校验用户是否存在，根据id查询用户表
-    var hpUser = AV.Object.extend("_User");
-    var query = new AV.Query(hpUser);
-    query.get(userid, {
-        success:function(userObj) {
-            if (!userObj) {
-                response.error('imAddToGroup 用户不存在！');
-                return;
-            }
-            var rcParam = myutils.getRongCloudParam();
+    console.info('imAddToGroup:rong cloud param:%s', JSON.stringify(rcParam));
 
-            console.info('imAddToGroup:rong cloud param:%s', JSON.stringify(rcParam));
-
-            //通过avcloud发送HTTP的post请求
-            AV.Cloud.httpRequest({
-                method: 'POST',
-                url: 'https://api.cn.rong.io/group/join.json',
-                headers: {
-                    'App-Key': rcParam.appKey,
-                    'Nonce': rcParam.nonce,
-                    'Timestamp': rcParam.timestamp,
-                    'Signature': rcParam.signature
-                },
-                body: querystring.stringify({
-                            userId:userid,
-                            groupId:groupid,
-                            groupName:groupname
-                        }),
-                success: function(httpResponse) {
-                    console.info('imAddToGroup:rong cloud response is '+httpResponse.text);
-                    if (httpResponse.data.code == 200)
-                        response.success('加入聊天群组成功');
-                    else
-                        response.error('加入聊天群组失败,code='+httpResponse.data.code);
-                },
-                error: function(httpResponse) {
-                    var errmsg = 'Request failed with response code ' + httpResponse.status;
-                    console.error('imAddToGroup:'+errmsg);
-                    response.error(errmsg);
-                }
-            });
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/join.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
         },
-        error:function(object, error) {
-            console.error('用户id：%s 不存在！', userid);
-            response.error('用户不存在');
+        body: querystring.stringify({
+                    userId:userid,
+                    groupId:groupid,
+                    groupName:groupname
+                }),
+        success: function(httpResponse) {
+            console.info('imAddToGroup:rong cloud response is '+httpResponse.text);
+            if (httpResponse.data.code == 200)
+                response.success('加入聊天群组成功');
+            else
+                response.error('加入聊天群组失败,code='+httpResponse.data.code);
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('imAddToGroup:'+errmsg);
+            response.error(errmsg);
         }
     });
 
@@ -268,50 +252,35 @@ AV.Cloud.define('imQuitGroup', function(request, response){
     }
     console.info("imQuitGroup:userid:%s groupid:%s", userid, groupid);
 
-    //校验用户是否存在，根据id查询用户表
-    var hpUser = AV.Object.extend("_User");
-    var query = new AV.Query(hpUser);
-    query.get(userid, {
-        success:function(userObj) {
-            if (!userObj) {
-                response.error('imQuitGroup 用户不存在！');
-                return;
-            }
-            var rcParam = myutils.getRongCloudParam();
+    var rcParam = myutils.getRongCloudParam();
 
-            console.info('imQuitGroup:rong cloud param:%s', JSON.stringify(rcParam));
+    console.info('imQuitGroup:rong cloud param:%s', JSON.stringify(rcParam));
 
-            //通过avcloud发送HTTP的post请求
-            AV.Cloud.httpRequest({
-                method: 'POST',
-                url: 'https://api.cn.rong.io/group/quit.json',
-                headers: {
-                    'App-Key': rcParam.appKey,
-                    'Nonce': rcParam.nonce,
-                    'Timestamp': rcParam.timestamp,
-                    'Signature': rcParam.signature
-                },
-                body: querystring.stringify({
-                            userId:userid,
-                            groupId:groupid
-                        }),
-                success: function(httpResponse) {
-                    console.info('imQuitGroup:rong cloud response is '+httpResponse.text);
-                    if (httpResponse.data.code == 200)
-                        response.success('退出聊天群组成功');
-                    else
-                        response.success('退出聊天群组失败,code='+httpResponse.data.code);
-                },
-                error: function(httpResponse) {
-                    var errmsg = 'Request failed with response code ' + httpResponse.status;
-                    console.error('imQuitGroup:'+errmsg);
-                    response.error(errmsg);
-                }
-            });
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/quit.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
         },
-        error:function(object, error) {
-            console.error('用户id：%s 不存在！', userid);
-            response.error('用户不存在');
+        body: querystring.stringify({
+                    userId:userid,
+                    groupId:groupid
+                }),
+        success: function(httpResponse) {
+            console.info('imQuitGroup:rong cloud response is '+httpResponse.text);
+            if (httpResponse.data.code == 200)
+                response.success('退出聊天群组成功');
+            else
+                response.success('退出聊天群组失败,code='+httpResponse.data.code);
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('imQuitGroup:'+errmsg);
+            response.error(errmsg);
         }
     });
 });

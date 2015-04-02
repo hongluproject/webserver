@@ -3,37 +3,57 @@
  */
 var common = require('cloud/common.js');
 
+/*
+    转换分享URL：包括动态、资讯
+ */
 AV.Cloud.define('convertShareURL', function(req, res){
-    var bDevelopEnv = common.isSahalaDevEnv();
-    var query = new AV.Query('DynamicNews');
-    query.limit(1000);
-    query.find().then(function(dynamics){
-        dynamics.forEach(function(dynamic){
-            var dynamicId = dynamic.id;
-            if (bDevelopEnv) {
-                dynamic.set('share_url', 'http://apidev.imsahala.com/dynamic/'.concat(dynamicId));
-            } else {
-                dynamic.set('share_url', 'http://api.imsahala.com/dynamic/'.concat(dynamicId));
+    function convertDynamicURL(skip, limit) {
+        var skip = skip || 0;
+        var limit = limit || 1000;
+        var bDevelopEnv = common.isSahalaDevEnv();
+        var query = new AV.Query('DynamicNews');
+        query.skip(skip);
+        query.limit(limit);
+        query.find().then(function(dynamics) {
+            dynamics.forEach(function (dynamic) {
+                var dynamicId = dynamic.id;
+                if (bDevelopEnv) {
+                    dynamic.set('share_url', 'http://apidev.imsahala.com/dynamic/'.concat(dynamicId));
+                } else {
+                    dynamic.set('share_url', 'http://api.imsahala.com/dynamic/'.concat(dynamicId));
+                }
+                dynamic.save();
+            });
+
+            if (dynamics&&dynamics.length==limit) {
+                //没有转完，则继续转换
+                convertDynamicURL(skip+limit);
             }
-            dynamic.save();
         });
+    }
+    function convertNewsURL(skip, limit) {
+        var skip = skip || 0;
+        var limit = limit || 1000;
 
         query = new AV.Query('News');
         query.contains('contents_url', 'https://');
-        query.limit(1000);
-        return query.find();
-    }).then(function(news){
-        news.forEach(function(newItem){
-            var newsId = newItem.id;
-            if (bDevelopEnv) {
-                newItem.set('contents_url', 'http://apidev.imsahala.com/news/'.concat(newsId));
-            } else {
-                newItem.set('contents_url', 'http://api.imsahala.com/news/'.concat(newsId));
-            }
+        query.limit(limit);
+        query.skip(skip);
+        query.find().then(function(news){
+            news.forEach(function(newItem){
+                var newsId = newItem.id;
+                if (bDevelopEnv) {
+                    newItem.set('contents_url', 'http://apidev.imsahala.com/news/'.concat(newsId));
+                } else {
+                    newItem.set('contents_url', 'http://api.imsahala.com/news/'.concat(newsId));
+                }
 
-            newItem.save();
-        })
-    });
+                newItem.save();
+            });
+
+            convertNewsURL(skip+limit);
+        });
+    }
 
     res.success();
 });
