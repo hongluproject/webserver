@@ -18,7 +18,7 @@ AV.Cloud.define("unfollowFriend",function(req, res) {
         res.success();
     }, function(err){
         console.error('%s unfollow %s error:', myUserId, friendUserId, err);
-        res.error(err);
+        res.error('取消关注好友失败，错误码:'+err.code);
     });
 
     /*

@@ -218,7 +218,7 @@ AV.Cloud.define('getDynamic', function(req,res){
 
                 res.success(statusReturn);
             }, function(error){
-                res.error('查询点赞状态失败:%o', error);
+                res.error('查询点赞状态失败，错误码：'+error.code);
             });
 
             break;
@@ -407,7 +407,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             }, function(err){
                 console.error('activityDynamic error:', err);
 
-                res.error('获取活动相关动态失败:'+err?err.message:'');
+                res.error('获取活动相关动态失败,错误码:'+err.code);
             });
             break;
     }
@@ -550,6 +550,6 @@ AV.Cloud.define('postComment', function(req, res){
         res.success(comment);
     }, function(error){
         console.error('postComment error:', error);
-        res.error(error);
+        res.error('提交评论失败，错误码:'+error.code);
     })
 });

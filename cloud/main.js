@@ -48,51 +48,17 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	//count
-	var queryNews = new AV.Query('_Status');
-	queryNews.count().then(function(result){
-		console.info('query count:', result);
-		res.success(result);
+
+	/*
+		测试 collection
+	 */
+	var query = new AV.Query('_User');
+	query.find().then(function(results){
+		var collection = new AV.Collection(results);
+		res.success(collection.toJSON());
 	});
 
-	return;
 
-	var userId = req.params.userId || req.user.id;
-	var activityId = req.params.activityId;
-	var activityName = req.params.activityName;
-	//同步融云群组
-	var rcParam = myutils.getRongCloudParam();
-	var body = {};
-	var key = 'group['+activityId + ']';
-	body[key] = activityName;
-	body['userId'] = userId;
-	console.info('syncRCGroup:rong cloud param:%s querystring:%s', JSON.stringify(rcParam), querystring.stringify(body));
-	//通过avcloud发送HTTP的post请求
-	AV.Cloud.httpRequest({
-		method: 'POST',
-		url: 'https://api.cn.rong.io/group/sync.json',
-		headers: {
-			'App-Key': rcParam.appKey,
-			'Nonce': rcParam.nonce,
-			'Timestamp': rcParam.timestamp,
-			'Signature': rcParam.signature
-		},
-		body: querystring.stringify(body),
-		success: function(httpResponse) {
-			console.info('syncRCGroup:rong cloud %s response is %s', key, httpResponse.text);
-			if (httpResponse.data.code == 200)
-				console.info('创建聊天室成功');
-			else
-				console.error('创建聊天室失败,code='+httpResponse.data.code);
-			res.success();
-		},
-		error: function(httpResponse) {
-			res.error('error');
-			console.error('syncRCGroup failed,errCode:%d errMsg:%s', httpResponse.status, httpResponse.text);
-		}
-	});
-
-	return;
 	/*
 	var pingpp = require('pingpp')(common.pingxxAppKey);
 	pingpp.charges.createRefund(

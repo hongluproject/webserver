@@ -57,7 +57,7 @@ AV.Cloud.define('imGetGroupnameFromId', function(req, res){
         }
     }, function(err){
        console.error('getGroupnameFromId error:', err);
-        res.error('获取群组名称失败:'+err?err.message:'');
+        res.error('获取群组名称失败,错误码:'+err.code);
     });
 });
 

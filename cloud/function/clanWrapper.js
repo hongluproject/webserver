@@ -95,6 +95,6 @@ AV.Cloud.define('getClanJoined', function(req, res){
 
         res.success(retClans);
     }, function(err){
-        res.error('查询部落失败:'+err?err.message:'');
+        res.error('查询部落失败,错误码:'+err.code);
     })
 });

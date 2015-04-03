@@ -322,7 +322,7 @@ AV.Cloud.define("joinClan", function (req, res) {
         });
     }, function(err){
         console.error('加入部落失败:', err);
-        res.error('加入部落失败:', err?err.message:'');
+        res.error('加入部落失败,错误码:'+err.code);
     });
 });
 

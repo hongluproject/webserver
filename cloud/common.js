@@ -214,6 +214,14 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
 
 }
 
+function isRCPrivateMessage(messageType) {
+    if (messageType == 'inviteUserToClan') {
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * 发送融云系统消息s
  * @param fromUserId：消息发起者
@@ -268,9 +276,12 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,titl
 
     console.info('rongcloud request body:%s', querystring.stringify(body));
 
+    var postURl = isRCPrivateMessage(messageType)?
+            'https://api.cn.rong.io/message/private/publish.json':
+            'https://api.cn.rong.io/message/system/publish.json';
     AV.Cloud.httpRequest({
         method: 'POST',
-        url: 'https://api.cn.rong.io/message/system/publish.json',
+        url: postURl,
         headers: {
             'App-Key': rcParam.appKey,
             'Nonce': rcParam.nonce,

@@ -237,6 +237,6 @@ AV.Cloud.define('getRecommendActivity', function(req, res){
         res.success(retVal);
     }, function(err){
         console.error('getRecommendActivity error:', err);
-        res.error('查询推荐活动失败:'+err?err.message:'');
+        res.error('查询推荐活动失败，错误码:'+err.code);
     });
 });

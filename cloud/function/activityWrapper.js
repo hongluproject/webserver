@@ -79,7 +79,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
         res.success();
     }, function(error) {
         console.error('joinActivity error:', error);
-        res.error('加入活动失败:'+error?error.message:'');
+        res.error('加入活动失败，错误码:'+error.code);
     });
 });
 
@@ -322,7 +322,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         res.success({orderNo:orderNo});
     }, function(err){
         console.error('user %s 加入 %s 活动，报名失败:', req.user&&req.user.get('nickname'), activity.get('title'), err);
-        res.error('生成订单失败:'+err?err.message:'');
+        res.error('生成订单失败,错误码:'+err.code);
     });
 });
 
@@ -453,7 +453,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         });
     }, function(err){
         console.error('获取活动失败:', err);
-        res.error('获取活动失败:'+err?err.message:'');
+        res.error('获取活动失败，错误码:'+err.code);
     });
 });
 
@@ -520,7 +520,8 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
             if (chargeId) {
                 var url = 'http://pay.imsahala.com/api/ping/refund?'+querystring.stringify({
                         ch_id:chargeId,
-                        description:'用户申请退款'
+                        description:'用户申请退款',
+                        amount:order.get('amount')||0
                     });
                 console.info('申请退款URL：%s', url);
                 //通知PHP server修改订单状态
@@ -539,7 +540,7 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
         res.success();
     }, function(err){
         console.error('cancelSignupActivity error:', err);
-        res.error('退出报名失败：', err?err.message:'');
+        res.error('退出报名失败,错误码:'+err.code);
     });
 });
 
@@ -649,7 +650,7 @@ AV.Cloud.define('cancelActivity', function(req, res){
         });
     }, function(err){
         console.error('活动取消失败：', err);
-        res.error('活动取消失败:'+err?err.message:'');
+        res.error('活动取消失败,错误码:'+err.code);
     });
 });
 
@@ -737,7 +738,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
             });
     }, function(err){
         console.error('处理订单完成失败:', err);
-        res.error('处理订单完成失败:', err?err.message:'');
+        res.error('处理订单完成失败,错误码:'+err.code);
     });
 });
 
@@ -802,14 +803,15 @@ AV.Cloud.define('getActivityUsers', function(req, res){
         res.success(retVal);
     }, function(err){
         console.error('处理订单完成失败:', err);
-        res.error('获取活动用户失败：'+err?err.message:'');
+        res.error('获取活动用户失败,错误码:'+err.code);
     });
 });
 
-/**
+/** 注：经约定，部落人员转移消息，由APP自己来发起，server端不参与此过程，该接口废弃
  * 邀请用户加入部落 函数名：inviteActivityUserToClan
  * @param   userIds:array   需要邀请转移的用户
  * @param   clanIds:array   转移到的目标部落
+ *
  */
 AV.Cloud.define('inviteActivityUserToClan', function(req,res){
     var userId = req.params.userId;
@@ -846,7 +848,7 @@ AV.Cloud.define('inviteActivityUserToClan', function(req,res){
         res.success();
     }, function(err){
         console.error('inviteActivityUserToClan error:', err);
-        res.error('邀请用户失败:'+err?err.message:'');
+        res.error('邀请用户失败,错误码:'+err.code);
     });
 });
 
@@ -920,7 +922,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         res.success(statement);
     }, function(err){
         console.error('getStatementDetail error:', err);
-        res.error('查询订单详情失败：'+err?err.message:'');
+        res.error('查询订单详情失败,错误码:'+err.code);
     });
 });
 
@@ -968,7 +970,7 @@ AV.Cloud.define('getOrderList', function(req, res){
         res.success(retVal);
     }, function(err){
         console.error('getOrderList error:', err);
-        res.error('获取订单列表失败:'+err?err.message:'');
+        res.error('获取订单列表失败,错误码:'+err.code);
     });
 });
 
@@ -1058,7 +1060,7 @@ AV.Cloud.define('getActivityList', function(req, res){
 
                 res.success(retVal);
             }, function(err){
-                res.error('查询活动失败:'+err?err.message:'');
+                res.error('查询活动失败,错误码:'+err.code);
             });
             break;
 
@@ -1103,7 +1105,7 @@ AV.Cloud.define('getActivityList', function(req, res){
 
                 res.success(retVal);
             }, function(err){
-                res.error('查询活动失败:'+err?err.message:'');
+                res.error('查询活动失败,错误码:'+err.code);
             });
             break;
 
@@ -1144,7 +1146,7 @@ AV.Cloud.define('getActivityList', function(req, res){
 
                 res.success(retVal);
             }, function(err){
-                res.error('查询活动失败:'+err?err.message:'');
+                res.error('查询活动失败,错误码:'+err.code);
             });
             break;
     }
@@ -1206,7 +1208,7 @@ AV.Cloud.define('getActivityJoined', function(req, res){
         res.success(retVal);
     }, function(err){
         console.error('getActivityJoined error:', err);
-        res.error('查询加入的活动失败:', err?err.message:'');
+        res.error('查询加入的活动失败,错误码:'+err.code);
     });
 });
 
@@ -1291,7 +1293,7 @@ AV.Cloud.define('signinActivity', function(req, res){
         res.success();
     }, function(err){
         console.error('签到失败:',err);
-        res.error('签到失败:', err?err.message:'');
+        res.error('签到失败,错误码:'+err.code);
     });
 });
 
@@ -1323,7 +1325,7 @@ AV.Cloud.define('cancelOrder', function(req, res){
         }
     }, function(err){
         console.error('cancelOrder error:', err);
-        res.error('取消订单失败：', err?err.message:'');
+        res.error('取消订单失败,错误码:'+err.code);
     });
 });
 
@@ -1419,7 +1421,7 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
         res.success(charge);
     }, function(err){
         console.error(err);
-        res.error('生成订单失败:'+err?err.message:'');
+        res.error('生成订单失败,错误码:'+err.code);
     });
 });
 

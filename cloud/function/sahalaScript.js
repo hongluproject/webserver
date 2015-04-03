@@ -55,6 +55,9 @@ AV.Cloud.define('convertShareURL', function(req, res){
         });
     }
 
+    convertDynamicURL();
+    convertNewsURL();
+
     res.success();
 });
 
