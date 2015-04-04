@@ -375,6 +375,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                 query = new AV.Query('DynamicNews');
                 query.include('user_id', 'activityId');
                 query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+                query.descending('createdAt');
                 query.limit(limit);
                 query.skip(skip);
                 return query.find();

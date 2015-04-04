@@ -316,10 +316,10 @@ exports.postRCMessage= postRCMessage;
  */
 exports.sendStatus = function(messageType, sourceUser, targetUser, query, extendProp) {
     var _ = AV._;
-    var messageObj = {
+    var statusMessageObj = {
         addFriend:"把您加为好友",
         removeFromClan:"被酋长移出了部落",
-        newComment:"有了新的评论",
+        newComment:"评论了你的动态",
         newPost:"发布了新的动态",
         newQuestion:'发布了新的问答',
         newLike:"觉得你牛掰了",
@@ -334,8 +334,64 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         refundSuccess:"退款成功"
     };
 
+    function rcMessageFromType(messageType) {
+        var retMsg = '';
+        switch (messageType) {
+            case 'addFriend':
+                retMsg = '我把你加为了好友';
+                break;
+            case 'removeFromClan':
+                var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
+                retMsg = '我把你移出了' + clanName;
+                break;
+            case 'newPost':
+                retMsg = '我发布了新的动态';
+                break;
+            case 'newLike':
+                retMsg = '我觉得你牛掰了';
+                break;
+            case 'addToClan':
+                var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
+                retMsg = '我加入了' + clanName||'';
+                break;
+            case 'quitClan':
+                var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
+                retMsg = '我退出了' + clanName||'';
+                break;
+            case 'joinActivity':
+                var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
+                retMsg = '我加入了' + activityName||'';
+                break;
+            case 'refuseToJoinClan':
+                var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
+                retMsg = '我拒绝了你加入' + clanName||'' + '的请求!';
+                break;
+            case 'allowToJoinClan':
+                var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
+                retMsg = '我通过了你加入' + clanName||'' + '的请求!';
+                break;
+            case 'quitActivity':
+                var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
+                retMsg = '我退出了' + activityName||'';
+                break;
+            case 'updateActivity':
+                var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
+                retMsg = '我更新了' + activityName|| + '信息';
+                break;
+            case 'cancelActivity':
+                var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
+                retMsg = '我取消了' + activityName||'';
+                break;
+            case 'refundSuccess':
+                retMsg = '退款成功';
+                break;
+        }
+
+        return retMsg || '';
+    }
+
     var toRcUsers = [];
-    var status = new AV.Status(null, messageObj[messageType]);
+    var status = new AV.Status(null, statusMessageObj[messageType]);
     status.data.source = sourceUser._toPointer();
     status.query = query;
     status.inboxType = exports.inboxtypeFromMessageType(messageType);
@@ -411,6 +467,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         status.send().then(function(status){
             if( messageType=='addFriend' ||
                 messageType=='newLike'||
+                messageType=='quitClan'||
                 messageType=='newComment'||
                 messageType=='joinActivity'||
                 messageType=='refuseToJoinClan' ||
@@ -421,7 +478,20 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 messageType=='cancelActivity' ||
                 messageType=='refundSuccess') {
                //fromUserId, toUserId, content, messageType,objectId
-                postRCMessage(sourceUser.id,toRcUsers,messageObj[messageType],messageType,status.id);
+                if (messageType=='newComment') {
+                    if (extendProp && extendProp.replyUser) {
+                        //如果是回复评论者，需要通知他
+                        postRCMessage(sourceUser.id,extendProp.replyUser.id,'我回复了你的评论',messageType,status.id);
+                    }
+
+                    if (sourceUser.id != targetUser.id) {
+                        //通知到动态发布者
+                        postRCMessage(sourceUser.id,targetUser.id,'我回复了你的动态',messageType,status.id);
+                    }
+
+                } else {
+                    postRCMessage(sourceUser.id,toRcUsers,rcMessageFromType(messageType),messageType,status.id);
+                }
              }
             console.info('%s 事件流发送成功', messageType);
         },function(error) {

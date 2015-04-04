@@ -7,10 +7,10 @@ var common = require('cloud/common.js');
     转换分享URL：包括动态、资讯
  */
 AV.Cloud.define('convertShareURL', function(req, res){
+    var bDevelopEnv = common.isSahalaDevEnv();
     function convertDynamicURL(skip, limit) {
         var skip = skip || 0;
         var limit = limit || 1000;
-        var bDevelopEnv = common.isSahalaDevEnv();
         var query = new AV.Query('DynamicNews');
         query.skip(skip);
         query.limit(limit);
@@ -51,12 +51,44 @@ AV.Cloud.define('convertShareURL', function(req, res){
                 newItem.save();
             });
 
-            convertNewsURL(skip+limit);
+            if (news&&news.length==limit) {
+                //没有转完，则继续转换
+                convertNewsURL(skip + limit);
+            }
         });
     }
 
+    function convertClanURL(skip, limit) {
+        var skip = skip || 0;
+        var limit = limit || 1000;
+
+        query = new AV.Query('Clan');
+        query.limit(limit);
+        query.skip(skip);
+        query.find().then(function(Clans){
+            Clans.forEach(function(clanItem){
+                var clanId = clanItem.id;
+                if (bDevelopEnv) {
+                    clanItem.set('shareUrl', 'http://apidev.imsahala.com/clan/'.concat(clanId));
+                } else {
+                    clanItem.set('shareUrl', 'http://api.imsahala.com/clan/'.concat(clanId));
+                }
+
+                clanItem.save();
+            });
+
+            if (Clans && Clans.length==limit) {
+                //没有转完，则继续转换
+                convertClanURL(skip+limit);
+            }
+        });
+    }
+
+    /*
     convertDynamicURL();
     convertNewsURL();
+    */
+    convertClanURL();
 
     res.success();
 });

@@ -1274,7 +1274,7 @@ AV.Cloud.define('signinActivity', function(req, res){
     query.select('signIn', 'activity_id');
     query.first().then(function(result){
        if (!result) {
-           res.error('您尚未报名！');
+           res.error('您尚未报名此活动！');
            return;
        }
 
@@ -1378,13 +1378,13 @@ AV.Cloud.define('newChargeWithOrder', function(req, res){
             var nowTime = new Date();
             var deadSignupTime = activity.get('dead_time');
             if (nowTime.getTime() > deadSignupTime.getTime()) {
-                res.error('报名时间已过！');
+                res.error('活动报名时间已过！');
                 return;
             }
             var maxUserNum = activity.get('max_num');
             var currUserNum = activity.get('current_num');
             if (maxUserNum && currUserNum>=maxUserNum) {
-                res.error('报名人数已满！');
+                res.error('活动报名人数已满！');
                 return;
             }
         }
@@ -1486,6 +1486,7 @@ AV.Cloud.define('updateActivity', function(req, res){
     query.equalTo('activity_id', activity);
     query.find().then(function(results) {
         if (!results) {
+            res.success();
             return;
         }
 
@@ -1497,6 +1498,7 @@ AV.Cloud.define('updateActivity', function(req, res){
 
         if (!joinUsers.length) {
             console.info('%s 活动没有参与者，不用发消息通知。', activityId);
+            res.success();
             return;
         }
 
@@ -1504,5 +1506,7 @@ AV.Cloud.define('updateActivity', function(req, res){
         var query = new AV.Query('_User');
         query.containedIn('objectId', joinUsers);
         common.sendStatus('updateActivity', activityFounder, joinUsers, query, {activity:activity});
+
+        res.success();
     });
 });

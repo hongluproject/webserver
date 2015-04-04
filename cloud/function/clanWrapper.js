@@ -2,6 +2,8 @@
  * Created by fugang on 14/12/22.
  */
 var common = require('cloud/common.js');
+var myutils = require('cloud/utils.js');
+var querystring = require('querystring');
 
 /** 判断用户是否可创建部落
  *
@@ -97,4 +99,104 @@ AV.Cloud.define('getClanJoined', function(req, res){
     }, function(err){
         res.error('查询部落失败,错误码:'+err.code);
     })
+});
+
+/*
+    部落信息更新
+    云函数：clanUpdate
+    参数：
+        clanId:objectId 部落ID
+        clanName:string 部落名称
+    返回：
+        success or error
+ */
+AV.Cloud.define('clanUpdate', function(req, res){
+    var clanId = req.params.clanId;
+    var clanName = req.params.clanName;
+    if (!clanId || !clanName) {
+        res.error('请传入参数！');
+        return;
+    }
+
+    //如果名称发生变更，将对应融云保存的群组名称也同步更新
+    var rcParam = myutils.getRongCloudParam();
+    console.info("clanUpdate:nonce:%d timestamp:%d singature:%s",
+        rcParam.nonce, rcParam.timestamp, rcParam.signature);
+    var reqBody = {
+        groupId:clanId,
+        groupName:clanName
+    };
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/refresh.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify(reqBody),
+        success: function(httpResponse) {
+            console.info('clanUpdate:rongcloud response is '+httpResponse.text);
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('clanUpdate:'+errmsg);
+        }
+    });
+
+    res.success();
+});
+
+/*
+    用户信息更新：
+    云函数：userUpdate
+    参数：
+        userId:objectId 用户ID
+        userName:string 用户昵称
+        userIcon:string 用户头像
+    返回：
+        success or error
+ */
+AV.Cloud.define('userUpdate', function(req, res){
+    var userId = req.params.userId;
+    var userName = req.params.userName;
+    var userIcon = req.params.userIcon;
+
+    if (!userId || !userName) {
+        res.error('请传入参数！');
+        return;
+    }
+
+    //如果名称发生变更，将对应融云保存的群组名称也同步更新
+    var rcParam = myutils.getRongCloudParam();
+    console.info("userUpdate:nonce:%d timestamp:%d singature:%s",
+        rcParam.nonce, rcParam.timestamp, rcParam.signature);
+    var reqBody = {
+        userId:userId,
+        name:userName,
+        portraitUri:userIcon
+    };
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/user/refresh.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify(reqBody),
+        success: function(httpResponse) {
+            console.info('userUpdate:rongcloud response is '+httpResponse.text);
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('userUpdate:'+errmsg);
+        }
+    });
+
+    res.success();
 });

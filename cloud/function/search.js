@@ -46,7 +46,7 @@ AV.Cloud.define("getSearch",function(req,res){
     if (!userId) {  //如果用户ID未传，则以当前登录用户的ID为准
         userId = currUserId;
     }
-    console.info('getSearch params,userId:%s type:%d kw:%s tagId:%s skip:%d limit:%d currUserId:%s',
+    console.info('getSearch params,userId:%s type:%s kw:%s tagId:%s skip:%d limit:%d currUserId:%s',
         userId, type, kw, tagId, skip, limit, currUserId);
 
     //资讯
@@ -277,6 +277,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.first({
             success: function(result) {
                 if(result){
+                    console.info('match tag:', result);
                     tagId = result.id;
                 }
                 switchTab(type, res);

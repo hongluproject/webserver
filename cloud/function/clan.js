@@ -280,6 +280,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                             res.error('加入部落失败');
                         }
                         else {
+                            common.postRCMessage(userid, clan.get("founder_id").id,
+                                "我加入了"+clan.get("title"),'requestJoinClan',clanid
+                            );
                             res.success();
                         }
                     });
@@ -299,7 +302,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                                     addReviewClanUser(userid, clanid, function(success) {
                                         if (success) {
                                             common.postRCMessage(userid, clan.get("founder_id").id,
-                                                fromUser.get("nickname")+"请求加入部落"+clan.get("title"),'requestJoinClan',clanid
+                                                "请求加入"+clan.get("title"),'requestJoinClan',clanid
                                             );
                                             res.success('已经发送申请');
                                         }

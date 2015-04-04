@@ -170,7 +170,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
 
     //找到该部落的founder
     var queryClan = new AV.Query('Clan');
-    queryClan.select('founder_id', 'current_num', 'max_num', 'is_full');
+    queryClan.select('founder_id', 'current_num', 'max_num', 'is_full', 'title');
     queryClan.get(clanObj.id, {
         success:function(clan) {
             if (!clan) {
