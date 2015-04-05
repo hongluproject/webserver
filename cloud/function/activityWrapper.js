@@ -1504,7 +1504,7 @@ AV.Cloud.define('updateActivity', function(req, res){
         //通知到所有活动参与者，活动已经更新
         var query = new AV.Query('_User');
         query.containedIn('objectId', joinUsers);
-        common.sendStatus('updateActivity', activityFounder, joinUsers, query, {activity:activity});
+        common.sendStatus('updateActivity', req.user, joinUsers, query, {activity:activity});
 
         res.success();
     });
