@@ -127,13 +127,6 @@ AV.Cloud.afterSave('ClanUser', function(req){
                     groupname:clan.get('title')
                 });
 
-                //向部落拥有者发送消息流，告知我已经加入该部落
-                var query = new AV.Query('_User');
-                query.equalTo('objectId', founderId);
-
-                if(userObj.id!=clan.get('founder_id').id){
-                    common.sendStatus('addToClan', userObj, clan.get('founder_id'), query);
-                }
             }
         });
     });

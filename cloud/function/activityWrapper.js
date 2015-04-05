@@ -817,6 +817,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
  * @param   clanIds:array   转移到的目标部落
  *
  */
+/*
 AV.Cloud.define('inviteActivityUserToClan', function(req,res){
     var userId = req.params.userId;
     if (!userId && req.user && req.user.id) {
@@ -846,7 +847,8 @@ AV.Cloud.define('inviteActivityUserToClan', function(req,res){
             var clanIcon = clan.get('icon');
 
             var content = userNickname + ' 邀请您加入 ' + clanName + ' 部落。';
-            common.postRCMessage(userId, inviteTargetUsers, content, 'inviteUserToClan', clanId, '部落邀请', clanIcon);
+            common.postRCMessage(userId, inviteTargetUsers, content, 'inviteUserToClan',
+                clanId, {title:'部落邀请', imgUrl:clanIcon});
         });
 
         res.success();
@@ -855,6 +857,7 @@ AV.Cloud.define('inviteActivityUserToClan', function(req,res){
         res.error('邀请用户失败,错误码:'+err.code);
     });
 });
+*/
 
 /*  获取订单详细信息  函数名:getStatementDetail
 *   参数：
@@ -1055,7 +1058,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                     retItem.activity.price = retItem.activity.price || '0.00';
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:0,
+                        friendJoin:Math.floor(Math.random()*100),
                         hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
                     delete retItem.activity.joinUsers;
@@ -1100,7 +1103,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                     retItem.activity.price = retItem.activity.price || '0.00';
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:0,
+                        friendJoin:Math.floor(Math.random()*100),
                         hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
                     delete retItem.activity.joinUsers;
@@ -1142,7 +1145,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                     retItem.activity.price = retItem.activity.price || '0.00';
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:0,
+                        friendJoin:Math.floor(Math.random()*100),
                         hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
                     delete retItem.activity.joinUsers;
@@ -1166,11 +1169,7 @@ AV.Cloud.define('getActivityList', function(req, res){
  *      skip:Integer  查询偏移
  *      limit:Integer 返回数量
  *  返回：[
- *      {
- *          objectId:活动ID
- *          title:活动标题
- *          index_thumb_image：封面图
- *      }
+ *      activity class object,only include 'index_thumb_image' 'title'
  *  ]
  */
 AV.Cloud.define('getActivityJoined', function(req, res){
@@ -1204,11 +1203,7 @@ AV.Cloud.define('getActivityJoined', function(req, res){
         }
 
         results.forEach(function(activity){
-            retVal.push({
-                objectId:activity.id,
-                index_thumb_image:activity.get('index_thumb_image') || '',
-                title:activity.get('title')||''
-            });
+            retVal.push(activity._toFullJSON());
         });
 
         res.success(retVal);
@@ -1278,7 +1273,7 @@ AV.Cloud.define('signinActivity', function(req, res){
     query.select('signIn', 'activity_id');
     query.first().then(function(result){
        if (!result) {
-           res.error('您尚未报名此活动！');
+           res.error('请扫描本次活动的二维码！');
            return;
        }
 

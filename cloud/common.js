@@ -230,14 +230,17 @@ function isRCPrivateMessage(messageType) {
  * @param messageType：扩展内容，消息类型
  * @param objectId：扩展类型，对应消息类型的objectId
  * @param replyUserId：回复动态评论的用户
- * @param title:图文消息标题
- * @param imgUrl:图像消息图像
+ * @param extProp: 扩展信息 {
+      title:图文消息标题
+      imgUrl:图像消息图像
+      clanId:部落ID
+  }
  */
-function postRCMessage (fromUserId, toUserId, content, messageType,objectId,title,imgUrl) {
+function postRCMessage (fromUserId, toUserId, content, messageType,objectId,extProp) {
     var rcParam = utils.getRongCloudParam();
     //通过avcloud发送HTTP的post请求
 
-    var bImgText = content&&title&&imgUrl;
+    var bImgText = extProp&&content&&extProp.title&&extProp.imgUrl;
     var toUsers = [];
     if (toUserId) {
         toUsers = toUsers.concat(toUserId);
@@ -249,12 +252,13 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,titl
             toUserId: toUsers,
             objectName: "RC:ImgTextMsg",
             content: JSON.stringify({
-                title:title,
-                imageUrl:imgUrl,
+                title:extProp.title,
+                imageUrl:extProp.imgUrl,
                 content: content,
                 extra: JSON.stringify({
                     type: messageType,
-                    objectId: objectId
+                    objectId: objectId,
+                    clanId:(extProp&&extProp.clanId)||''
                 })
             })
         }
@@ -268,7 +272,8 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,titl
                 content: content,
                 extra: JSON.stringify({
                     type: messageType,
-                    objectId: objectId
+                    objectId: objectId,
+                    clanId:(extProp&&extProp.clanId)||''
                 })
             })
         }
@@ -491,7 +496,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                     }
 
                 } else {
-                    postRCMessage(sourceUser.id,toRcUsers,rcMessageFromType(messageType),messageType,status.id);
+                    postRCMessage(sourceUser.id,toRcUsers,rcMessageFromType(messageType),messageType,status.id,
+                        {clanId:extendProp&&extendProp.clan&&extendProp.clan.id});
                 }
              }
             console.info('%s 事件流发送成功', messageType);

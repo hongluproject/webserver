@@ -280,6 +280,10 @@ AV.Cloud.define("joinClan", function (req, res) {
                             res.error('加入部落失败');
                         }
                         else {
+                            //向部落拥有者发送消息流，告知我已经加入该部落
+                            var queryUser = new AV.Query('_User');
+                            queryUser.equalTo('objectId', clan.get('founder_id').id);
+                            common.sendStatus('addToClan', AV.User.createWithoutData('_User',userid), clan.get('founder_id'), queryUser,{clan:clan});
                             res.success();
                         }
                     });
