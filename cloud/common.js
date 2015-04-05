@@ -467,6 +467,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         status.send().then(function(status){
             if( messageType=='addFriend' ||
                 messageType=='newLike'||
+                messageType=='addToClan'||
                 messageType=='quitClan'||
                 messageType=='newComment'||
                 messageType=='joinActivity'||

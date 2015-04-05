@@ -341,7 +341,11 @@ AV.Cloud.define('signUpActivity', function(req, res) {
  *  }
  */
 AV.Cloud.define('getActivityDetail', function(req, res){
-    var userId = req.params.userId || req.user.id;
+    var userId = req.params.userId || (req.user&&req.user.id);
+    if (!userId) {
+        res.error('请登录账号！');
+        return;
+    }
     var activityId = req.params.activityId;
     if (!activityId) {
         return res.error('请传入活动ID！');
