@@ -873,12 +873,9 @@ AV.Cloud.define('getStatementDetail', function(req, res){
 
     console.info('getStatementDetail params,bookNo:%s bGetSignup:%d', bookNo, bGetSignup);
 
-    var statement, activity, signup;
+    var statement, activity, signup, user;
     var query = new AV.Query('StatementAccount');
-    query.include('activityId');
-    if (bGetSignup) {
-        query.include('signupId');
-    }
+    query.include('activityId', 'signupId');
     query.equalTo('bookNumber', bookNo);
     query.first().then(function(result){
         if (!result) {
@@ -888,6 +885,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         statement = result;
         activity = result.get('activityId');
         signup = result.get('signupId');
+        user = result.get('userId');
 
         var payType = activity.get('pay_type');
         var accountStatus = result.get('accountStatus');
@@ -917,7 +915,37 @@ AV.Cloud.define('getStatementDetail', function(req, res){
                     statement.set('transactionNo', result.transaction_no);
                 }
 
-                statement.save();
+                statement.save().then(function(result){
+                    statement = result;
+                    //查询用户是否已经加入，若没有，则将用户加入ActivityUser
+                    query = new AV.Query('ActivityUser');
+                    query.equalTo('user_id', user);
+                    query.equalTo('activity_id', activity);
+                    return query.first();
+                }).then(function(result){
+                    if (result) {
+                        //已经加入，则不用理会
+                        console.info('用户已经加入活动，不用重复加入!');
+                        return;
+                    }
+
+                    //将用户加入ActivityUser
+                    var signupInfo = statement.get('signupId');
+                    var ActivityUser = AV.Object.extend('ActivityUser');
+                    var activityUser = new ActivityUser();
+                    activityUser.set('sex', signupInfo.get('sex'));
+                    activityUser.set('real_name', signupInfo.get('realName'));
+                    activityUser.set('phone', signupInfo.get('phone'));
+                    activityUser.set('idcard', signupInfo.get('idcard'));
+                    activityUser.set('signIn', 1);
+                    activityUser.set('passport_card', signupInfo.get('passportCard'));
+                    activityUser.set('mtp', signupInfo.get('mtp'));
+                    activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
+                    activityUser.set('user_id', user._toPointer());
+                    activityUser.set('activity_id', activity._toPointer());
+                    activityUser.set('order_id', statement._toPointer());
+                    activityUser.save();
+                });
             }
         }
 
