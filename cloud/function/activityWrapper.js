@@ -915,8 +915,8 @@ AV.Cloud.define('getStatementDetail', function(req, res){
                     statement.set('transactionNo', result.transaction_no);
                 }
 
+                var order = statement;
                 statement.save().then(function(result){
-                    statement = result;
                     //查询用户是否已经加入，若没有，则将用户加入ActivityUser
                     query = new AV.Query('ActivityUser');
                     query.equalTo('user_id', user);
@@ -930,7 +930,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
                     }
 
                     //将用户加入ActivityUser
-                    var signupInfo = statement.get('signupId');
+                    var signupInfo = order.get('signupId');
                     var ActivityUser = AV.Object.extend('ActivityUser');
                     var activityUser = new ActivityUser();
                     activityUser.set('sex', signupInfo.get('sex'));
@@ -943,8 +943,10 @@ AV.Cloud.define('getStatementDetail', function(req, res){
                     activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
                     activityUser.set('user_id', user._toPointer());
                     activityUser.set('activity_id', activity._toPointer());
-                    activityUser.set('order_id', statement._toPointer());
+                    activityUser.set('order_id', order._toPointer());
                     activityUser.save();
+
+                    console.info('保存在线付费活动用户完成!userId:%s activityId:%s', user.id, activity.id);
                 });
             }
         }

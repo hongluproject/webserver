@@ -144,6 +144,35 @@ AV.Cloud.define('updateClanForRC', function(req, res){
     });
 });
 
+AV.Cloud.define('updateActivityForRC', function(req, res){
+    var userId = req.params.userId;
+    var query = new AV.Query('ActivityUser');
+    query.include('activity_id');
+    query.limit(1000);
+    var activityObj = {};
+    query.find().then(function(results){
+        var activityId, activityName;
+       results.forEach(function(userItem){
+           var userId = userItem.get('user_id').id;
+           var activity = userItem.get('activity_id');
+           activityId = activity.id;
+           activityName = activity.get('title');
+           if (activityObj[activityId]) {
+               activityObj[activityId].push(userId);
+           } else {
+               activityObj[activityId] = [userId];
+           }
+       })
+
+        //加入融云组群
+        AV.Cloud.run('imAddToGroup',{
+            userid:userIds,
+            groupid:activityId,
+            groupname:activityName
+        });
+    });
+});
+
 
 
 

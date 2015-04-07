@@ -43,9 +43,6 @@ AV.Cloud.afterSave('DynamicComment', function(request){
                 var userIds = [replyUser.id];
                 if (postUser.id != commentUser.id) {
                     userIds.push(postUser.id);
-                } else {
-                    //回复的是自己的评论，则不向自己发送
-                    targetUser = null;
                 }
                 query.containedIn('objectId', userIds);
             } else {

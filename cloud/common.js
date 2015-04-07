@@ -381,7 +381,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 break;
             case 'updateActivity':
                 var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
-                retMsg = '我更新了' + activityName|| + '信息';
+                retMsg = '我更新了' + activityName||'' + '信息';
                 break;
             case 'cancelActivity':
                 var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
@@ -467,44 +467,58 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         });
 
     } else { //将消息发送到目标用户
-        var currUser = AV.User.current();
-        AV.User._currentUser = sourceUser;
-        status.send().then(function(status){
-            if( messageType=='addFriend' ||
-                messageType=='newLike'||
-                messageType=='addToClan'||
-                messageType=='quitClan'||
-                messageType=='newComment'||
-                messageType=='joinActivity'||
-                messageType=='refuseToJoinClan' ||
-                messageType=='allowToJoinClan' ||
-                messageType=='removeFromClan' ||
-                messageType=='quitActivity' ||
-                messageType=='updateActivity' ||
-                messageType=='cancelActivity' ||
-                messageType=='refundSuccess') {
-               //fromUserId, toUserId, content, messageType,objectId
-                if (messageType=='newComment') {
-                    if (extendProp && extendProp.replyUser) {
-                        //如果是回复评论者，需要通知他
-                        postRCMessage(sourceUser.id,extendProp.replyUser.id,'我回复了你的评论',messageType,status.id);
-                    }
+        var sendStatusMessage = function() {
+            status.send().then(function(status){
+                if( messageType=='addFriend' ||
+                    messageType=='newLike'||
+                    messageType=='addToClan'||
+                    messageType=='quitClan'||
+                    messageType=='newComment'||
+                    messageType=='joinActivity'||
+                    messageType=='refuseToJoinClan' ||
+                    messageType=='allowToJoinClan' ||
+                    messageType=='removeFromClan' ||
+                    messageType=='quitActivity' ||
+                    messageType=='updateActivity' ||
+                    messageType=='cancelActivity' ||
+                    messageType=='refundSuccess') {
+                    //fromUserId, toUserId, content, messageType,objectId
+                    if (messageType=='newComment') {
+                        if (extendProp && extendProp.replyUser) {
+                            //如果是回复评论者，需要通知他
+                            postRCMessage(sourceUser.id,extendProp.replyUser.id,'我回复了你的评论',messageType,status.id);
+                        }
 
-                    if (sourceUser.id != targetUser.id) {
-                        //通知到动态发布者
-                        postRCMessage(sourceUser.id,targetUser.id,'我回复了你的动态',messageType,status.id);
-                    }
+                        if (sourceUser.id != targetUser.id) {
+                            //通知到动态发布者
+                            postRCMessage(sourceUser.id,targetUser.id,'我回复了你的动态',messageType,status.id);
+                        }
 
-                } else {
-                    postRCMessage(sourceUser.id,toRcUsers,rcMessageFromType(messageType),messageType,status.id,
-                        {clanId:extendProp&&extendProp.clan&&extendProp.clan.id});
+                    } else {
+                        postRCMessage(sourceUser.id,toRcUsers,rcMessageFromType(messageType),messageType,status.id,
+                            {clanId:extendProp&&extendProp.clan&&extendProp.clan.id});
+                    }
                 }
-             }
-            console.info('%s 事件流发送成功', messageType);
-        },function(error) {
-            console.error(error);
-        });
-        AV.User._currentUser = currUser;
+                console.info('%s 事件流发送成功', messageType);
+            },function(error) {
+                console.error(error);
+            });
+        }
+
+        if (!AV.User.current()) {
+            console.info('login default user for send status');
+            //模拟用户登陆
+            AV.User.logIn('18939886042', '111111').then(function(user){
+                if (user) {
+                    console.info('login default user success!');
+                    sendStatusMessage();
+                    AV.User.logOut();
+                }
+            });
+        } else {
+            sendStatusMessage();
+        }
+
     }
 
 
