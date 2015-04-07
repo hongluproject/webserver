@@ -260,7 +260,7 @@ app.get('/clan/:objId', function(req,res) {
 app.get('/activity/:objId', function(req,res) {
     var invitationCode = req.param('invitation_id');
     var activityId = req.param('objId');
-    if (!activityId||!invitationCode) {
+    if (!activityId) {
         console.error('activity id has not input!');
         res.writeHead(404);
         res.end();
@@ -280,8 +280,10 @@ app.get('/activity/:objId', function(req,res) {
             var tags = activityResult.get('tags');
             var tagsName = [];
             for (var i in tags) {
-                var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
-                tagsName.push(tagName?tagName:'');
+                if(AV.HPGlobalParam.hpTags[tags[i]]){
+                    var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+                    tagsName.push(tagName?tagName:'');
+                }
             }
             activityResult.set('tagsName', tagsName);
             var InvitationCode = AV.Object.extend("InvitationCode");
