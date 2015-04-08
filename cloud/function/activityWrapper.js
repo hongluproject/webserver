@@ -337,6 +337,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
  *          hasSignup: bool 当前用户是否已经报名
  *          accountStatus:Integer 当前订单状态
  *          bookNuber:string 订单编号
+ *          bMountaineerClub:bool 登协定制活动
  *      }
  *  }
  */
@@ -353,7 +354,9 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     var currActivity;
     var founderUserId;
     var payType = 1;
-    var extraData = {};
+    var extraData = {
+        bMountaineerClub:true
+    };
 
     var queryActivity = new AV.Query('Activity');
     queryActivity.include('user_id');
@@ -890,17 +893,9 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         var payType = activity.get('pay_type');
         var accountStatus = result.get('accountStatus');
         var serialNumber = result.get('serialNumber');
-        var url = 'http://pay.imsahala.com/api/ping/retrieve?ch_id='+serialNumber;
-        console.info('pingxx url:%s', url);
         if (common.isOnlinePay(payType) && serialNumber && accountStatus==1) {
             //线上支付&订单处于未支付状态，去支付平台同步查询订单实际状态
             return pingpp(common.pingxxAppKey).charges.retrieve(serialNumber);
-            /*
-            return AV.Cloud.httpRequest({
-                method: 'GET',
-                url: url
-            });
-            */
         } else {
             return AV.Promise.as();
         }
@@ -917,6 +912,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
 
                 var order = statement;
                 statement.save().then(function(result){
+                    console.info('查询用户是否已经加入报名列表');
                     //查询用户是否已经加入，若没有，则将用户加入ActivityUser
                     query = new AV.Query('ActivityUser');
                     query.equalTo('user_id', user);
@@ -947,6 +943,8 @@ AV.Cloud.define('getStatementDetail', function(req, res){
                     activityUser.save();
 
                     console.info('保存在线付费活动用户完成!userId:%s activityId:%s', user.id, activity.id);
+                }, function(err){
+                    console.error('error in process payment:', err);
                 });
             }
         }
@@ -1088,7 +1086,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                     retItem.activity.price = retItem.activity.price || '0.00';
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:Math.floor(Math.random()*100),
+                        friendJoin:/*Math.floor(Math.random()*100)*/0,
                         hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
                     delete retItem.activity.joinUsers;
@@ -1133,7 +1131,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                     retItem.activity.price = retItem.activity.price || '0.00';
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:Math.floor(Math.random()*100),
+                        friendJoin:0/*Math.floor(Math.random()*100)*/,
                         hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
                     delete retItem.activity.joinUsers;
@@ -1175,7 +1173,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                     retItem.activity.price = retItem.activity.price || '0.00';
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
-                        friendJoin:Math.floor(Math.random()*100),
+                        friendJoin:0/*Math.floor(Math.random()*100)*/,
                         hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
                     };
                     delete retItem.activity.joinUsers;

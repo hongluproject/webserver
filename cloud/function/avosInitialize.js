@@ -93,12 +93,51 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var deviceVersion = req.params.deviceVersion;
     var customer = req.params.customer;
 
+    //compare version1 and version,
+    //  if version2>version1 return 1
+    //  if version2==version1 return 0
+    //  if version2<version1 return -1
+    function compareVersion(version1, version2) {
+        var arr1 = version1.split('.') || [];
+        var arr2 = version2.split('.') || [];
+
+        if (arr1.length > arr2.length) {
+            return 1;
+        } else if (arr1.length < arr2.length) {
+            return -1;
+        } else {
+            for (var i in arr1) {
+                var intVal1 = parseInt(arr1[i]);
+                var intVal2 = parseInt(arr2[i]);
+                if (intVal1 > intVal2) {
+                    return 1;
+                } else if (intVal1 < intVal2) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+        return 0;
+    }
+
     console.info('checkUpdate params, clientVersion:%s deviceType:%s deviceVersion:%s customer:%s',
         clientVersion, deviceType, deviceVersion, customer);
 
+    var updateInfo = {
+        android:{
+            latestVersion:'1.0.5',
+            needUpdate:true
+        },
+        iPhone:{
+            latestVersion:'1.0.6',
+            needUpdate:false
+        }
+    };
+
     if (deviceType == 'android') {
         res.success({
-            needUpdate:false,
+            needUpdate:updateInfo.android.needUpdate &&
+                        (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
             message:'1、第一次发布版本\n' +
@@ -107,7 +146,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
             clickURL:'http://www.imsahala.com/sahala.apk',
-            lastVersion:'1.0.2'
+            lastVersion:updateInfo.android.latestVersion
         });
     } else {
         res.success({
@@ -120,7 +159,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
             clickURL:'https://itunes.apple.com/us/app/sa-ha-la-jie-shi-tong-qu-peng/id952260502?mt=8&uo=4',
-            lastVersion:'1.0.3'
+            lastVersion:latestIPhoneVersion
         });
     }
 
