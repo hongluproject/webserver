@@ -158,17 +158,25 @@ AV.Cloud.define('updateActivityForRC', function(req, res){
            activityId = activity.id;
            activityName = activity.get('title');
            if (activityObj[activityId]) {
-               activityObj[activityId].push(userId);
+               var groupItem = activityObj[activityId];
+               groupItem.userId.push(userId);
            } else {
-               activityObj[activityId] = [userId];
+               var groupItem = {
+                   userId:[userId],
+                   activityId:activityId,
+                   activityName:activityName
+               };
+               activityObj[activityId] = groupItem;
            }
        })
 
-        //加入融云组群
-        AV.Cloud.run('imAddToGroup',{
-            userid:userIds,
-            groupid:activityId,
-            groupname:activityName
+        activityObj.each(function(item){
+            //加入融云组群
+            AV.Cloud.run('imAddToGroup',{
+                userid:item,
+                groupid:activityId,
+                groupname:activityName
+            });
         });
     });
 });

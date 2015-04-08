@@ -388,7 +388,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 retMsg = '我取消了' + activityName||'';
                 break;
             case 'refundSuccess':
-                retMsg = '退款成功';
+                var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
+                retMsg = activityName + '退款成功';
                 break;
         }
 
@@ -436,10 +437,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         case 'quitActivity':
         case 'updateActivity':
         case 'cancelActivity':
-            status.set('activity', extendProp.activity._toPointer());
-            break;
         case 'refundSuccess':
-            status.set('StatementAccount', extendProp.statementAccount._toPointer());
+            status.set('activity', extendProp.activity._toPointer());
             break;
     }
     if (messageType=='newPost' || messageType=='newQuestion') {
@@ -582,4 +581,96 @@ exports.activityGroupIdForRC = function(activityId) {
 
 exports.naviGroupIdForRC = function(activityId) {
     return 'chatroom-'.concat(activityId);
+}
+
+exports.addLikesAndReturn = function(userId, dynamics, response) {
+    var likeTarget = {};	//记录该用户点过赞的id
+
+    //为动态或问答加入点赞状态
+    var addLikeTarget = function(dynamics, likeTarget) {
+        var hpTags = AV.HPGlobalParam.hpTags;
+        //将所有动态返回，添加isLike，记录点赞状态，添加tagName字段，去掉user字段中多余的信息
+        for (var i in dynamics) {
+            var currDynamic = dynamics[i];
+            if (likeTarget[currDynamic.id] == true)	//添加点赞状态字段
+                currDynamic.set('isLike', true);
+            else
+                currDynamic.set('isLike', false);
+
+            //从tagId转换tagName，并返回给APP
+            if (hpTags) {
+                var arrayTagName = [];
+                for (var k in currDynamic.tags) {
+                    arrayTagName.push(hpTags[currDynamic.tags[k]].get('tag_name') || '');
+                }
+                if (arrayTagName.length) {
+                    currDynamic.set('tagName', arrayTagName);
+                }
+            }
+
+            //遍历user_id，去掉不需要返回的字段，减少网络传输
+            var rawUser = currDynamic.get('user_id');
+            if (rawUser && rawUser.id) {
+                var postUser = AV.Object.createWithoutData('_User', rawUser.id);
+                postUser.set('icon', rawUser.get('icon'));
+                postUser.set('nickname', rawUser.get('nickname'));
+                var jValue = postUser._toFullJSON();
+                delete jValue.__type;
+                currDynamic.set('user_id', jValue);
+            }
+
+            //返回关联到的活动信息
+            var rawActivity = currDynamic.get('activityId');
+            if (rawActivity) {
+                var activity = AV.Object.createWithoutData('Activity', rawActivity.id);
+                activity.set('title', rawActivity.get('title'));
+                var jValue = activity._toFullJSON();
+                delete jValue.__type;
+                currDynamic.set('activityId', jValue);
+            }
+
+        }
+    }
+
+    //获取所有动态objectId，再查询该用户对这些动态是否点过赞
+    var dynamicIdArray = [];
+    for (var i=0; i<dynamics.length; i++) {
+        if (dynamics[i].get('user_id')) {
+            dynamicIdArray.push(dynamics[i].id);
+        } else {    //删除不合法的数据
+            dynamics[i] = undefined;
+        }
+    }
+
+    dynamics = AV._.reject(dynamics, function(val){
+        return (val == undefined);
+    });
+
+    //查询点赞表
+    var likeClass = AV.Object.extend("Like");
+    var likeQuery = new AV.Query(likeClass);
+    likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+    likeQuery.containedIn('external_id', dynamicIdArray);
+    return likeQuery.find().then(function(likes) {
+        for (var i in likes) {
+            likeTarget[likes[i].get('external_id')] = true;
+        }
+
+        addLikeTarget(dynamics, likeTarget);
+
+        if (response) {
+            response.success(dynamics);
+        }
+
+        return AV.Promise.as(dynamics);
+    }, function(error) {
+        console.error('query dynamic like failed:', error);
+        addLikeTarget(dynamics, likeTarget);
+        if (response) {
+            response.success(dynamics);
+        }
+
+        return AV.Promise.as(dynamics);
+    });
+
 }

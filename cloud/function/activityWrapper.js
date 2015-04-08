@@ -338,6 +338,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
  *          accountStatus:Integer 当前订单状态
  *          bookNuber:string 订单编号
  *          bMountaineerClub:bool 登协定制活动
+ *          levelUrl:登协通关URL
  *      }
  *  }
  */
@@ -354,8 +355,10 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     var currActivity;
     var founderUserId;
     var payType = 1;
+    var bMountaineerClub = (activityId=='5524cdcae4b03381b308d12d');
     var extraData = {
-        bMountaineerClub:true
+        bMountaineerClub: bMountaineerClub,
+        levelUrl:bMountaineerClub?'http://sport.hoopeng.cn/api/sport/pathinfo':''
     };
 
     var queryActivity = new AV.Query('Activity');
@@ -507,9 +510,12 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
             return;
         }
 
+        var payType = activity.get('pay_type');
         var currDate = new Date();
         var paymentDeadTime = activity.get('payment_dead_time');
-        if (paymentDeadTime && currDate.getTime()>paymentDeadTime.getTime()) {
+        if (common.isOnlinePay(payType) &&
+            paymentDeadTime &&
+            currDate.getTime()>paymentDeadTime.getTime()) {
             res.error('已过退款时间！');
             return;
         }
@@ -519,7 +525,6 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
         activityFounder = activity.get('user_id');
 
         var chargeId = order.get('serialNumber');
-        var payType = activity.get('pay_type');
         if (common.isOnlinePay(payType)) { //如果为线上支付，则先改为申请退款
             order.set('accountStatus', 3); //将订单状态改为申请退款中
             order.save();
@@ -1474,6 +1479,7 @@ AV.Cloud.define('refundComplete', function(req, res){
     }
 
     var query = new AV.Query('StatementAccount');
+    query.include('activityId');
     query.equalTo('serialNumber', chargeId);
     query.first().then(function(order){
         if (!order) {
@@ -1481,9 +1487,18 @@ AV.Cloud.define('refundComplete', function(req, res){
             return;
         }
 
+        var user = order.get('userId');
+        var activity = order.get('activityId');
+        var founder = activity.get('user_id');
+
         order.set('accountStatus', 4);
         order.set('refundId', refundId);
         order.save();
+
+        //通知用户退款成功
+        var query = new AV.Query('_User');
+        query.equalTo('objectId', user.id);
+        common.sendStatus('refundSuccess', founder, user, query, {activity:activity});
 
         res.success({
             refund:true

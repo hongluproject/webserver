@@ -126,7 +126,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var updateInfo = {
         android:{
             latestVersion:'1.0.5',
-            needUpdate:true
+            needUpdate:false
         },
         iPhone:{
             latestVersion:'1.0.6',
@@ -159,7 +159,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
             clickURL:'https://itunes.apple.com/us/app/sa-ha-la-jie-shi-tong-qu-peng/id952260502?mt=8&uo=4',
-            lastVersion:latestIPhoneVersion
+            lastVersion:updateInfo.iPhone.latestVersion
         });
     }
 

@@ -3,7 +3,7 @@
 /**
  * Created by fugang on 14/12/12.
  */
-
+var common = require('cloud/common');
 
 AV.Cloud.define("getRecommend",function(req, res){
     //共用
@@ -23,8 +23,7 @@ AV.Cloud.define("getRecommend",function(req, res){
 
     var ret = {
         recommendUser:{},
-        recommendDynamic:{},
-        recommendAsk:{}
+        recommendDynamic:{}
     };
     var getRecommendAsk = function(){
         var query = new AV.Query(Dynamic);
@@ -94,37 +93,17 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.greaterThan('createdAt',searchDate);
         query.limit(2);
         query.descending("up_count");
-        query.include('user_id');
+        query.include('user_id', 'activityId');
         query.find({
-            success:function(result){
-                var dynamicResult = [];
-                for (var i = 0; result && i < result.length; i++) {
-                    var outChannel = {};
-                    outChannel       = result[i];
-
-                    //遍历user_id，去掉不需要返回的字段，减少网络传输
-                    var user =  outChannel.get("user_id");
-                    if (!user || !user.id) {
-                        continue;
-                    }
-                    var rawUser = user;
-                    if (rawUser && rawUser.id) {
-                        var postUser = AV.Object.createWithoutData('_User', rawUser.id);
-                        postUser.set('icon', rawUser.get('icon'));
-                        postUser.set('nickname', rawUser.get('nickname'));
-                        var jValue = postUser._toFullJSON();
-                        delete jValue.__type;
-                        outChannel.set('user_id', jValue);
-                    }
-
-                    dynamicResult.push(outChannel);
-                }
-                ret.recommendDynamic = dynamicResult;
-                getRecommendAsk();
+            success:function(dynamicResults){
+                common.addLikesAndReturn(userid, dynamicResults).then(function(results){
+                    ret.recommendDynamic = results;
+                    res.success(ret);
+                })
             },
             error:function(){
                 ret.recommendDynamic = [];
-                getRecommendAsk();
+                res.success(ret);
             }
         })
     }
