@@ -13,6 +13,7 @@ AV.Cloud.define("unfollowFriend",function(req, res) {
     var myUserObj = AV.User.createWithoutData('_User', myUserId);
     myUserObj.unfollow(friendUserId).then(function(){
         //好友数减1
+        myUserObj.fetchWhenSave(true);
         myUserObj.increment('friendCount', -1);
         myUserObj.save();
         res.success();

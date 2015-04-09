@@ -82,7 +82,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
             console.error('ClanUser afterSave userid %s not found!', userObj.id);
             return;
         }
-
+        user.fetchWhenSave(true);
         user.increment('clanCount');    //部落人数加1
         user.addUnique('clanids', clanObj.id);  //部落ID加入用户表
         user.save();
@@ -112,6 +112,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
                 var maxUserNum = clanParam.getMaxClanUsers(level);
                 if (userLevel != 2) {   //不是创建者，则该部落当前人数加1
                     //部落人数加1
+                    clan.fetchWhenSave(true);
                     clan.increment('current_num');
                     currUserNum++;
 
@@ -156,6 +157,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             //删除用户所在的部落
             user.remove('clanids', clanObj.id);
             //用户所在部落数减1
+            user.fetchWhenSave(true);
             user.increment('clanCount', -1);
             user.save();
         }
@@ -180,6 +182,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             var maxUserNum = clan.get('max_num');
 
             //部落成员数减1
+            clan.fetchWhenSave(true);
             clan.increment('current_num', -1);
             currUserNum--;
 

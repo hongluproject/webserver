@@ -8,6 +8,7 @@ var common = require('cloud/common.js');
 AV.Cloud.afterSave('_Followee', function(req) {
     //好友数加1
     var user = req.object.get('user');
+    user.fetchWhenSave(true);
     user.increment('friendCount');
     user.save();
 

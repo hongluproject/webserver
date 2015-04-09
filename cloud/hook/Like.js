@@ -17,6 +17,7 @@ AV.Cloud.afterSave('Like', function(request){
         query.get(targetId, {
             success: function(result) {
                 console.info("Like afterSave up_count increment for News,current up_count is %d", result.get('up_count'));
+                result.fetchWhenSave(true);
                 result.increment("up_count");
                 result.save();
             },
@@ -29,6 +30,7 @@ AV.Cloud.afterSave('Like', function(request){
         query.get(targetId, {
             success: function(dynamic) {
                 console.info("Like afterSave up_count increment for DynamicNews,current up_count is %d", dynamic.get('up_count'));
+                dynamic.fetchWhenSave(true);
                 dynamic.increment('up_count');
                 dynamic.save();
 
@@ -65,6 +67,7 @@ AV.Cloud.afterDelete('Like', function(request) {
             success: function(result) {
                 console.info("Like afterDelete up_count increment for news,current up_count is %d", result.get('up_count'));
                 if (result.get('up_count') > 0) {
+                    result.fetchWhenSave(true);
                     result.increment("up_count", -1);
                     result.save();
                 } else {
@@ -82,6 +85,7 @@ AV.Cloud.afterDelete('Like', function(request) {
                 console.info("Like afterDelete up_count increment for DynamicNews,current up_count is %d", result.get('up_count'));
                 //点赞次数累加
                 if (result.get('up_count') > 0) {
+                    result.fetchWhenSave(true);
                     result.increment('up_count', -1);
                     result.save();
                 } else {

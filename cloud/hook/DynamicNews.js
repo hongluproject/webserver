@@ -28,6 +28,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
             //该用户发布动态数加1
             var messageType = 'newPost';
             var type = request.object.get('type');   //1:ask 2:dynamic
+            userObj.fetchWhenSave(true);
             switch (type) {
                 case 1:
                     messageType = 'newQuestion';
@@ -107,6 +108,7 @@ AV.Cloud.afterDelete('DynamicNews', function(request) {
     });
 
     //用户发布动态数减1
+    user.fetchWhenSave(true);
     switch(type) {
         case 1:
             user.increment('questionCount', -1);

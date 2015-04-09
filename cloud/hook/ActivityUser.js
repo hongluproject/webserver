@@ -50,7 +50,7 @@ AV.Cloud.afterSave('ActivityUser', function(req){
             if (!activity) {
                 return;
             }
-
+            activity.fetchWhenSave(true);
             activity.increment('current_num');
             activity.addUnique('joinUsers', userObj.id);
             activity.save();
@@ -84,7 +84,7 @@ AV.Cloud.afterDelete('ActivityUser', function(req){
         if (!activity) {
             return;
         }
-
+        activity.fetchWhenSave(true);
         activity.increment('current_num', -1);
         activity.remove('joinUsers', userObj.id);
         activity.save();

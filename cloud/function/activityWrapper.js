@@ -1318,6 +1318,7 @@ AV.Cloud.define('signinActivity', function(req, res){
             result.save();
 
             if (activity) { //对应活动的签到人数+1
+                activity.fetchWhenSave(true);
                 activity.increment('signin_num');
                 activity.save();
             }
