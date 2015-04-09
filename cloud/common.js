@@ -369,11 +369,11 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 break;
             case 'refuseToJoinClan':
                 var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
-                retMsg = '我拒绝了你加入' + clanName||'' + '的请求!';
+                retMsg = '我拒绝了你加入' + (clanName||'') + '的请求!';
                 break;
             case 'allowToJoinClan':
                 var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
-                retMsg = '我通过了你加入' + clanName||'' + '的请求!';
+                retMsg = '我通过了你加入' + (clanName||'') + '的请求!';
                 break;
             case 'quitActivity':
                 var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
@@ -381,7 +381,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 break;
             case 'updateActivity':
                 var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
-                retMsg = '我更新了' + activityName||'' + '信息';
+                retMsg = '我更新了' + (activityName||'') + '信息';
                 break;
             case 'cancelActivity':
                 var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');

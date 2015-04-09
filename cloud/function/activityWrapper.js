@@ -1525,7 +1525,8 @@ AV.Cloud.define('updateActivity', function(req, res){
     var activity = AV.Object.createWithoutData('Activity', activityId);
     var query = new AV.Query('ActivityUser');
     query.limit(1000);
-    query.select('user_id');
+    query.include('activity_id');
+    query.select('user_id', 'activity_id');
     query.equalTo('activity_id', activity);
     query.find().then(function(results) {
         if (!results) {
@@ -1533,10 +1534,13 @@ AV.Cloud.define('updateActivity', function(req, res){
             return;
         }
 
+        var activityName;
         var joinUsers = [];
         results.forEach(function(item){
             var user = item.get('user_id');
             joinUsers.push(user.id);
+            var currActivity = item.get('activity_id');
+            activityName = currActivity.get('title');
         });
 
         if (!joinUsers.length) {
@@ -1546,6 +1550,7 @@ AV.Cloud.define('updateActivity', function(req, res){
         }
 
         //通知到所有活动参与者，活动已经更新
+        activity.set('title', activityName);
         var query = new AV.Query('_User');
         query.containedIn('objectId', joinUsers);
         common.sendStatus('updateActivity', req.user, joinUsers, query, {activity:activity});
