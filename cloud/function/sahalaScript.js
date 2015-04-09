@@ -2,6 +2,7 @@
  * Created by fugang on 15/1/17.
  */
 var common = require('cloud/common.js');
+var _ = AV._;
 
 /*
     转换分享URL：包括动态、资讯
@@ -170,13 +171,21 @@ AV.Cloud.define('updateActivityForRC', function(req, res){
            }
        })
 
-        activityObj.each(function(item){
-            //加入融云组群
-            AV.Cloud.run('imAddToGroup',{
-                userid:item,
-                groupid:activityId,
-                groupname:activityName
-            });
+        console.info('total activity : %d', _.keys(activityObj).length);
+
+        var currNum = 0;
+        var i = 1000;
+        _.each(activityObj, function(item){
+            _.delay(function(){
+                console.info('current process is %d', ++currNum);
+                //加入融云组群
+                AV.Cloud.run('imAddToGroup',{
+                    userid:item.userId,
+                    groupid:item.activityId,
+                    groupname:item.activityName
+                });
+            }, i);
+            i += 500;
         });
     });
 });

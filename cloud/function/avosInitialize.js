@@ -125,7 +125,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var updateInfo = {
         android:{
-            latestVersion:'1.0.5',
+            latestVersion:'1.0.6',
             needUpdate:false
         },
         iPhone:{
@@ -145,7 +145,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '3、我是歌手\n' +
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
-            clickURL:'http://www.imsahala.com/sahala.apk',
+            clickURL:'http://imsahala.com/sahala-1.0.7-20150409-118-0.apk',
             lastVersion:updateInfo.android.latestVersion
         });
     } else {
