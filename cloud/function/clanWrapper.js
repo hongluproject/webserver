@@ -4,6 +4,7 @@
 var common = require('cloud/common.js');
 var myutils = require('cloud/utils.js');
 var querystring = require('querystring');
+var _ = AV._;
 
 /** 判断用户是否可创建部落
  *
@@ -199,4 +200,76 @@ AV.Cloud.define('userUpdate', function(req, res){
     });
 
     res.success();
+});
+
+/*
+    获取部落详情
+    函数名:
+        getClanDetail
+    参数：
+        clanId:objectId 部落ID
+        userId:objectId 当前用户ID
+    返回：{
+        clan:clan class object
+        clanUsers: [
+            user class object,
+            ...
+        ],
+        activity:activity class object
+    }
+ */
+AV.Cloud.define('getClanDetail', function(req, res){
+    var clanId = req.params.clanId;
+    var userId = req.params.userId || (req.user && req.user.id);
+    if (!clanId || !userId) {
+        res.error('请传入相关参数！');
+        return;
+    }
+    var ret = {
+        clan:{},
+        clanUsers:[],
+        activity:{}
+    };
+
+    var queryClan = new AV.Query('Clan');
+    queryClan.include('founder_id');
+    queryClan.equalTo('objectId', clanId);
+    queryClan.first().then(function(clan){
+        var founder;
+        if (clan) {
+            founder = clan.get('founder_id');
+            clan = clan._toFullJSON();
+            clan.founder_id = founder._toFullJSON();
+            ret.clan = clan;
+        }
+
+        //查询部落成员
+        var queryUsers = new AV.Query('ClanUser');
+        queryUsers.select('user_id');
+        queryUsers.include('user_id');
+        queryUsers.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+        if (founder) {
+            queryUsers.notEqualTo('user_id', founder);
+        }
+        queryUsers.limit(10);
+        return queryUsers.find();
+    }).then(function(users){
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        _.each(users, function(userItem){
+            var user = userItem.get('user_id');
+            ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
+        });
+
+        //查询该部落最近一次的活动
+        var queryActivity = new AV.Query('Activity');
+        queryActivity.limit(1);
+        queryActivity.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+        queryActivity.descending('createdAt');
+        return queryActivity.first();
+    }).then(function(activity){
+        ret.activity = activity && activity._toFullJSON();
+
+        res.success(ret);
+    });
 });

@@ -3,6 +3,7 @@
  */
 var utils = require('cloud/utils.js');
 var querystring = require('querystring');
+var _ = AV._;
 
 // 对Date的扩展，将 Date 转化为指定格式的String
 // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
@@ -673,4 +674,15 @@ exports.addLikesAndReturn = function(userId, dynamics, response) {
         return AV.Promise.as(dynamics);
     });
 
+}
+
+exports.tagNameFromId = function(tags) {
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var tagNames = [];
+    _.each(tags, function(tagItem){
+        var tagName = (HPGlobalParam.hpTags && HPGlobalParam.hpTags[tagItem] && HPGlobalParam.hpTags[tagItem].get('tag_name')) || '';
+        tagNames.push(tagName);
+    });
+
+    return tagNames;
 }

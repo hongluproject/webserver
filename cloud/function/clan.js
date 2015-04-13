@@ -1,6 +1,121 @@
 var clanParam = require('cloud/common.js').clanParam;
 var myutils = require('cloud/utils.js');
 var common = require('cloud/common.js');
+var _ = AV._;
+
+/*
+    用户部落
+    函数名：getClan2
+    参数：
+        userId:用户ID
+        tags:用户标签
+    返回：
+    {
+    selfClan: [
+        {
+            clan: clan class object,
+            extraData:{
+                tagNames: array 标签名称，对应 clan里面tags的名称
+            }
+        },
+        ...
+    ],
+    recommendClan:[
+        {
+            clan: clan class object,
+            extraData:{
+                tagNames: array 标签名称，对应 clan里面tags的名称
+            }
+        },
+        ...
+    ]
+    }
+*/
+AV.Cloud.define('getClan2', function(req, res){
+    var userId = req.params.userId || (req.user && req.user.id);
+    if (!userId) {
+        res.error('请传入用户信息！');
+        return;
+    }
+    var tagsOfUser = req.params.tags || (req.user && req.user.get('tags'));
+    var index = Math.floor((Math.random()*tagsOfUser.length));
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var ret = {
+        selfClan:[],
+        recommendClan:[]
+    };
+
+    //保留的user keys
+    var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+    var user = req.user;
+    var clanIds = user.get('clanids');
+    var reviewClanIds = user.get('review_clanids');
+    var userGeoPoint = user.get('actual_position');
+
+    var queryMine = new AV.Query('Clan');
+    queryMine.containedIn('objectId', clanIds)
+    queryMine.include('founder_id');
+    queryMine.find().then(function(clans){
+        //get mine clans first
+        _.each(clans, function(clanItem) {
+            var founder = clanItem.get('founder_id');
+            var tagsOfClan = clanItem.get('tags');
+            clanItem = clanItem._toFullJSON();
+            clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
+            if (clanItem.founder_userinfo) {
+                delete clanItem.founder_userinfo;
+            }
+
+            ret.selfClan.push({
+                clan:clanItem,
+                extraData:{
+                    tagNames:common.tagNameFromId(tagsOfClan)
+                }
+            })
+        });
+
+        //then get recommend clans
+        var queryRecommend = new AV.Query('Clan');
+        queryRecommend.limit(2);
+        var clanCondition = [];
+        if(clanIds){
+            clanCondition = clanCondition.concat(clanIds);
+        }
+        if(reviewClanIds){
+            clanCondition =clanCondition.concat(reviewClanIds);
+        }
+        if(clanCondition){
+            queryRecommend.notContainedIn("objectId", clanCondition);
+        }
+
+        if(tagsOfUser && tagsOfUser[index]){
+            queryRecommend.equalTo("tags", tagsOfUser[index]);
+        }
+        if (userGeoPoint)
+            queryRecommend.near("position", userGeoPoint);
+        queryRecommend.equalTo("is_full", false);
+        return queryRecommend.find();
+    }).then(function(clans){
+        _.each(clans, function(clanItem){
+            var founder = clanItem.get('founder_id');
+            var tagsOfClan = clanItem.get('tags');
+            clanItem = clanItem._toFullJSON();
+            clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
+            if (clanItem.founder_userinfo) {
+                delete clanItem.founder_userinfo;
+            }
+
+            ret.recommendClan.push({
+                clan:clanItem,
+                extraData:{
+                    tagNames:common.tagNameFromId(tagsOfClan)
+                }
+            })
+        });
+
+        res.success(ret);
+    });
+});
 
 AV.Cloud.define("getClan",function(req, res){
     var HPGlobalParam = AV.HPGlobalParam || {};
@@ -14,6 +129,8 @@ AV.Cloud.define("getClan",function(req, res){
         selfClan:{},
         recommendClan:{}
     };
+    //保留的user keys
+    var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
 
     console.info('getClan params, userid:%s', userid);
 
@@ -48,6 +165,12 @@ AV.Cloud.define("getClan",function(req, res){
                             }
 
                             var founderObj = result[i].get('founder_id');
+                            console.dir(_.pick(founderObj._toFullJSON(), pickUserKeys));
+                            result[i].set('founder_id', _.pick(founderObj._toFullJSON(), pickUserKeys));
+                            result[i].set('founder_userinfo', {
+                                icon:founderObj.get('icon')||'',
+                                nickname:founderObj.get('nickname')||''
+                            });
                             var userLevel = founderObj.get('level');
                             result[i].set('max_num', clanParam.getMaxClanUsers(userLevel));
                             outResult       = result[i];
@@ -130,6 +253,11 @@ AV.Cloud.define("getClan",function(req, res){
                 }
                 outResult       = result[i];
                 var founderObj = result[i].get('founder_id');
+                result[i].set('founder_id', _.pick(founderObj._toFullJSON(), pickUserKeys));
+                result[i].set('founder_userinfo', {
+                    icon:founderObj.get('icon')||'',
+                    nickname:founderObj.get('nickname')||''
+                });
                 var userLevel = founderObj.get('level');
                 result[i].set('max_num', clanParam.getMaxClanUsers(userLevel));
                 recommendClan.push(outResult);

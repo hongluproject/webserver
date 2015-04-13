@@ -413,7 +413,6 @@ AV.Cloud.define('getActivityDetail', function(req, res){
             query.include('user_id', 'order_id');
             return query.find();
         }
-
     }).then(function(result){
         var bHasSignup = false;
         if (result) {   //设置已经报名状态
