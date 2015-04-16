@@ -171,6 +171,63 @@ AV.Cloud.define('getUserInfo', function(req,res){
 });
 
 /*
+    获取用户信息，以及与自己之间的好友关系
+    函数名：
+        getUserInfo2 （替换 getUserInfo)
+    参数：
+        userId:objectId 查询目标用户ID
+        findFriendId:objectId 与userId的好友关系的用户ID
+    返回：
+        {
+        user:{
+            user class object
+        },
+        extra{
+            isFriend: bool true or false
+        }
+    }
+ */
+AV.Cloud.define('getUserInfo2', function(req, res){
+    var userId = req.params.userId;
+    var findFriendId = req.params.findFriendId;
+    if (!userId || !findFriendId) {
+        res.error('请传入用户信息！');
+        return;
+    }
+
+    console.info('userId:%s findFriendId:%s', userId, findFriendId);
+
+    var userReturn;
+    //查找对应用户信息
+    var queryUser = new AV.Query('_User');
+    queryUser.equalTo('objectId', userId);
+    queryUser.first().then(function(userResult){
+        userReturn = userResult;
+
+        if (userId == findFriendId) {
+            return AV.Promise.as(0);
+        } else {
+            //查找是否为好友关系
+            var queryFollowee = new AV.Query('_followee');
+            queryFollowee.equalTo('user', AV.Object.createWithoutData('_User',findFriendId));
+            queryFollowee.equalTo('followee', AV.Object.createWithoutData('_User',userId));
+            return queryFollowee.count();
+        }
+    }).then(function(count){
+        var bFriend = false;
+        if (count > 0) {    //找到好友关系
+            bFriend = true;
+        }
+
+        res.success({
+            user:userReturn._toFullJSON(),
+            extra:{
+                isFriend:bFriend
+            }
+        });
+    });
+});
+/*
     检测当前用户是否有经过实名认证
     函数名：getRealNameAuthentication
     返回：

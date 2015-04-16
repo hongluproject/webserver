@@ -128,6 +128,7 @@ AV.Cloud.define('quitActivity', function(req, res) {
  *  userId: objectId 用户ID
  *  activityId : objectId 用户ID
  *  teamId: objectId 团队ID，暂不考虑团队报名，不用传
+ *  skipDeadTime: bool 是否跳过报名时间限制
  *  userGroup:[ {"realName":"\u96ea\u677e",
  *              "idcard":"321111198306182318",
  *              "phone":"15955159604"，
@@ -160,6 +161,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     var teamId = req.params.teamId;
     var activityId = req.params.activityId;
     var userGroup = req.params.userGroup;
+    var skipDeadTime = req.params.skipDeadTime || false;
     if (typeof userGroup == 'string') {
         userGroup = JSON.parse(userGroup);
     }
@@ -188,22 +190,27 @@ AV.Cloud.define('signUpActivity', function(req, res) {
 
         var bRemoved = activity.get('removed') || false;
         if (bRemoved) {
+            console.error('该活动已取消！');
             res.error('该活动已取消！');
             return;
         }
 
         //判断报名截止时间已过
-        var currDate = new Date();
-        var deadDate = activity.get('dead_time');
-        if (currDate.getTime() > deadDate.getTime()) {
-            res.error('报名时间已过！');
-            return;
+        if (!skipDeadTime) {
+            var currDate = new Date();
+            var deadDate = activity.get('dead_time');
+            if (currDate.getTime() > deadDate.getTime()) {
+                console.error('报名时间已过！');
+                res.error('报名时间已过！');
+                return;
+            }
         }
 
         //判断报名人数是否已经超过上限
         var currNum = activity.get('current_num');
         var maxNum = activity.get('max_num');
         if (maxNum && currNum >= maxNum) {
+            console.error('报名人数已满！');
             res.error('报名人数已满！');
             return;
         }
@@ -211,6 +218,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         //判断是否已经在报名列表中
         var joinUsers = activity.get('joinUsers');
         if (joinUsers && _.indexOf(joinUsers,userId)>=0) {
+            console.error('已经报名！');
             res.error('已经报名！');
             return;
         }
@@ -355,7 +363,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     var currActivity;
     var founderUserId;
     var payType = 1;
-    var bMountaineerClub = (activityId=='5524cdcae4b03381b308d12d');
+    var bMountaineerClub = (activityId==common.getMountaineerClubActivityId());
     var extraData = {
         bMountaineerClub: bMountaineerClub,
         levelUrl:bMountaineerClub?'http://sport.hoopeng.cn/api/sport/pathinfo':''
@@ -1216,11 +1224,13 @@ AV.Cloud.define('getActivityJoined', function(req, res){
 
     var query = new AV.Query('Activity');
     query.equalTo('user_id', AV.Object.createWithoutData('_User', userId));
+    query.notEqualTo('objectId', '5524cdcae4b03381b308d12d');
     queryOr.push(query);
 
     query = new AV.Query('Activity');
     query.notEqualTo('user_id', AV.Object.createWithoutData('_User', userId));
     query.equalTo('joinUsers', userId);
+    query.notEqualTo('objectId', '5524cdcae4b03381b308d12d');
     queryOr.push(query);
 
     query = AV.Query.or.apply(null, queryOr);

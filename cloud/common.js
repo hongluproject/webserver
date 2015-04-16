@@ -77,6 +77,88 @@ exports.getUserGrownWithLevel = function(level) {
     return undefined;
 }
 
+exports.newsResultWapper2 = function(userId, results) {
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var retResult = [];
+    var newsIds = [];
+    var likeTarget = {};
+
+    _.each(results, function(newsItem){
+        var retItem = {};
+        var extraData = {};
+
+        newsIds.push(newsItem.id);
+
+        //tags列表最多返回3个，否则前端会显示不下
+        var tags = newsItem.get('tags');
+        if (tags && tags.length>3) {
+            tags.splice(3, tags.length-3);
+            newsItem.set('tags', tags);
+        }
+
+        //返回cate名称
+        var arrayCateName = [];
+        var arrayCate = newsItem.get('cateids');
+        _.each(arrayCate, function(cateItem){
+            var name = (HPGlobalParam.hpCates[cateItem]&&HPGlobalParam.hpCates[cateItem].get('cate_name')) || '';
+            arrayCateName.push(name);
+        });
+        extraData.cateName = arrayCateName;
+
+        //返回area名称
+        var arrayAreaName = [];
+        var arrayArea = newsItem.get('areas');
+        _.each(arrayArea, function(areaItem){
+            var name = (HPGlobalParam.hpAreas[areaItem] && HPGlobalParam.hpAreas[areaItem].get('title')) || '';
+            arrayAreaName.push(name);
+        });
+        extraData.areaName = arrayAreaName;
+
+
+        //返回tags名称
+        var arrayTagName = [];
+        var arrayTag = newsItem.get('tags');
+        _.each(arrayTag, function(tagItem){
+            var name = (HPGlobalParam.hpTags[tagItem] && HPGlobalParam.hpTags[tagItem].get('tag_name')) || '';
+            arrayTagName.push(name);
+        });
+        extraData.tagName = arrayTagName;
+
+        retItem.news = newsItem._toFullJSON();
+        retItem.extra = extraData;
+        retResult.push(retItem);
+    });
+    if (userId && retResult.length) {
+        //根据资讯&用户id，查询点赞信息
+        var likeClass = AV.Object.extend("Like");
+        var queryLike = new AV.Query(likeClass);
+        queryLike.equalTo('like_type', 1);
+        queryLike.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+        queryLike.containedIn('external_id', newsIds);
+        return queryLike.find().then(function(likes) {
+            if (!likes) {
+                return AV.Promise.as(retResult);
+            }
+            _.each(likes, function(likeItem){
+                likeTarget[likeItem.get('external_id')] = likeItem.id;
+            })
+
+            _.each(retResult, function(resItem){
+                var newsItem = resItem.news;
+                if (likeTarget[newsItem.id]) {
+                    resItem.extra.isLike = true;
+                    resItem.extra.likeObjectId = likeTarget[newsItem.id];
+                }
+            });
+
+            return AV.Promise.as(retResult);
+        });
+    } else {
+        return AV.Promise.as(retResult);
+    }
+}
+
+
 /* @params:
     userId: user objectId, maybe null
     results: news result
@@ -213,6 +295,72 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
     }
 
 
+}
+
+/**
+ * 在users中，找出和findFriendId是好友关系的用户
+ * @param findFriendId  查找的好友用户
+ * @param users         用户列表
+ * @returns {
+ *    userObjectId: true or false
+ * }
+ */
+exports.findFriendShipForUsers = function(findFriendId, users) {
+    if (!findFriendId) {
+        return AV.Promise.as({});
+    } else {
+        var friendList = [];
+        var friendStatus = {};
+        for (var i in users) {
+            friendList.push(AV.User.createWithoutData('_User', users[i].id));
+        }
+
+        var queryFriend = new AV.Query('_Followee');
+        queryFriend.select('followee');
+        queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
+        queryFriend.containedIn('followee', friendList);
+        return queryFriend.find().then(function(results) {
+            _.each(results, function(resItem){
+                var myFollowee = resItem.get('followee');
+                if (myFollowee) {
+                    friendStatus[myFollowee.id] = true;
+                }
+            });
+
+            return AV.Promise.as(friendStatus);
+        });
+    }
+}
+
+/**
+ * 查找对应用户对动态的点赞状态
+ * @param findLikeUserId 查找的目标用户
+ * @param dynamics       待查找的动态列表
+ * @return {
+ *     dynamicObjectId: true or false
+ * }
+ */
+exports.findLikeDynamicUsers = function(findLikeUserId, dynamics) {
+    var dynamicIds = [];
+
+    _.each(dynamics, function(dynamic){
+        dynamicIds.push(dynamic.id);
+    });
+
+    //根据动态&用户id，查询点赞信息
+    var likeClass = AV.Object.extend("Like");
+    var queryLike = new AV.Query(likeClass);
+    queryLike.equalTo('like_type', 2);
+    queryLike.equalTo('user_id', AV.User.createWithoutData('_User', findLikeUserId));
+    queryLike.containedIn('external_id', dynamicIds);
+    return queryLike.find().then(function(likes) {
+        var retLike = {};
+        _.each(likes, function(likeItem){
+            retLike[likeItem.get('external_id')] = true;
+        });
+
+        return AV.Promise.as(retLike);
+    });
 }
 
 function isRCPrivateMessage(messageType) {
@@ -676,13 +824,67 @@ exports.addLikesAndReturn = function(userId, dynamics, response) {
 
 }
 
+/**
+ * 从标签ID获取标签名称
+ * @param tags
+ * @returns {Array}
+ */
 exports.tagNameFromId = function(tags) {
     var HPGlobalParam = AV.HPGlobalParam || {};
+    var tagArray = [];
     var tagNames = [];
-    _.each(tags, function(tagItem){
+
+    tagArray = tagArray.concat(tags);
+    _.each(tagArray, function(tagItem){
         var tagName = (HPGlobalParam.hpTags && HPGlobalParam.hpTags[tagItem] && HPGlobalParam.hpTags[tagItem].get('tag_name')) || '';
         tagNames.push(tagName);
     });
 
     return tagNames;
+}
+
+/**
+ * 从地域ID获取名称
+ * @param areaId
+ * @returns {Array}
+ */
+exports.areaNameFromId = function(areaId) {
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var areaNames = [];
+    var areaIdArray = [];
+
+    areaIdArray = areaIdArray.concat(areaId);
+    _.each(areaIdArray, function(areaItem) {
+        var areaName = (HPGlobalParam.hpAreas&&HPGlobalParam.hpAreas[areaItem]&&HPGlobalParam.hpAreas[areaItem].get('title')) || '';
+        areaNames.push(areaName);
+    });
+
+    return areaNames;
+}
+
+/**
+ * 从装备ID获取装备名称
+ * @param cateId
+ * @returns {Array}
+ */
+exports.cateNameFromId = function(cateId) {
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var cateNames = [];
+    var cateIdArray = [];
+
+    cateIdArray = cateIdArray.concat(cateId);
+    _.each(cateIdArray, function(cateItem) {
+        var cateName = (HPGlobalParam.hpCates&&HPGlobalParam.hpCates[cateItem]&&HPGlobalParam.hpCates[cateItem].get('cate_name')) || '';
+        cateNames.push(cateName);
+    });
+
+    return cateNames;
+}
+
+exports.getMountaineerClubActivityId = function() {
+    if (this.isSahalaDevEnv()) {
+        return '5524cdcae4b03381b308d12d';
+    }
+
+    return '';
 }

@@ -48,13 +48,10 @@ require('cloud/function/sahalaScript.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var query = new AV.Query('Activity');
-	query.find().then(function(activitys){
-		activitys.forEach(function(activity){
-			console.info('user icon %s', activity.get('joinUsers'));
-		});
-	});
-
+	var user = req.user;
+	if (user) {
+		console.info('friend count is %d', user.get('friendCount'));
+	}
 });
 
 /**  获取七牛云存储token

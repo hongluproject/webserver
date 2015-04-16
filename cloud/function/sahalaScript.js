@@ -338,3 +338,153 @@ AV.Cloud.define('queryPingXX', function(req, res){
     }
 });
 
+/*
+
+ */
+AV.Cloud.define('joinMountaineerActivity', function(req, res){
+    AV.Cloud.httpRequest({
+        method: 'GET',
+        url: 'http://sport.hoopeng.cn/api/sport/userinfo'
+    }).then(function(response){
+        console.info('joinMountaineerActivity http status code %d ', response.status);
+        if (response.status != 200) {
+            console.error('joinMountaineerActivity error:%d', response.status);
+            return;
+        }
+
+        var userVal = JSON.parse(response.text);
+        if (userVal) {
+            var userObj = {};
+            _.each(userVal, function (userItem) {
+                userObj[userItem.phone] = userItem.username;
+            });
+            var importUsers = _.keys(userObj);
+
+            //拿到所有用户信息
+            var query = new AV.Query('_User');
+            query.containedIn('username', importUsers);
+            query.find().then(function(users){
+                var userObjs = [];
+                var userObjMap = {};
+                _.each(users, function(userItem){
+                    userObjs.push(userItem._toPointer());
+
+                    var phone = userItem.get('username');
+                    userObjMap[userItem.id] = {
+                        phone:phone,
+                        realname:userObj[phone]
+                    };
+                });
+
+                var queryActivity = new AV.Query('ActivityUser');
+                queryActivity.containedIn('user_id', userObjs);
+                queryActivity.equalTo('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+                queryActivity.find().then(function(activityUsers){
+                    _.each(activityUsers, function(item){
+                        var userObjId = item.get('user_id').id;
+                        if (userObjMap[userObjId]) {
+                            delete userObjMap[userObjId];
+                        }
+                    });
+
+                    console.info('unjoin activity user:', userObjMap);
+                    for (var userId in userObjMap) {
+                        AV.Cloud.run('signUpActivity', {
+                            userId:userId,
+                            activityId:common.getMountaineerClubActivityId(),
+                            skipDeadTime:true,
+                            userGroup:[
+                                {
+                                    realName:userObjMap[userId].realname,
+                                    phone:userObjMap[userId].phone
+                                }
+                            ]
+                        });
+                    }
+                });
+
+            });
+        }
+    });
+});
+
+/*
+    将登协的用户注册到撒哈拉平台
+ */
+AV.Cloud.define('importMountaineer', function(req, res){
+    AV.Cloud.httpRequest({
+        method: 'GET',
+        url: 'http://sport.hoopeng.cn/api/sport/userinfo'
+    }).then(function(response){
+        console.info('importMountaineer http status code %d ', response.status);
+        if (response.status == 200) {
+            var userVal = JSON.parse(response.text);
+            if (userVal) {
+                var userObj = {};
+                _.each(userVal, function(userItem){
+                    userObj[userItem.phone] = userItem.username;
+                });
+                var importUsers = _.keys(userObj);
+
+                //找到尚未注册的用户
+                var query = new AV.Query('_User');
+                query.containedIn('username', importUsers);
+                query.find().then(function(users){
+
+                    /*
+                    _.each(users, function(userItem){
+                        var username = userItem.get('username');
+                        var password = username.substr(-6);
+                        AV.User.logIn(username,password).then(function(userItem){
+                            var nickname = '行者'.concat(userItem.get('invite_id'));
+                            userItem.set('mobilePhoneNumber', userItem.get('username'));
+                            userItem.set('nickname', nickname);
+                            userItem.save().then(function(user){
+                                console.info('save user %s ok', nickname);
+                            }, function(err){
+                                console.error('save user %s fail', nickname, err);
+                            });
+                            console.info('update user mobilePhoneNumber %s', nickname);
+                        }, function(err){
+                            console.error(err);
+                        })
+                    });
+                    //return;
+                    */
+
+                    var registerUsers = [];
+                    _.each(users, function(userItem){
+                        console.info(userItem.get('username'));
+                       registerUsers.push(userItem.get('username'));
+                    });
+
+                    //比较两个数组，找出尚未注册的用户
+                    var unregisterUsers = _.difference(importUsers, registerUsers);
+                    console.info('unregister users ', unregisterUsers);
+                    _.each(unregisterUsers, function(userPhone){
+                        var userName = userPhone;
+                        var realName = userObj[userPhone];
+                        var password = userName.substr(-6);
+                        console.info('user %s realname %s password %s begin register', userName, realName, password);
+                        AV.User.signUp(userName,password,{
+                            mobilePhoneNumber:userName
+                        }).then(function(user){
+                            var username = user.get('username');
+                            var password = username.substr(-6);
+                            console.info('user %s password %s beigin login', username, password);
+                            return AV.User.logIn(userName, password);
+                        }).then(function(user){
+                            //注册，设置nickname
+                            var invitedId = user.get('invite_id');
+                            user.set('nickname', '行者'.concat(invitedId));
+                            console.info('set current user nickname %s', user.get('nickname'));
+                            user.save();
+                        }, function(err){
+                            console.error('register mountaineer club user fail:', err);
+                        });
+                    });
+                });
+            }
+        }
+    });
+});

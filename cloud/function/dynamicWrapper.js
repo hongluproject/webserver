@@ -2,6 +2,187 @@
  * Created by fugang on 14/12/12.
  */
 var common = require('cloud/common');
+var _ = AV._;
+/*
+    获取动态
+    函数名：
+        getDynamic2 （替换 getDynamic)
+    参数：
+        dynamicType:    string  查询动态类型
+            followeDynamic  我关注的动态，动态首页显示内容
+            mineDynamic     我的动态
+            clanDynamic     归属到部落的动态
+            favoriteDynamic 收藏的动态
+            commentDynamic  评论过的动态
+            activityDynamic 活动相关动态
+        limit:Integer   本次查询返回数目
+        skip:Integer    本次查询起始偏移
+        maxId:Integer   由于followeDynamic采用事件流获取，需要用maxId替换skip来获取数据
+    返回：
+        [
+            {
+                dynamic:DynamicNews class object
+                extra:{
+                    isLike: true or false
+                    tagNames: array  动态tagIds对应的名称
+                }
+            }
+        ]
+ */
+AV.Cloud.define('getDynamic2', function(req,res){
+    var dynamicType = req.params.dynamicType || 'followeDynamic';	//获取的动态类型
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+    var maxId = req.params.maxId || 0;
+    var retDynamic = [];
+    var dynamics;
+    if (!userId) {
+        res.error('缺少用户信息！');
+        return;
+    }
+
+    var pickActivityKeys = ['objectId','__type', 'title', "className"];
+    var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
+    switch (dynamicType) {
+        case 'followeDynamic':  //查询我关注的动态，需要通过事件流查询
+            //查询事件流，获取用户关注的所有动态
+            var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User',userId));
+            var statusReturn = [];
+            var dynamics;
+            query.equalTo('messageType', 'newPost');
+            query.include('dynamicNews');
+            query.include('source');
+            query.include('dynamicNews.user_id');
+            query.include('dynamicNews.activityId');
+            query.limit(limit);
+            query.maxId(maxId);
+            query.exists('dynamicNews');
+            break;
+
+        case 'mineDynamic':     //我发出的动态
+            var query = new AV.Query('DynamicNews');
+            query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.equalTo('type', 2);
+            query.include('user_id', 'activityId');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            break;
+
+        case 'clanDynamic': //查询部落动态和问答
+            var clanId = req.params.clanId;
+            if (!clanId) {
+                res.error('请输入部落信息！');
+            }
+
+            var queryInClanIds = new AV.Query('DynamicNews');
+            queryInClanIds.equalTo('clan_ids', clanId);
+            var queryEqualToClan = new AV.Query('DynamicNews');
+            if (clanId) {
+                queryEqualToClan.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+            }
+
+            var query = AV.Query.or(queryInClanIds, queryEqualToClan);
+            query.equalTo('type', 2);
+            query.include('user_id', 'activityId');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            break;
+
+        case 'favoriteDynamic': //获取收藏动态或问答信息
+            console.info('favoriteDynamic params:', req.params);
+            var favoriteIds = req.params.favoriteIds || [];
+            if (favoriteIds.length <= 0) {
+                res.error('请输入收藏的动态或问答信息！');
+                return;
+            }
+            var query = new AV.Query('DynamicNews');
+            query.equalTo('type', 2);
+            if (favoriteIds.length > 0) {
+                limit = favoriteIds.length;
+                query.containedIn('objectId', favoriteIds);
+            }
+            query.include('user_id', 'activityId');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            break;
+
+        case 'commentDynamic':  //我评论过的动态
+            var query = new AV.Query('DynamicNews');
+            query.skip(skip);
+            query.limit(limit);
+            query.include('user_id', 'activityId');
+            query.equalTo('commentUsers', userId);
+            query.equalTo('type', 2);
+            query.descending('createdAt');
+            break;
+
+        case 'activityDynamic': // 活动相关动态
+            var activityId = req.params.activityId;
+            if (!activityId) {
+                res.error('缺少必备参数！');
+                return;
+            }
+
+            //查询活动相关动态
+            var query = new AV.Query('DynamicNews');
+            query.include('user_id', 'activityId');
+            query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+            query.equalTo('type', 2);
+            query.descending('createdAt');
+            query.limit(limit);
+            query.skip(skip);
+            break;
+
+        default :
+            console.error('查询类型未知：', dynamicType)
+            res.error('未知的查询类型！');
+            return;
+    }
+
+    query.find().then(function(results){
+        if (dynamicType == 'followeDynamic') {
+            dynamics = [];
+            _.each(results, function(item){
+                if (item.data.dynamicNews) {
+                    dynamics.push(item.data.dynamicNews);
+                }
+            });
+        } else {
+            dynamics = results;
+            dynamics = _.reject(dynamics, function(val){
+                return (val == undefined);
+            });
+        }
+        return common.findLikeDynamicUsers(userId, dynamics);
+    }).then(function(likeResult){
+        var retDynamic = [];
+        _.each(dynamics, function(dynamic){
+
+            var userId = dynamic.get('user_id');
+            var activityId = dynamic.get('activityId');
+            dynamic = dynamic._toFullJSON();
+            dynamic.user_id = _.pick(userId._toFullJSON(), pickUserKeys);
+            if (activityId) {
+                dynamic.activityId = _.pick(activityId._toFullJSON(), pickActivityKeys);
+            }
+
+            retDynamic.push({
+                dynamic:dynamic,
+                extra:{
+                    isLike:likeResult[dynamic.objectId]?true:false,
+                    tagNames:common.tagNameFromId(dynamic.tags)
+                }
+            });
+        });
+
+        res.success(retDynamic);
+
+    });});
+
 /**
  *  获取动态
  */
@@ -319,6 +500,8 @@ AV.Cloud.define('getDynamic', function(req,res){
  *  获取动态、资讯、活动等相关评论
  */
 AV.Cloud.define('getComments', function(req,res) {
+    console.info('user friend count %d', req.user.get('friendCount'));
+
     var sourceId = req.params.sourceId;
     var commentId = req.params.commentId;
     var limit = req.params.limit || 20;
@@ -453,4 +636,15 @@ AV.Cloud.define('postComment', function(req, res){
         console.error('postComment error:', error);
         res.error('提交评论失败，错误码:'+error.code);
     })
+});
+
+/*
+    获取动态详情
+    函数名:
+        getDynamicDetail
+    参数：
+
+ */
+AV.Cloud.define('getDynamicDetail', function(req, res){
+
 });

@@ -251,6 +251,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
         if (founder) {
             queryUsers.notEqualTo('user_id', founder);
         }
+        queryUsers.descending('createdAt');
         queryUsers.limit(10);
         return queryUsers.find();
     }).then(function(users){
@@ -264,7 +265,9 @@ AV.Cloud.define('getClanDetail', function(req, res){
         //查询该部落最近一次的活动
         var queryActivity = new AV.Query('Activity');
         queryActivity.limit(1);
-        queryActivity.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+        queryActivity.notEqualTo('removed', true);
+        queryActivity.equalTo('allow_join_type', 2);    //活动归属于部落
+        queryActivity.equalTo('allow_join_data', clanId);
         queryActivity.descending('createdAt');
         return queryActivity.first();
     }).then(function(activity){
@@ -273,3 +276,73 @@ AV.Cloud.define('getClanDetail', function(req, res){
         res.success(ret);
     });
 });
+
+/*
+    获取部落成员
+    云函数：getClanUser (替换 imGetClanUser)
+    参数：
+        clanId:objectId 部落ID
+        type: string   查询类别
+                clanUser: 查询部落成员
+                reviewClanUser: 查询申请加入该部落，待审核的成员
+        skip:Integer  查询偏移
+        limit:Integer 返回数量
+    返回：{
+        clanUser:[          //type 为 clanUser 时返回
+            ClanUser class object,
+            ...
+        ],
+        reviewClanUser:[    //type 为 reviewClanUser 时返回
+            ReviewClanUser class object
+        ]
+    }
+ */
+AV.Cloud.define('getClanUser', function(req, res){
+    var clanId = req.params.clanId;
+    var type = req.params.type || 'clanUser';
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
+    if (!clanId) {
+        res.error('请传入部落信息!');
+        return;
+    }
+
+    var ret = {};
+    //保留的user keys
+    var pickUserKeys = ["objectId", "nickname", "className", "icon", "__type"];
+    var query;
+    if (type == 'clanUser') {
+        query = new AV.Query('ClanUser');
+    } else if (type == 'reviewClanUser') {
+        query = new AV.Query('ClanReviewUser');
+    } else {
+        res.error('请传入正确的查询类型!');
+        return;
+    }
+    query.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+    query.skip(skip);
+    query.limit(limit);
+    query.include('user_id');
+    query.find().then(function(users){
+        var clanUser = [], reviewClanUser = [];
+        _.each(users, function(userItem){
+            var user = userItem.get('user_id');
+            userItem = userItem._toFullJSON();
+            if (userItem.founder_userinfo) {
+                delete userItem.founder_userinfo;
+            }
+            userItem.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+            if (type == 'clanUser') {
+                clanUser.push(userItem);
+            } else if (type == 'reviewClanUser') {
+                reviewClanUser.push(userItem);
+            }
+        });
+
+        ret.clanUser = clanUser;
+        ret.reviewClanUser = reviewClanUser;
+        res.success(ret);
+    }, function(err){
+        res.error('查询失败,错误码:'+err.code);
+    });
+})

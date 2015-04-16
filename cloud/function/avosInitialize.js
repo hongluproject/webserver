@@ -85,6 +85,7 @@ AV.Cloud.define('updateHPParamTimer', function(req, res) {
         message:升级提示
         clickURL:点击链接
         lastVersion:1.0.1 最近版本
+        showManualUpdate: true or false ,APP默认为false,显示手动升级，IOS使用。
     }
  */
 AV.Cloud.define('checkUpdate', function(req, res) {
@@ -152,6 +153,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
         res.success({
             needUpdate:false,
             showAdForIdfa:true,
+            showManualUpdate:false, //显示手动升级，APP默认为false，若showManualUpdate为true，则显示
             updateType:1,
             message:'1、第一次发布版本\n' +
             '2、天天向上\n' +
