@@ -263,7 +263,7 @@ AV.Cloud.define('getRecommendActivity', function(req, res){
 
     var retVal = [];
     var query = new AV.Query('ActivityRecommend');
-    query.equalTo('status', 1); //处于上线状态
+    query.lessThan('status', 1); //小于1表示出于上线状态
     query.include('activityId');
     query.limit(5);
     query.descending('updatedAt');

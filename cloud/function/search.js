@@ -572,7 +572,6 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.lessThanOrEqualTo('status', 1);
         query.first({
             success: function(result) {
-                console.dir(result);
                 if(result){
                     console.info('match tag:', result);
                     tagId = result.id;

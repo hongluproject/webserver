@@ -240,7 +240,6 @@ AV.Cloud.define("getClan",function(req, res){
                             }
 
                             var founderObj = result[i].get('founder_id');
-                            console.dir(_.pick(founderObj._toFullJSON(), pickUserKeys));
                             result[i].set('founder_id', _.pick(founderObj._toFullJSON(), pickUserKeys));
                             result[i].set('founder_userinfo', {
                                 icon:founderObj.get('icon')||'',

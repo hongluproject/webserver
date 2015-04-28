@@ -53,7 +53,6 @@ AV.Cloud.afterSave('Activity', function(request) {
 
 AV.Cloud.afterUpdate('Activity', function(req){
    var Activity = req.object;
-    console.dir(Activity);
 
     var currentNum = Activity.get('current_num');
     console.info('current number is %d', currentNum);

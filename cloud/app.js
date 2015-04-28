@@ -152,7 +152,6 @@ app.get('/dynamic/:objId', function(req, res) {
             tagsName.push(tagName?tagName:'');
         }
         dynamicResult.set('tagsName', tagsName);
-        console.dir(tagsName);
 
         renderObj = dynamicResult;
         //获取该动态最近10个评论

@@ -15,7 +15,6 @@ AV.Cloud.afterSave('DynamicComment', function(request){
         console.error('DynamicComment 数据非法！');
         return;
     }
-    console.dir(dynamicObj);
     var targetUser;
 
     //get dynamic object first

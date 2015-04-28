@@ -394,7 +394,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         //简化user_id的返回内容
         var _ = AV._;
         //保留的user keys
-        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon"];
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "actual_position"];
         activity.set('user_id', _.pick(userObj._toFullJSON(), pickUserKeys));
 
         var activityFounder = activity.get('user_id');
@@ -1090,6 +1090,12 @@ AV.Cloud.define('getActivityList', function(req, res){
                     tagOr.equalTo("tags", tags[i]);
                     queryOr.push(tagOr);
                 }
+
+                //查询我创建的活动
+                var queryMyCreate = new AV.Query(activityClass);
+                queryMyCreate.equalTo('user_id', req.user);
+                queryOr.push(queryMyCreate);
+
                 var query= AV.Query.or.apply(null, queryOr);
             }else{
                 var query= new AV.Query(activityClass);

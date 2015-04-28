@@ -336,7 +336,6 @@ AV.Cloud.define('getClanUser', function(req, res){
     query.limit(limit);
     query.include('user_id');
     query.find().then(function(clanUsers){
-        console.dir(clanUsers);
         refClanUsers = clanUsers;
         var users = [];
         _.each(clanUsers, function(clanUser){

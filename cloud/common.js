@@ -626,11 +626,10 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         AV.Status.sendStatusToFollowers(status).then(function(status){
             //发布状态成功，返回状态信息
             console.info("%s 发布动态给粉丝成功!", sourceUser.id);
-            console.dir(status);
         }, function(err){
             //发布失败
             console.error("%s 发布动态给粉丝失败!", sourceUser.id);
-            console.dir(err);
+            console.error(err);
         });
 
         //再向 dynamic 发送一次
@@ -638,11 +637,10 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         AV.Status.sendStatusToFollowers(status).then(function(status){
             //发布状态成功，返回状态信息
             console.info("%s 发布动态给粉丝成功!", sourceUser.id);
-            console.dir(status);
         }, function(err){
             //发布失败
             console.error("%s 发布动态给粉丝失败!", sourceUser.id);
-            console.dir(err);
+            console.error(err);
         });
 
     } else { //将消息发送到目标用户

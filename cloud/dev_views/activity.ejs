@@ -4,7 +4,9 @@
     <%
     var title = activity.get('title');
     var tags = activity.get('tagsName');
-    var index_thumb_image = activity.get('index_thumb_image') || '/images/share/logo.png';
+    var thumbImage = activity.get('index_thumb_image');
+    thumbImage = thumbImage && thumbImage.concat('?imageView2/2/w/148');
+    var index_thumb_image = thumbImage || '/images/share/logo.png';
     %>
     <title>我分享了一个撒哈拉活动--<%=title%></title>
     <meta charset="utf-8" />

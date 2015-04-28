@@ -4,7 +4,8 @@
     <%
     var title = clan.get('title');
     var tags = clan.get('tagsName');
-    var icon = clan.get('icon') || '/images/share/logo.png';
+    var icon = clan.get('icon');
+    icon =  (icon && icon.concat('?imageView2/2/w/148')) || '/images/share/logo.png';
     %>
     <title>我分享了一个撒哈拉部落--<%=title%></title>
     <meta charset="utf-8" />
@@ -14,7 +15,7 @@
     <meta content="telephone=no" name="format-detection" />
     <link rel="stylesheet" href="/stylesheets/page.css?2015022801" />
     <script src="/js/jquery-1.11.2.min.js"></script>
-    <script src="/js/layer.m.js"></script>
+    <script type="application/javascript" src="/js/layer.m.js"></script>
 </head>
 
 <body>
