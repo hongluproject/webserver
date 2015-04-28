@@ -36,35 +36,37 @@ exports.pad = function(num, n) {
 
 exports.clanParam = {
     getMaxClanUsers : function(level) {
+        level = level || 1;
         AV.HPGlobalParam = AV.HPGlobalParam || {};
         if (AV.HPGlobalParam.hpLevels && AV.HPGlobalParam.hpLevels[level]) {
-            return AV.HPGlobalParam.hpLevels[level].get('maxClanUsers')||30;
+            return AV.HPGlobalParam.hpLevels[level].get('maxClanUsers')||100;
         }
 
         switch (level) {
             case 1:
-                return 30;
+                return 100;
             case 2:
-                return 50;
+                return 500;
         }
 
-        return 30;
+        return 100;
     },
 
     getMaxCreateClan : function(level) {
+        level = level || 1;
         AV.HPGlobalParam = AV.HPGlobalParam || {};
         if (AV.HPGlobalParam.hpLevels && AV.HPGlobalParam.hpLevels[level]) {
-            return AV.HPGlobalParam.hpLevels[level].get('maxCreateClan')||2;
+            return AV.HPGlobalParam.hpLevels[level].get('maxCreateClan')||5;
         }
 
         switch (level) {
             case 1:
-                return 2;
+                return 5;
             case 2:
                 return 5;
         }
 
-        return 2;
+        return 5;
     }
 };
 
@@ -254,7 +256,32 @@ exports.newsResultWapper = function(userId, results) {
 
 }
 
+exports.getFriendshipUsers = function(findFriendId, users) {
+    if (!findFriendId || !users) {
+        return {};
+    } else {
+        var friendList = [];
+        _.each(users, function(user){
+            friendList.push(AV.User.createWithoutData('_User', user.id));
+        });
 
+        var queryFriend = new AV.Query('_Followee');
+        queryFriend.select('followee');
+        queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
+        queryFriend.containedIn('followee', friendList);
+        return queryFriend.find().then(function(results) {
+            var friendObj = {};
+            _.each(results, function(result){
+                var myFollowee = result.get('followee');
+                if (myFollowee) {
+                    friendObj[myFollowee.id] = true;
+                }
+            });
+
+            return AV.Promise.as(friendObj);
+        });
+    }
+}
 
 exports.addFriendShipForUsers = function(findFriendId, users) {
     if (!findFriendId) {
@@ -343,6 +370,10 @@ exports.findFriendShipForUsers = function(findFriendId, users) {
 exports.findLikeDynamicUsers = function(findLikeUserId, dynamics) {
     var dynamicIds = [];
 
+    if (!_.isArray(dynamics)) {
+        //若不是数组，先转换成数组
+        dynamics = [dynamics];
+    }
     _.each(dynamics, function(dynamic){
         dynamicIds.push(dynamic.id);
     });
@@ -883,8 +914,50 @@ exports.cateNameFromId = function(cateId) {
 
 exports.getMountaineerClubActivityId = function() {
     if (this.isSahalaDevEnv()) {
-        return '5524cdcae4b03381b308d12d';
+        return '55375588e4b0cafb0a13ad92';
     }
 
     return '';
+}
+
+/**
+ * 获取撒哈拉小助手账号（将来可能有多个）
+ * @returns {*}
+ */
+exports.getSahalaAssistants = function() {
+    if (this.isSahalaDevEnv()) {
+        return ['5534b53ce4b0825685f268fc'];
+    }
+
+    return ['5538afc9e4b0cafb0a1e8d6e'];
+}
+
+/**
+ * 关注撒哈拉官方助手
+ * @param userId
+ */
+exports.followSahalaAssistants = function(userId) {
+    var sahalaObjs = [];
+    var assistants = this.getSahalaAssistants();
+
+    _.each(assistants, function(user){
+        sahalaObjs.push(AV.User.createWithoutData('_User', user));
+    });
+    var query = new AV.Query('_Followee');
+    query.equalTo('user', AV.User.createWithoutData('_User', userId));
+    query.containedIn('followee', sahalaObjs);
+    query.find().then(function(results){
+        var followees = [];
+        _.each(results, function(user){
+            followees.push(user.get('followee').id);
+        });
+
+        //找到该用户还有哪些官方账号没有关注，然后关注之
+        var unfollowees = _.difference(assistants, followees);
+        _.each(unfollowees, function(assistantUserId){
+            console.info('user %s follow sahala assistant %s', userId, assistantUserId);
+            AV.User.current().follow(assistantUserId);
+        });
+
+    });
 }

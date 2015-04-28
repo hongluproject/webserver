@@ -4,6 +4,79 @@
  * Created by fugang on 14/12/12.
  */
 var common = require('cloud/common');
+var _ = AV._;
+
+/*
+    推荐
+ 函数名
+ getRecommend2 （用于替换getRecommend）
+ 参数：
+ recommendType:string 推荐类型
+           user    推荐用户
+ userId: objectId 用户ID
+ tags: array 用户标签，若为当前登陆用户，可不传
+ skip、limit:翻页查询参数
+ 返回：[
+         {
+             user: user class object
+             dynamics: 用户最近发布的带图片的动态
+             [
+                dynamic class object
+             ]
+         }
+     ]
+ */
+AV.Cloud.define('getRecommend2', function(req, res){
+    var userId = req.params.userId || (req.user && req.user.id);
+    var tags = req.params.tags || (req.user && req.user.get('tags'));
+    var recommendType = req.params.recommendType || 'user';
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
+
+    if (!userId || !tags) {
+        res.success([]);
+        return;
+    }
+
+    console.info('user tags %s', tags);
+
+    var retVal = [];
+    var excludeIds = [userId];
+    var query = new AV.Query('_Followee');
+    query.select('followee');
+    query.equalTo('user', AV.User.createWithoutData('_User', userId));
+    query.limit(1000);
+    query.find().then(function(results){
+        _.each(results, function(followee){
+            excludeIds.push(followee.get('followee').id);
+        });
+
+        var queryOr = [];
+        _.each(tags, function(tag){
+            var query = new AV.Query('_User');
+            query.equalTo('tags', tag);
+            query.exists('tags');
+            queryOr.push(query);
+        });
+
+        var queryUser = AV.Query.or.apply(null, queryOr);
+        queryUser.notContainedIn('objectId', excludeIds);
+        queryUser.skip(skip);
+        queryUser.limit(limit);
+        queryUser.descending('friendCount');
+        return queryUser.find();
+    }).then(function(users){
+        _.each(users, function(user){
+           retVal.push({
+               user: user._toFullJSON()
+           });
+        });
+
+        res.success(retVal);
+    });
+
+
+});
 
 AV.Cloud.define("getRecommend",function(req, res){
     //共用
@@ -190,6 +263,7 @@ AV.Cloud.define('getRecommendActivity', function(req, res){
 
     var retVal = [];
     var query = new AV.Query('ActivityRecommend');
+    query.equalTo('status', 1); //处于上线状态
     query.include('activityId');
     query.limit(5);
     query.descending('updatedAt');
@@ -200,11 +274,6 @@ AV.Cloud.define('getRecommendActivity', function(req, res){
         }
 
         results.forEach(function(item){
-            //已经取消的活动，不在活动首页幻灯中显示
-            var bRemoved = item.get('removed') || false;
-            if (bRemoved) {
-                return;
-            }
 
             var activity = item.get('activityId');
             item = item._toFullJSON();

@@ -105,6 +105,7 @@ AV.Cloud.define('updateClanParam', function(req, res){
     if (clanId) {
         queryClan.equalTo('objectId', clanId);
     }
+    queryClan.limit(1000);
     queryClan.find().then(function(results){
         for (var i in results) {
             var userLevel = results[i].get('founder_id').get('level');
@@ -339,6 +340,11 @@ AV.Cloud.define('queryPingXX', function(req, res){
 });
 
 /*
+    将登协用户加入登协活动
+    1、通过用户数据接口，拿到所有用户数据。
+    2、找到已经注册过的用户，然后再查找哪些用户已经加入过活动，得到尚未加入活动的用户。
+    3、执行加入活动的操作。
+    注：该函数可重复执行，不会产生冗余数据。
 
  */
 AV.Cloud.define('joinMountaineerActivity', function(req, res){
@@ -410,6 +416,10 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
 
 /*
     将登协的用户注册到撒哈拉平台
+    1、访问用户数据接口，拿到所有用户列表
+    2、在用户表中找到尚未注册的用户，开始执行注册（密码为手机号后6位）
+    3、注册完成后，设置用户的nickname
+    注：该函数可重复执行，不会产生冗余数据
  */
 AV.Cloud.define('importMountaineer', function(req, res){
     AV.Cloud.httpRequest({
@@ -486,5 +496,77 @@ AV.Cloud.define('importMountaineer', function(req, res){
                 });
             }
         }
+    });
+});
+
+/**
+ * 注册账号
+ * 参数：
+ *      username:string 账户名
+ *      password:string 密码
+ */
+AV.Cloud.define('signUpUser', function(req, res){
+    var username = req.params.username;
+    var password = req.params.password;
+
+    AV.User.signUp(username,password,{
+        mobilePhoneNumber:username,
+        nickname:'小撒'
+    }).then(function(user) {
+        console.dir(user);
+        res.success(user._toFullJSON());
+    }, function(err){
+        console.error('注册失败:', err);
+        res.error(err);
+    });
+
+});
+
+/** 关注官方账号
+ *
+ */
+AV.Cloud.define('followAssistants', function(req, res){
+    var sahalaObjs = [];
+    var assistants = common.getSahalaAssistants();
+
+    _.each(assistants, function(user){
+        sahalaObjs.push(AV.User.createWithoutData('_User', user));
+    });
+
+    var allUserIds = [];
+    var allUserObjs = [];
+    var query = new AV.Query('_User');
+    query.notContainedIn('objectId', assistants);
+    query.limit(1000);
+    query.find().then(function(users){
+        console.info('total user count is %d', users.length);
+        _.each(users, function(user){
+            allUserObjs.push(AV.User.createWithoutData('_User', user.id));
+            allUserIds.push(user.id);
+        });
+
+        var query = new AV.Query('_Followee');
+        query.containedIn('user', allUserObjs);
+        query.containedIn('followee', sahalaObjs);
+        query.limit(1000);
+        query.find().then(function(results){
+            console.info('followee user count is %d', results.length);
+            var followees = [];
+            _.each(results, function(user){
+                followees.push(user.get('user').id);
+            });
+
+            var unfollowees = _.difference(allUserIds, followees);
+            console.info('unfollowees count %d, content %s', unfollowees.length, unfollowees);
+            _.each(unfollowees, function(userId){
+                if (process && process.domain)
+                    process.domain._currentUser = AV.User.createWithoutData('_User', userId);
+                _.each(assistants, function(assistantUserId){
+                    console.info('user %s follow sahala assistant %s', userId, assistantUserId);
+                    AV.User.current().follow(assistantUserId);
+                })
+            });
+
+        });
     });
 });

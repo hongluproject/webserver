@@ -156,6 +156,12 @@ AV.Cloud.define('quitActivity', function(req, res) {
  *  */
 AV.Cloud.define('signUpActivity', function(req, res) {
     console.info('signUpActivity params:', req.params);
+
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     //取得用户传入的参数
     var userId = req.params.userId;
     var teamId = req.params.teamId;
@@ -370,6 +376,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     };
 
     var queryActivity = new AV.Query('Activity');
+    queryActivity.select('-joinUsers', '-hasSignupUsers');
     queryActivity.include('user_id');
     queryActivity.equalTo('objectId', activityId);
     queryActivity.first().then(function(activity){
@@ -387,7 +394,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         //简化user_id的返回内容
         var _ = AV._;
         //保留的user keys
-        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon"];
         activity.set('user_id', _.pick(userObj._toFullJSON(), pickUserKeys));
 
         var activityFounder = activity.get('user_id');
@@ -489,6 +496,11 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     5、hook ActivityUser删除记录，通知组织者我已经退出
  */
 AV.Cloud.define('cancelSignupActivity', function(req, res){
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var userId = req.params.userId;
     if (!userId && req.user) {
         userId = req.user.id;
@@ -523,7 +535,7 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
         if (common.isOnlinePay(payType) &&
             paymentDeadTime &&
             currDate.getTime()>paymentDeadTime.getTime()) {
-            res.error('已过退款时间！');
+            res.error('超过最晚退款时间，请联系发起人退款。');
             return;
         }
 
@@ -585,6 +597,11 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
  * 3、若未线上支付活动，将该活动下订单为已支付的订单状态，改为‘申请退款’
  */
 AV.Cloud.define('cancelActivity', function(req, res){
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var activityId = req.params.activityId;
     var cancelReason = req.params.cancelReason;
     var joinUsers = [];     //所有加入活动的ids
@@ -794,29 +811,32 @@ AV.Cloud.define('getActivityUsers', function(req, res){
         var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type", "actual_position"];
         results.forEach(function(item) {
             var user = item.get('user_id');
-            var userInfo = {
-                nickname:user.get('nickname'),
-                icon:user.get('icon')||''
-            };
-            item.set('user_info', userInfo);
-            var order = item.get('order_id');
-            if (order) {
-                var signupInfo = order.get('signupId');
-                if (signupInfo) {
-                    item.set('sex', signupInfo.get('sex'));
-                    item.set('phone', signupInfo.get('phone'));
-                    item.set('idcard', signupInfo.get('idcard'));
-                    item.set('two_way_permit', signupInfo.get('twoWayPermit'));
-                    item.set('passport_card', signupInfo.get('passportCard'));
-                    item.set('mtp', signupInfo.get('mtp'));
-                    item.set('real_name', signupInfo.get('realName'));
+            if (user) {
+                var userInfo = {
+                    nickname:user.get('nickname') || '',
+                    icon:user.get('icon')||''
+                };
+                item.set('user_info', userInfo);
+                var order = item.get('order_id');
+                if (order) {
+                    var signupInfo = order.get('signupId');
+                    if (signupInfo) {
+                        item.set('sex', signupInfo.get('sex'));
+                        item.set('phone', signupInfo.get('phone'));
+                        item.set('idcard', signupInfo.get('idcard'));
+                        item.set('two_way_permit', signupInfo.get('twoWayPermit'));
+                        item.set('passport_card', signupInfo.get('passportCard'));
+                        item.set('mtp', signupInfo.get('mtp'));
+                        item.set('real_name', signupInfo.get('realName'));
+                    }
                 }
+
+                item = item._toFullJSON();
+                item.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+
+                retVal.push(item);
             }
 
-            item = item._toFullJSON();
-            item.user_id = _.pick(user._toFullJSON(), pickUserKeys);
-
-            retVal.push(item);
         })
 
         res.success(retVal);
@@ -1077,15 +1097,12 @@ AV.Cloud.define('getActivityList', function(req, res){
             if (userGeoPoint)
                 query.near("position", userGeoPoint);
             var searchDate=new Date();
-            query.greaterThan('dead_time',searchDate);
+            query.greaterThan('activity_end_time', searchDate);
             query.limit(limit);
             query.skip(skip);
             query.notEqualTo('removed', true);
             query.descending('createdAt');
-            query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
-            'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
-            'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price',
-            'joinUsers');
+            query.select('-hasSignupUsers');
             query.find().then(function(results){
                 if (!results) {
                     res.success();
@@ -1128,6 +1145,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);
+            query.select('-hasSignupUsers');
             query.limit(limit);
             query.skip(skip);
             query.descending('createdAt');
@@ -1162,41 +1180,65 @@ AV.Cloud.define('getActivityList', function(req, res){
                 res.error('请传入部落信息！');
                 break;
             }
-            var query = new AV.Query('Activity');
-            query.equalTo('allow_join_type', 2);
-            query.equalTo('allow_join_data', clanId);
-            query.skip(skip);
-            query.limit(limit);
-            query.notEqualTo('removed', true);
-            query.select('tags', 'payment_dead_time', 'dead_time', 'place', 'join_type', 'activity_time',
-                'current_num', 'user_info', 'index_thumb_image', 'require_type', 'duration', 'title', 'allow_join_type',
-                'max_num', 'comment_count', 'user_id', 'position', 'activity_end_time', 'area', 'intro', 'pay_type', 'price',
-                'joinUsers');
-            query.descending('createdAt');
-            query.find().then(function(results){
-                if (!results) {
-                    res.success();
+            var Clan = AV.Object.extend('Clan');
+            var clan = new Clan();
+            clan.id = clanId;
+            clan.fetch().then(function(clan){
+                //找到clan的founder
+                var clanFounder = clan && clan.get('founder_id');
+                if (!clanFounder) {
+                    res.error('未找到该部落的创建者!');
                     return;
                 }
 
-                results.forEach(function(activity){
-                    var retItem = {};
-                    retItem.activity = activity._toFullJSON();
-                    retItem.activity.price = retItem.activity.price || '0.00';
-                    var joinUsers = retItem.activity.joinUsers || [];
-                    retItem.extra = {
-                        friendJoin:0/*Math.floor(Math.random()*100)*/,
-                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
-                    };
-                    delete retItem.activity.joinUsers;
+                var queryOr = [];
+                var query = new AV.Query('Activity');
+                query.equalTo('allow_join_type', 2);
+                query.equalTo('allow_join_data', clanId);
+                query.notEqualTo('removed', true);
+                queryOr.push(query);
 
-                    retVal.push(retItem);
+                var clanIds = req.user.get('clanids');
+                if (_.indexOf(clanIds, clanId) >= 0) {
+                    //如果是部落成员，则该部落酋长发布的公开活动，也可以看到
+                    query = new AV.Query('Activity');
+                    query.equalTo('allow_join_type', 1);
+                    query.equalTo('user_id', clanFounder);
+                    query.notEqualTo('removed', true);
+                    queryOr.push(query);
+                }
+
+                query = AV.Query.or.apply(null, queryOr);
+                query.skip(skip);
+                query.limit(limit);
+                query.select('-hasSignupUsers');
+                query.descending('createdAt');
+                query.find().then(function(results){
+                    if (!results) {
+                        res.success();
+                        return;
+                    }
+
+                    results.forEach(function(activity){
+                        var retItem = {};
+                        retItem.activity = activity._toFullJSON();
+                        retItem.activity.price = retItem.activity.price || '0.00';
+                        var joinUsers = retItem.activity.joinUsers || [];
+                        retItem.extra = {
+                            friendJoin:0/*Math.floor(Math.random()*100)*/,
+                            hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
+                        };
+                        delete retItem.activity.joinUsers;
+
+                        retVal.push(retItem);
+                    });
+
+                    res.success(retVal);
+                }, function(err){
+                    res.error('查询活动失败,错误码:'+err.code);
                 });
-
-                res.success(retVal);
-            }, function(err){
-                res.error('查询活动失败,错误码:'+err.code);
             });
+
             break;
     }
 
@@ -1266,6 +1308,11 @@ AV.Cloud.define('getActivityJoined', function(req, res){
  *      }
  */
 AV.Cloud.define('canCreateActivity', function(req, res) {
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var userId = req.params.userId;
     if (!userId && req.user) {
         userId = req.user.id;
@@ -1303,6 +1350,11 @@ AV.Cloud.define('canCreateActivity', function(req, res) {
  *      success or error
  */
 AV.Cloud.define('signinActivity', function(req, res){
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var userId = req.params.userId;
     if (!userId && req.user) {
         userId = req.user.id;
@@ -1350,6 +1402,11 @@ AV.Cloud.define('signinActivity', function(req, res){
         success or fail
  */
 AV.Cloud.define('cancelOrder', function(req, res){
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var orderNo = req.params.orderNo;
     if (!orderNo) {
         res.error('请传入订单信息！');
@@ -1525,6 +1582,11 @@ AV.Cloud.define('refundComplete', function(req, res){
         success or error
  */
 AV.Cloud.define('updateActivity', function(req, res){
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var activityId = req.params.activityId;
     if (!activityId) {
         res.error('请传入活动信息！');

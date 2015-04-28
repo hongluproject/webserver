@@ -18,6 +18,7 @@ var _ = AV._;
         limit:Integer   本次查询返回数目
         skip:Integer    本次查询起始偏移
         maxId:Integer   由于followeDynamic采用事件流获取，需要用maxId替换skip来获取数据
+        favoriteIds:array   查询指定动态列表,在favoriteDynamic里面用到
     返回：
         [
             {
@@ -157,17 +158,17 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 return (val == undefined);
             });
         }
-        return common.findLikeDynamicUsers(userId, dynamics);
+        return common.findLikeDynamicUsers(req.user&&req.user.id, dynamics);
     }).then(function(likeResult){
         var retDynamic = [];
         _.each(dynamics, function(dynamic){
 
             var userId = dynamic.get('user_id');
-            var activityId = dynamic.get('activityId');
+            var activity = dynamic.get('activityId');
             dynamic = dynamic._toFullJSON();
             dynamic.user_id = _.pick(userId._toFullJSON(), pickUserKeys);
             if (activityId) {
-                dynamic.activityId = _.pick(activityId._toFullJSON(), pickActivityKeys);
+                dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
             }
 
             retDynamic.push({
@@ -327,7 +328,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
 
-                common.addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic mineDynamic failed:', error);
                 res.success([]);
@@ -365,7 +366,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
 
-                common.addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic mineDynamic failed:', error);
                 res.success([]);
@@ -399,7 +400,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
 
-                common.addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic favoriteDynamic failed:', error);
                 res.success([]);
@@ -427,7 +428,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     res.success([]);
                     return;
                 }
-                common.addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic commentDynamic failed:', error);
                 res.success([]);
@@ -462,7 +463,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                 return query.find();
             }).then(function(results){
 
-                return common.addLikesAndReturn(req, results);
+                return common.addLikesAndReturn(req.user&&req.user.id, results);
             }).then(function(dynamics){
                 if (dynamics) {
                     retVal.dynamics = [];
@@ -495,6 +496,91 @@ AV.Cloud.define('getDynamic', function(req,res){
     }
 });
 
+/*
+    获取动态、资讯、活动等相关评论
+    云函数：
+        getComments2 (用于替换getComments)
+    参数：
+        sourceId:objectId  动态、资讯 or 活动 等ID
+        commentId:objectId 查询指定的评论ID
+        limit、skip:分页查询参数
+        commentType:
+            dynamic:    动态评论
+            news:       资讯评论
+            activity:   活动评论
+    返回：
+        [
+            {
+                comment: comment class object
+            },
+            ...
+        ]
+ */
+AV.Cloud.define('getComments2', function(req, res){
+    var sourceId = req.params.sourceId;
+    var commentId = req.params.commentId;
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+    var commentType = req.params.commentType || 'dynamic';
+
+    if (!sourceId) {
+        res.error('请输入动态ID!');
+        return;
+    }
+    var query;
+    switch (commentType) {
+        case 'news':
+            query = new AV.Query('NewsComment');
+            if (sourceId) {
+                query.equalTo('newsid', AV.Object.createWithoutData('News',sourceId));
+            }
+            break;
+        case 'activity':
+            query = new AV.Query('ActivityComment');
+            if (sourceId) {
+                query.equalTo('activity_id', AV.Object.createWithoutData('Activity',sourceId));
+            }
+            break;
+        case 'dynamic':
+        default :
+            query = new AV.Query('DynamicComment');
+            if (sourceId) {
+                query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews',sourceId));
+            }
+            break;
+    }
+    if (commentId) {    //查询指定的评论ID
+        query.equalTo('objectId', commentId);
+    }
+    query.equalTo('status', 1);
+    query.include('user_id', 'reply_userid');
+    query.skip(skip);
+    query.limit(limit);
+    query.descending('createdAt');
+    query.find().then(function(results){
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        var retVal = [];
+        _.each(results, function(comment){
+            var postUser = comment.get('user_id');
+            var replyUser = comment.get('reply_userid');
+            comment.unset('append_userinfo');
+            comment.unset('append_replyinfo');
+
+            comment = comment._toFullJSON();
+            comment.user_id = _.pick(postUser._toFullJSON(), pickUserKeys);
+            if (replyUser) {
+                comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
+            }
+
+            retVal.push({
+                comment:comment
+            });
+        });
+
+        res.success(retVal);
+    });
+});
 
 /**
  *  获取动态、资讯、活动等相关评论
@@ -643,8 +729,100 @@ AV.Cloud.define('postComment', function(req, res){
     函数名:
         getDynamicDetail
     参数：
-
+        userId:objectId 用户ID
+        dynamicId:objectId 动态ID
+        getComment:bool,是否获取动态相关评论
+        limit、skip：评论对应查询偏移和返回数目
+    返回：{
+        dynamic: dynamic class object
+        extra:{
+            isLike: true or false
+            tagNames: array 标签对应的名称
+        },
+        comments:[
+            DynamicComment class object
+        ]
+    }
  */
 AV.Cloud.define('getDynamicDetail', function(req, res){
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var dynamicId = req.params.dynamicId;
+    if (!userId || !dynamicId) {
+        res.error('请传入相关参数！');
+        return;
+    }
+    var getComment = req.params.getComment;
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
 
+    var retVal = {};
+    var retDynamic;
+    var query = new AV.Query('DynamicNews');
+    query.equalTo('objectId', dynamicId);
+    query.include('user_id', 'activityId');
+    query.first().then(function(dynamic){
+        if (!dynamic) {
+            console.info('动态 %s 不存在', dynamicId);
+            return res.success({});
+        }
+        retDynamic = dynamic;
+
+        return common.findLikeDynamicUsers(userId, dynamic);
+    }).then(function(likeObj){
+        var bLiked = likeObj && likeObj[retDynamic.id];
+        var tags = retDynamic.get('tags');
+        var userPost = retDynamic.get('user_id');
+        var activityId = retDynamic.get('activityId');
+
+        var pickActivityKeys = ['objectId','__type', 'title', "className"];
+        retDynamic = retDynamic._toFullJSON();
+        retDynamic.user_id = userPost._toFullJSON();
+        if (activityId) {
+            retDynamic.activityId = _.pick(activityId._toFullJSON(), pickActivityKeys);
+        }
+
+        retVal = {
+            dynamic: retDynamic,
+            extra:{
+                isLike:bLiked,
+                tagNames:common.tagNameFromId(tags)
+            }
+        };
+        if (getComment) {
+            var query = new AV.Query('DynamicComment');
+            query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews', dynamicId));
+            query.equalTo('status', 1);
+            query.include('user_id', 'reply_userid');
+            query.limit(limit);
+            query.skip(skip);
+            query.descending('createdAt');
+            return query.find();
+        } else {
+            res.success(retVal);
+            return;
+        }
+    }).then(function(comments){
+        var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
+        var retComment = [];
+        _.each(comments, function(comment){
+            var commentUser = comment.get('user_id');
+            var replyUser = comment.get('reply_userid');
+            comment.unset('user_info');
+            comment.unset('append_replyinfo');
+
+            comment = comment._toFullJSON();
+            comment.user_id = _.pick(commentUser._toFullJSON(), pickUserKeys);
+            if (replyUser) {
+                comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
+            }
+            retComment.push(comment);
+        });
+
+        retVal.comments = retComment;
+        res.success(retVal);
+
+    }, function(err){
+        console.error('查询动态 %s 详情错误:', dynamicId, err);
+        res.success({});
+    });
 });

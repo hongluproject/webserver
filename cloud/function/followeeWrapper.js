@@ -3,7 +3,7 @@
  */
 
 AV.Cloud.define("unfollowFriend",function(req, res) {
-    var myUserId = req.params.userId;
+    var myUserId = req.params.userId || (req.user && req.user.id);
     var friendUserId = req.params.friendUserId;
     if (!myUserId || !friendUserId) {
         res.error('请输入用户信息！');

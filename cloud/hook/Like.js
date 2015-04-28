@@ -4,7 +4,6 @@
 var utils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 
-
 /** 添加点赞时，对应的文章源点赞数动态调整
  *
  */

@@ -2,6 +2,8 @@
  * Created by fugang on 15/3/6.
  */
 var myutils = require('cloud/utils.js');
+var common = require('cloud/common.js');
+var _ = AV._;
 
 AV.Cloud.afterUpdate('_User', function(request) {
     var userObj = request.object;

@@ -5,84 +5,66 @@ var utils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 var _ = AV._;
 
-
 /** 发布动态后，通知到所有关注我的人
  *
  */
 AV.Cloud.afterSave('DynamicNews', function(request){
     var postUser = request.object.get('user_id');
-    if (!postUser) {
-        console.info("DynamicNews afterSave:user is null!");
+    var userObj = request.user;
+    if (!userObj || !postUser) {
         return;
     }
-    var clanObj = request.object.get('clan_id');
 
-    var queryUser = new AV.Query('_User');
-    queryUser.select("nickname", "clanids");
-    queryUser.get(postUser.id, {
-        success:function(userObj) {
-            if (!userObj) {
-                return;
-            }
+    //该用户发布动态数加1
+    var messageType = 'newPost';
+    var type = request.object.get('type');   //1:ask 2:dynamic
+    if (type == 2) {
+        userObj.fetchWhenSave(true);
+        messageType = 'newPost';
+        userObj.increment('dynamicCount');
+        userObj.save();
+    }
 
-            //该用户发布动态数加1
-            var messageType = 'newPost';
-            var type = request.object.get('type');   //1:ask 2:dynamic
-            userObj.fetchWhenSave(true);
-            switch (type) {
-                case 1:
-                    messageType = 'newQuestion';
-                    userObj.increment('questionCount');
-                    break;
-                case 2:
-                    messageType = 'newPost';
-                    userObj.increment('dynamicCount');
-                    break;
-            }
-            userObj.save();
-
-            var clansOfUser = userObj.get('clanids');
-            var tagsOfDynamic = request.object.get('tags');
-
-            //如果用户没有设置动态所归属的部落，则需要将该动态自动加入所属标签的部落中
-            var queryOr = [];
-            var clanOfDynamic = request.object.get('clan_ids');
-            if (!clanOfDynamic && clansOfUser && tagsOfDynamic && tagsOfDynamic.length>0) {
-                for(var i in tagsOfDynamic){
-                    var clanOr = new AV.Query('Clan');
-                    clanOr.equalTo("tags", tagsOfDynamic[i]);
-                    queryOr.push(clanOr);
-                }
-                var queryClan = AV.Query.or.apply(null, queryOr);
-                queryClan.containedIn('objectId', clansOfUser);
-                queryClan.find().then(function(results){
-                    var clanids = [];
-                    for(var i in results) {
-                        clanids.push(results[i].id);
-                    }
-
-                    var DynamicObj = request.object;
-                    var DynamicObjId = DynamicObj.id;
-                    var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';
-                    DynamicObj.set('share_url', urlPath.concat(DynamicObjId));
-                    if (clanids.length > 0) {
-                        DynamicObj.set('clan_ids', clanids);
-                    }
-                    DynamicObj.save();
-                });
-            } else {
-                var DynamicObj = request.object;
-                var DynamicObjId = DynamicObj.id;
-                var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';
-                DynamicObj.set('share_url', urlPath.concat(DynamicObjId));
-                DynamicObj.save();
-            }
-
-            if (_.isEmpty(clanOfDynamic)) { //如果是在部落里面发布动态，则不同步到事件流
-                common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
-            }
+    //如果用户没有设置动态所归属的部落，则需要将该动态自动加入所属标签的部落中
+    var clansOfUser = userObj.get('clanids');
+    var tagsOfDynamic = request.object.get('tags');
+    var queryOr = [];
+    var clanOfDynamic = request.object.get('clan_ids');
+    if (!clanOfDynamic && clansOfUser && tagsOfDynamic && tagsOfDynamic.length>0) {
+        for(var i in tagsOfDynamic){
+            var clanOr = new AV.Query('Clan');
+            clanOr.equalTo("tags", tagsOfDynamic[i]);
+            queryOr.push(clanOr);
         }
-    })
+        var queryClan = AV.Query.or.apply(null, queryOr);
+        queryClan.containedIn('objectId', clansOfUser);
+        queryClan.find().then(function(results){
+            var clanids = [];
+            for(var i in results) {
+                clanids.push(results[i].id);
+            }
+
+            var DynamicObj = request.object;
+            var DynamicObjId = DynamicObj.id;
+            var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';
+            DynamicObj.set('share_url', urlPath.concat(DynamicObjId));
+            if (clanids.length > 0) {
+                DynamicObj.set('clan_ids', clanids);
+            }
+            DynamicObj.save();
+        });
+    } else {
+        var DynamicObj = request.object;
+        var DynamicObjId = DynamicObj.id;
+        var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';
+        DynamicObj.set('share_url', urlPath.concat(DynamicObjId));
+        DynamicObj.save();
+    }
+
+    if (_.isEmpty(clanOfDynamic)) { //如果是在部落里面发布动态，则不同步到事件流
+        common.sendStatus(messageType, postUser, null, null, {dynamicNews:request.object});
+    }
+
 });
 
 /** 动态删除后，将对应的status也清除掉，该动态对应的事件流也会相应消失

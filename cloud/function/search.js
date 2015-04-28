@@ -60,7 +60,8 @@ AV.Cloud.define("getSearch",function(req,res){
         if (tagId) {
             query.equalTo("tags", tagId);
         } else {
-            query.contains("title", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("title",  re);
         }
         var newsIds = [];
         query.find().then(function(results){
@@ -125,40 +126,20 @@ AV.Cloud.define("getSearch",function(req,res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("content", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("content",  re);
         }
         query.skip(skip);
         query.include('user_id', 'activityId');
         query.descending('createdAt');
         query.find({
             success:function(results){
-                if (results) {
-                    var pickActivityKeys = ['objectId', 'title', "className"];
-                    for (var i in results) {
-                        var currResult = results[i];
-                        var currUser = currResult.get('user_id');
-                        if (!currUser || !currUser.id) {
-                            results[i] = undefined;
-                            continue;
-                        }
-                        var retUser = AV.User.createWithoutData('_User', currUser.id);
-                        retUser.set('nickname', currUser.get('nickname'));
-                        retUser.set('icon', currUser.get('icon'));
-                        retUser.set('tags', currUser.get('tags'));
-                        var jValue = retUser._toFullJSON();
-                        delete jValue.__type;
-                        currResult.set('user_id', jValue);
-
-                        var activityId = currResult.get('activityId');
-                        if (activityId) {
-                            currResult.set('activityId', _.pick(activityId._toFullJSON(), pickActivityKeys));
-                        }
-                    }
+                if (!results) {
+                    res.success([]);
+                    return;
                 }
-                results = AV._.reject(results, function(val){
-                   return (val == undefined);
-                });
-                res.success(results);
+
+                common.addLikesAndReturn(req.user&&req.user.id, results, res);
             }
         })
     };
@@ -174,7 +155,8 @@ AV.Cloud.define("getSearch",function(req,res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("title", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("title",  re);
         }
         query.find({
             success: function(result) {
@@ -212,7 +194,8 @@ AV.Cloud.define("getSearch",function(req,res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("title", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("title",  re);
         }
         query.skip(skip);
         query.descending('createdAt');
@@ -279,6 +262,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.select("objectId","tag_name");
         var re=new RegExp(kw,"i");
         query.matches("tag_name",  re);
+        query.lessThanOrEqualTo('status', 1);
         query.first({
             success: function(result) {
                 if(result){
@@ -379,7 +363,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         userId, type, kw, tagId, skip, limit);
 
     //资讯
-    var getNews =function() {
+    var getNews = function() {
         var query = new AV.Query('News');
         query.select(["comment_count", "cateids", "title", "up_count", "list_pic",
             "allow_comment", "areas", "contents_url", "allow_forward", "tags", "rank"]);
@@ -389,7 +373,8 @@ AV.Cloud.define('getSearch2', function(req, res){
         if (tagId) {
             query.equalTo("tags", tagId);
         } else {
-            query.contains("title", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("title",  re);
         }
         var newsIds = [];
         query.find().then(function(results){
@@ -413,10 +398,11 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("content", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("content",  re);
         }
         query.skip(skip);
-        query.include('user_id');
+        query.include('user_id', 'activityId');
         query.descending('createdAt');
         var findDynamics;
         query.find().then(function(dynamics){
@@ -425,9 +411,20 @@ AV.Cloud.define('getSearch2', function(req, res){
             return common.findLikeDynamicUsers(userId, dynamics);
         }).then(function(likeResult){
             var retDynamic = [];
+            var pickUserKeys = ["objectId", "nickname", "className", "icon", "__type"];
+            var pickActivityKeys = ['objectId','__type', 'title', "className"];
             _.each(findDynamics, function(dynamic){
+                var user = dynamic.get('user_id');
+                var activity = dynamic.get('activityId');
+
+                dynamic = dynamic._toFullJSON();
+                dynamic.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+                if (activity) {
+                    dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
+                }
+
                 retDynamic.push({
-                    dynamic:dynamic._toFullJSON(),
+                    dynamic:dynamic,
                     extra:{
                         isLike:likeResult[dynamic.id]?true:false
                     }
@@ -451,7 +448,8 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("title", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("title",  re);
         }
         query.find({
             success: function(results) {
@@ -513,7 +511,8 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            query.contains("title", kw);
+            var re=new RegExp(kw,"i");
+            query.matches("title",  re);
         }
         query.skip(skip);
         query.descending('createdAt');
@@ -545,9 +544,6 @@ AV.Cloud.define('getSearch2', function(req, res){
             case 'dynamic':
                 getDynamic();
                 break;
-            case 'dynamic':
-                getDynamic();
-                break;
             case 'clan':
                 getClan();
                 break;
@@ -573,6 +569,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.select("objectId","tag_name");
         var re=new RegExp(kw,"i");
         query.matches("tag_name",  re);
+        query.lessThanOrEqualTo('status', 1);
         query.first({
             success: function(result) {
                 console.dir(result);

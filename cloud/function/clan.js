@@ -4,32 +4,31 @@ var common = require('cloud/common.js');
 var _ = AV._;
 
 /*
-    用户部落
+    用户部落，所加入的部落，以及推荐的部落
     函数名：getClan2
     参数：
         userId:用户ID
         tags:用户标签
+        type:
+            joined: 我加入的部落
+            recommend: 推荐的部落
+            self:我创建的部落
+            mine:我加入和我创建的部落
+        skip,limit:翻页查询参数
     返回：
-    {
-    selfClan: [
+        [
         {
             clan: clan class object,
-            extraData:{
+            extra:{
                 tagNames: array 标签名称，对应 clan里面tags的名称
-            }
-        },
-        ...
-    ],
-    recommendClan:[
-        {
-            clan: clan class object,
-            extraData:{
-                tagNames: array 标签名称，对应 clan里面tags的名称
+                clanType:
+                        0:未知
+                        1:我创建的部落
+                        2:我加入的部落
             }
         },
         ...
     ]
-    }
 */
 AV.Cloud.define('getClan2', function(req, res){
     var userId = req.params.userId || (req.user && req.user.id);
@@ -38,83 +37,159 @@ AV.Cloud.define('getClan2', function(req, res){
         return;
     }
     var tagsOfUser = req.params.tags || (req.user && req.user.get('tags'));
-    var index = Math.floor((Math.random()*tagsOfUser.length));
     var HPGlobalParam = AV.HPGlobalParam || {};
-    var ret = {
-        selfClan:[],
-        recommendClan:[]
-    };
+    var retVal = [];
 
-    //保留的user keys
-    var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
     var user = req.user;
-    var clanIds = user.get('clanids');
-    var reviewClanIds = user.get('review_clanids');
-    var userGeoPoint = user.get('actual_position');
+    if (!user) {
+        res.error('用户登陆信息丢失！');
+        return;
+    }
+    var type = req.params.type || 'mine';
+    var createdClanIds = user.get('createdClanIds');
+    var clanIds = user.get('clanids') || [];
+    var reviewClanIds = user.get('review_clanids') || [];
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
 
-    var queryMine = new AV.Query('Clan');
-    queryMine.containedIn('objectId', clanIds)
-    queryMine.include('founder_id');
-    queryMine.find().then(function(clans){
-        //get mine clans first
-        _.each(clans, function(clanItem) {
-            var founder = clanItem.get('founder_id');
-            var tagsOfClan = clanItem.get('tags');
-            clanItem = clanItem._toFullJSON();
-            clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
-            if (clanItem.founder_userinfo) {
-                delete clanItem.founder_userinfo;
-            }
+    var formatResult = function(clans, bGetClanType) {
+        var retClan = [];
 
-            ret.selfClan.push({
-                clan:clanItem,
-                extraData:{
-                    tagNames:common.tagNameFromId(tagsOfClan)
-                }
-            })
-        });
-
-        //then get recommend clans
-        var queryRecommend = new AV.Query('Clan');
-        queryRecommend.limit(2);
-        var clanCondition = [];
-        if(clanIds){
-            clanCondition = clanCondition.concat(clanIds);
-        }
-        if(reviewClanIds){
-            clanCondition =clanCondition.concat(reviewClanIds);
-        }
-        if(clanCondition){
-            queryRecommend.notContainedIn("objectId", clanCondition);
-        }
-
-        if(tagsOfUser && tagsOfUser[index]){
-            queryRecommend.equalTo("tags", tagsOfUser[index]);
-        }
-        if (userGeoPoint)
-            queryRecommend.near("position", userGeoPoint);
-        queryRecommend.equalTo("is_full", false);
-        return queryRecommend.find();
-    }).then(function(clans){
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
         _.each(clans, function(clanItem){
             var founder = clanItem.get('founder_id');
             var tagsOfClan = clanItem.get('tags');
+            clanItem.unset('founder_userinfo');
+
             clanItem = clanItem._toFullJSON();
             clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
-            if (clanItem.founder_userinfo) {
-                delete clanItem.founder_userinfo;
-            }
 
-            ret.recommendClan.push({
+            var retItem = {
                 clan:clanItem,
-                extraData:{
+                extra:{
                     tagNames:common.tagNameFromId(tagsOfClan)
                 }
-            })
+            }
+            if (bGetClanType) {
+                //区分我创建的部落、和我加入的部落
+                retItem.extra.clanType = ((founder.id==userId)?1:2);
+            }
+            retClan.push(retItem);
         });
 
-        res.success(ret);
-    });
+        return retClan;
+    }
+
+    switch (type) {
+        case 'mine':
+            if (_.isEmpty(clanIds)){
+                res.success([]);
+                return;
+            }
+            var query = new AV.Query('Clan');
+            query.containedIn('objectId', clanIds);
+            query.skip(skip);
+            query.limit(limit);
+            query.find().then(function(clans){
+                retVal = formatResult(clans, true);
+                res.success(retVal);
+            });
+            break;
+
+        case 'joined':
+            if (_.isEmpty(clanIds)) {
+                res.success(retVal);
+                return;
+            }
+            var joinedClanIds = _.difference(clanIds, createdClanIds);
+            if (_.isEmpty(joinedClanIds)) {
+                res.success(retVal);
+                return;
+            }
+            var query = new AV.Query('Clan');
+            query.containedIn('objectId', joinedClanIds);
+            query.skip(skip);
+            query.limit(limit);
+            query.find().then(function(clans){
+                retVal = formatResult(clans);
+                res.success(retVal);
+            });
+            break;
+
+        case 'self':
+            if (_.isEmpty(createdClanIds)) {
+                res.success(retVal);
+                return;
+            }
+            var query = new AV.Query('Clan');
+            query.containedIn('objectId', createdClanIds);
+            query.skip(skip);
+            query.limit(limit);
+            query.find().then(function(clans){
+                retVal = formatResult(clans);
+                res.success(retVal);
+            });
+            break;
+
+        case 'recommend':
+            var reviewClanIds = user.get('review_clanids');
+            var userGeoPoint = user.get('actual_position');
+            var arrClanIds = [];
+
+            //先按照标签推荐部落
+            var queryOr = [];
+            _.each(tagsOfUser, function(tag){
+                var query = new AV.Query("Clan");
+                query.equalTo('tags', tag);
+                query.exists('tags');
+                queryOr.push(query);
+            });
+
+            var query = AV.Query.or.apply(null, queryOr);
+            arrClanIds = arrClanIds.concat(clanIds).concat(reviewClanIds);
+            if(arrClanIds.length){
+                query.notContainedIn("objectId", arrClanIds);
+            }
+            if (userGeoPoint) {
+                query.near("position", userGeoPoint);
+            }
+            query.equalTo("is_full", false);
+            query.limit(limit);
+            query.skip(skip);
+            query.find().then(function(clans){
+              if (_.isEmpty(clans) && !skip){
+                  //若没有按照随机标签找到部落，则按地理位置推荐就近的部落
+                  var query = new AV.Query('Clan');
+                  if (arrClanIds) {
+                      query.notContainedIn('objectId', arrClanIds);
+                  }
+                  if (userGeoPoint) {
+                      query.near("position", userGeoPoint);
+                  }
+                  query.include('founder_id');
+                  query.equalTo("is_full", false);
+                  query.limit(limit);
+                  query.skip(skip);
+                  return query.find();
+              } else {
+                  return AV.Promise.as(clans);
+              }
+            }).then(function(clans){
+                retVal = formatResult(clans);
+
+                res.success(retVal);
+            }, function(err){
+                console.error(err);
+            });
+
+            return;
+
+        default:
+            res.error('位置查询类型！');
+            return;
+    }
+
 });
 
 AV.Cloud.define("getClan",function(req, res){
@@ -301,8 +376,8 @@ function addClanUser(userid, clanid, callback) {
     clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
     clanUser.set("user_level", 1);
     clanUser.save(null, {
-        success: function () {
-            callback(true);
+        success: function (clanUser) {
+            callback(true, clanUser);
         },
         error: function () {
             callback(false);
@@ -366,6 +441,10 @@ function removeReviewClanUser(userid, clanid, callback) {
 
 //
 AV.Cloud.define("joinClan", function (req, res) {
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
 
     var userid = req.params.userid;
     var clanid = req.params.clanid;
@@ -460,8 +539,14 @@ AV.Cloud.define("joinClan", function (req, res) {
 
 
 AV.Cloud.define("reviewClan", function (req, res) {
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var userid = req.params.userid;
     var clanid = req.params.clanid;
+    var findFriendId = (req.user && req.user.id);
     // type 1允许 2拒绝
     var type = req.params.type;
 
@@ -498,13 +583,36 @@ AV.Cloud.define("reviewClan", function (req, res) {
             var query = new AV.Query('_User');
             query.get(userid, {
                 success: function (JoinUser) {
-                    addClanUser(userid, clanid, function(success) {
+                    addClanUser(userid, clanid, function(success, clanUser) {
                         if (success) {
                             removeReviewClanUser(userid,clanid,function(success){
                                 var query = new AV.Query('_User');
                                 query.equalTo('objectId', userid);
                                 common.sendStatus('allowToJoinClan', clan.get('founder_id'), JoinUser, query, {clan:clan});
-                                res.success('加入部落成功');
+
+                                //获取user详细信息，查询和当前用户的好友关系，裁剪数据后再返回
+                                var user = clanUser.get('user_id');
+                                user.fetch().then(function(user){
+                                    var refUsers = [user];
+                                    common.findFriendShipForUsers(findFriendId, refUsers).then(function(friendObj){
+                                        var currUser = refUsers[0];
+                                        var tags = clanUser.get('tags');
+                                        clanUser = clanUser._toFullJSON();
+                                        //保留的user keys
+                                        var pickUserKeys = ["objectId", "nickname", "className", "icon", "__type", 'sex', 'age', 'tags', 'friendCount',
+                                            'actual_position', 'normal_area', 'clanCount', 'noRemoveFromFriend'];
+                                        clanUser.user_id = _.pick(currUser._toFullJSON(), pickUserKeys);
+                                        res.success({
+                                            user:clanUser,
+                                            extra:{
+                                                userTagNames:common.tagNameFromId(tags),
+                                                isFriend:friendObj[currUser.id]?true:false
+                                            }
+                                        });
+                                    }, function(err){
+                                        res.error('加入部落失败，错误码:'+err.code);
+                                    });
+                                });
                             });
                         }
                         else {

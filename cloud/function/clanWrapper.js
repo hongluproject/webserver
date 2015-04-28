@@ -112,6 +112,11 @@ AV.Cloud.define('getClanJoined', function(req, res){
         success or error
  */
 AV.Cloud.define('clanUpdate', function(req, res){
+    if (!req.user) {
+        res.error('您尚未登录!');
+        return;
+    }
+
     var clanId = req.params.clanId;
     var clanName = req.params.clanName;
     if (!clanId || !clanName) {
@@ -161,6 +166,11 @@ AV.Cloud.define('clanUpdate', function(req, res){
         success or error
  */
 AV.Cloud.define('userUpdate', function(req, res){
+    if (!req.user) {
+        res.error('您尚未登录!');
+        return;
+    }
+
     var userId = req.params.userId;
     var userName = req.params.userName;
     var userIcon = req.params.userIcon;
@@ -222,6 +232,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
     var clanId = req.params.clanId;
     var userId = req.params.userId || (req.user && req.user.id);
     if (!clanId || !userId) {
+        console.info('clan %s,userId %s', clanId, userId);
         res.error('请传入相关参数！');
         return;
     }
@@ -248,9 +259,6 @@ AV.Cloud.define('getClanDetail', function(req, res){
         queryUsers.select('user_id');
         queryUsers.include('user_id');
         queryUsers.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
-        if (founder) {
-            queryUsers.notEqualTo('user_id', founder);
-        }
         queryUsers.descending('createdAt');
         queryUsers.limit(10);
         return queryUsers.find();
@@ -287,17 +295,19 @@ AV.Cloud.define('getClanDetail', function(req, res){
                 reviewClanUser: 查询申请加入该部落，待审核的成员
         skip:Integer  查询偏移
         limit:Integer 返回数量
-    返回：{
-        clanUser:[          //type 为 clanUser 时返回
-            ClanUser class object,
+    返回：[
+            {
+                user:ClanUser class object,
+                extra:{
+                    userTagNames:array  用户标签对应的名称
+                    isFriend:bool 是否为好友
+                }
+            },
             ...
-        ],
-        reviewClanUser:[    //type 为 reviewClanUser 时返回
-            ReviewClanUser class object
         ]
-    }
  */
 AV.Cloud.define('getClanUser', function(req, res){
+    var findFriendId = req.params.userId || (req.user && req.user.id);
     var clanId = req.params.clanId;
     var type = req.params.type || 'clanUser';
     var skip = req.params.skip || 0;
@@ -307,9 +317,11 @@ AV.Cloud.define('getClanUser', function(req, res){
         return;
     }
 
-    var ret = {};
+    var ret = [];
+    var refClanUsers;
     //保留的user keys
-    var pickUserKeys = ["objectId", "nickname", "className", "icon", "__type"];
+    var pickUserKeys = ["objectId", "nickname", "className", "icon", "__type", 'sex', 'age', 'tags', 'friendCount',
+                        'actual_position', 'normal_area', 'clanCount', 'noRemoveFromFriend'];
     var query;
     if (type == 'clanUser') {
         query = new AV.Query('ClanUser');
@@ -323,24 +335,32 @@ AV.Cloud.define('getClanUser', function(req, res){
     query.skip(skip);
     query.limit(limit);
     query.include('user_id');
-    query.find().then(function(users){
-        var clanUser = [], reviewClanUser = [];
-        _.each(users, function(userItem){
-            var user = userItem.get('user_id');
-            userItem = userItem._toFullJSON();
-            if (userItem.founder_userinfo) {
-                delete userItem.founder_userinfo;
-            }
-            userItem.user_id = _.pick(user._toFullJSON(), pickUserKeys);
-            if (type == 'clanUser') {
-                clanUser.push(userItem);
-            } else if (type == 'reviewClanUser') {
-                reviewClanUser.push(userItem);
-            }
+    query.find().then(function(clanUsers){
+        console.dir(clanUsers);
+        refClanUsers = clanUsers;
+        var users = [];
+        _.each(clanUsers, function(clanUser){
+            users.push(clanUser.get('user_id'));
         });
 
-        ret.clanUser = clanUser;
-        ret.reviewClanUser = reviewClanUser;
+        return common.getFriendshipUsers(findFriendId, users);
+    }).then(function(friendObj){
+        _.each(refClanUsers, function(userItem) {
+            var user = userItem.get('user_id');
+            var tags = user.get('tags');
+            userItem.unset('founder_userinfo');
+
+            userItem = userItem._toFullJSON();
+            userItem.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+            ret.push({
+                user:userItem,
+                extra:{
+                    userTagNames:common.tagNameFromId(tags),
+                    isFriend:friendObj[user.id]?true:false
+                }
+            });
+        });
+
         res.success(ret);
     }, function(err){
         res.error('查询失败,错误码:'+err.code);

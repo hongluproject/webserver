@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/18.
  */
 var common = require('cloud/common.js');
+var _ = AV._;
 
 /** 查询消息流
  *  函数名：getStatus
@@ -84,11 +85,88 @@ AV.Cloud.define('getStatus', function(req, res) {
 
 });
 
+/*
+    获取好友列表
+    函数名：
+        getFriendList2 (替换 getFriendList)
+    参数：
+        userId:objectId 待查询目标用户ID
+        limit、skip：分页查询参数
+        findFriendId: 待查询好友关系的用户ID
+    返回：[
+        {
+            user: user class object
+            extra:{
+                isFriend:true or false
+            }
+        }
+    ]
+ */
+AV.Cloud.define('getFriendList2', function(req, res){
+    var userId = req.params.userId || (req.user && req.user.id);
+    var limit = req.params.limit || 100;
+    var skip = req.params.skip || 0;
+    var findFriendId = req.params.findFriendId || (req.user&&req.user.id);
+    if (!userId) {
+        res.error('缺少用户信息!');
+        return;
+    }
+
+    var followees = [];
+    var friendStatus = {};
+    var query = new AV.Query('_Followee');
+    query.equalTo('user', AV.User.createWithoutData('_User', userId));
+    query.include('followee');
+    query.select('followee');
+    query.descending('priority');   //优先级高者，排在前面
+    query.limit(limit);
+    query.skip(skip);
+    query.find().then(function(results) {
+        _.each(results, function(result){
+            followees.push(result.get('followee'));
+        });
+
+        if (findFriendId && findFriendId!=userId) { //查询好友关系
+            return common.getFriendshipUsers(findFriendId, followees);
+        } else {
+            return AV.Promise.as();
+        }
+
+    }).then(function(friendObj){
+        var ret = [];
+        //保留的user keys
+        var pickUserKeys = ["objectId", "clanids", "nickname", 'noRemoveFromFriend', "className", "icon", "__type"];
+        _.each(followees, function(user){
+            user = _.pick(user._toFullJSON(), pickUserKeys);
+
+            var bFriend = false;
+            if (userId == findFriendId) {
+                bFriend = true;
+            } else if (friendObj && friendObj[user.objectId]) {
+                bFriend = true;
+            }
+            var retObj = {
+                user:user,
+                extra:{
+                    isFriend:bFriend
+                }
+            };
+
+            ret.push(retObj);
+        });
+
+        res.success(ret);
+    }, function(err){
+        console.error('getFriendList2 error:', err);
+        res.error('查询失败，错误码：'+err.code);
+    });
+});
+
 AV.Cloud.define('getFriendList', function(req, res) {
     var userId = req.params.userId;
     var limit = req.params.limit || 100;
     var skip = req.params.skip;
-    var findFriendId = req.params.findFriendId;
+    var findFriendId = req.params.findFriendId || (req.user&&req.user.id);
     if (!userId) {
         res.error('缺少用户信息!');
         return;
@@ -136,7 +214,7 @@ AV.Cloud.define('getFriendList', function(req, res) {
 
 AV.Cloud.define('getUserInfo', function(req,res){
     var userId = req.params.userId;
-    var findFriendId = req.params.findFriendId;
+    var findFriendId = req.params.findFriendId || (req.user&&req.user.id);
     if (!userId || !findFriendId) {
         res.error('请传入用户信息！');
         return;
@@ -189,7 +267,7 @@ AV.Cloud.define('getUserInfo', function(req,res){
  */
 AV.Cloud.define('getUserInfo2', function(req, res){
     var userId = req.params.userId;
-    var findFriendId = req.params.findFriendId;
+    var findFriendId = req.params.findFriendId || (req.user&&req.user.id);
     if (!userId || !findFriendId) {
         res.error('请传入用户信息！');
         return;

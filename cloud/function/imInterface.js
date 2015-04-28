@@ -4,6 +4,7 @@
 
 var myutils = require('cloud/utils.js');
 var querystring = require('querystring');
+var common = require('cloud/common');
 
 /** 通过群组ID获取群组名称
  *  函数名：imGetGroupnameFromId
@@ -124,6 +125,9 @@ AV.Cloud.define('imGetToken', function(req, res){
             res.error(errmsg);
         }
     });
+
+    //账号登陆时，关注撒哈拉官方小助手
+    common.followSahalaAssistants(req.user.id);
 });
 
 

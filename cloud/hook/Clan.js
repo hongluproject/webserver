@@ -9,6 +9,11 @@ var myutils = require('cloud/utils.js');
  *
  */
 AV.Cloud.beforeSave('Clan', function(req,res) {
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var clanObj = req.object;
     var founderUser = req.object.get('founder_id');
     if (!founderUser || !founderUser.id) {
@@ -24,9 +29,14 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
             }
 
             //根据用户等级，修改该部落可以最多加入的人数
-            var userLevel = userResult.get('level');
+            var userLevel = userResult.get('level') || 1;
             var nMaxClanUser = clanParam.getMaxClanUsers(userLevel);
+            var fouderUserInfo = {
+                icon:founderUser.get('icon') || '',
+                nickname:founderUser.get('nickname') || ''
+            };
 
+            clanObj.set('founder_userinfo', fouderUserInfo);
             clanObj.set('max_num', nMaxClanUser);
 
             res.success();
@@ -57,9 +67,11 @@ AV.Cloud.afterSave('Clan', function(req) {
         userResult.save();
     });
 
+    //保存部落分享链接
     var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/clan/':'http://api.imsahala.com/clan/';
     clanObj.set('shareUrl', urlPath.concat(clanObj.id));
     clanObj.save();
+
     //创建者信息加入到ClanUser表中
     var ClanUser = AV.Object.extend('ClanUser');
     var clanUser = new ClanUser();
