@@ -147,8 +147,6 @@ AV.Cloud.define("getSearch",function(req,res){
     //部落
     var getClan = function(){
         var query = new AV.Query(Clan);
-        query.select("icon", "title","position","tags","objectId", "invite_id", "founder_id", "current_num", "max_num",
-                    "area", "intro");
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');
@@ -426,7 +424,7 @@ AV.Cloud.define('getSearch2', function(req, res){
                 retDynamic.push({
                     dynamic:dynamic,
                     extra:{
-                        isLike:likeResult[dynamic.id]?true:false
+                        isLike:likeResult[dynamic.objectId]?true:false
                     }
                 })
             });
@@ -440,8 +438,6 @@ AV.Cloud.define('getSearch2', function(req, res){
     //部落
     var getClan = function(){
         var query = new AV.Query('Clan');
-        query.select("icon", "title","position","tags","objectId", "invite_id", "founder_id", "current_num", "max_num",
-            "area", "intro");
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');

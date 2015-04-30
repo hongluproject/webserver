@@ -12,17 +12,13 @@ AV.Cloud.afterSave('Like', function(request){
     var targetId = request.object.get('external_id');
     var likeUser = request.object.get('user_id');
     if (likeType == 1) {	//资讯点赞
-        var query = new AV.Query('News');
-        query.get(targetId, {
-            success: function(result) {
-                console.info("Like afterSave up_count increment for News,current up_count is %d", result.get('up_count'));
-                result.fetchWhenSave(true);
-                result.increment("up_count");
-                result.save();
-            },
-            error: function(error) {
-                console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
-            }
+        var newsObj = AV.Object.createWithoutData('News', targetId);
+        newsObj.fetchWhenSave(true);
+        newsObj.increment("up_count");
+        newsObj.save().then(function(result){
+            console.info("Like afterSave up_count increment for News,current up_count is %d", result.get('up_count'));
+        }, function(err){
+            console.error( "Like afterSave:Got an error " + err.code + " : " + err.message);
         });
     } else if (likeType == 2) {	//动态点赞
         var query = new AV.Query('DynamicNews');

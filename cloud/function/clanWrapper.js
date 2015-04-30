@@ -221,11 +221,17 @@ AV.Cloud.define('userUpdate', function(req, res){
         userId:objectId 当前用户ID
     返回：{
         clan:clan class object
+        extra:{
+            catalogs:[
+                ClanCategory class object,...
+            ]
+        }
         clanUsers: [
             user class object,
             ...
         ],
-        activity:activity class object
+        activity:activity class object,
+        news: News class object 部落里面最近的看吧文章
     }
  */
 AV.Cloud.define('getClanDetail', function(req, res){
@@ -238,16 +244,21 @@ AV.Cloud.define('getClanDetail', function(req, res){
     }
     var ret = {
         clan:{},
+        extra:{},
         clanUsers:[],
         activity:{}
     };
 
+    var retClan;
+    var categoryIds;
     var queryClan = new AV.Query('Clan');
     queryClan.include('founder_id');
     queryClan.equalTo('objectId', clanId);
     queryClan.first().then(function(clan){
         var founder;
         if (clan) {
+            retClan = clan;
+            categoryIds = clan.get('catalogIds');
             founder = clan.get('founder_id');
             clan = clan._toFullJSON();
             clan.founder_id = founder._toFullJSON();
@@ -281,7 +292,52 @@ AV.Cloud.define('getClanDetail', function(req, res){
     }).then(function(activity){
         ret.activity = activity && activity._toFullJSON();
 
+        //查询分类对应的名称，若部落没有分类，则用默认的分类代替
+        if (common.isSahalaDevEnv()) {
+            if (_.isEmpty(categoryIds)) {
+                categoryIds = [];
+                _.each(AV.HPGlobalParam.hpClanCategory, function(category){
+                    categoryIds.push(category.id);
+                });
+
+                retClan.set('clanCateIds', categoryIds);
+                retClan.save();
+            }
+            var queryCategory = new AV.Query('ClanCategory');
+            queryCategory.containedIn('objectId', categoryIds);
+            return queryCategory.find();
+        } else {
+            return AV.Promise.as();
+        }
+    }).then(function(results){
+        if (results) {
+            var categoryObj = {};
+            _.each(results, function(category){
+                categoryObj[category.id] = category._toFullJSON();
+            });
+
+            var categorys = [];
+            _.each(categoryIds, function(categoryId){
+                categorys.push(categoryObj[categoryId]);
+            });
+
+            ret.extra.categorys = categorys;
+        }
+
+        //查询看吧里面最近的一篇文章
+        var queryNews = new AV.Query('News');
+        queryNews.greaterThan('from', 0);           //非系统抓取
+        queryNews.equalTo('clanId', AV.Object.createWithoutData('Clan', clanId));       //该文章归属到该部落
+        queryNews.equalTo('status', 1);             //处于上线状态
+        queryNews.descending('publicAt');
+        queryNews.select('-contents');
+        return queryNews.first();
+    }).then(function(result){
+        ret.news = result && result._toFullJSON();
+
         res.success(ret);
+    }, function(err){
+        console.error(err);
     });
 });
 
@@ -365,3 +421,154 @@ AV.Cloud.define('getClanUser', function(req, res){
         res.error('查询失败,错误码:'+err.code);
     });
 })
+
+/*
+    部落看吧文章置顶
+    函数名：
+        bringNewsToTop
+    参数：
+        newsId      资讯ID
+        clanId      部落ID
+        categoryId  分类ID
+    返回：
+        success or fail
+ */
+AV.Cloud.define('bringNewsToTop', function(req, res){
+    var newsId = req.params.newsId;
+    var clanId = req.params.clanId;
+    var categoryId = req.params.categoryId;
+    if (!newsId || !clanId || !categoryId) {
+        res.error('请传入相关信息!');
+        return;
+    }
+
+    var query = new AV.Query('News');
+    query.select('rank');
+    query.equalTo('clanId', AV.Object.createWithoutData('Clan', clanId));
+    query.equalTo('clanCateId', AV.Object.createWithoutData('ClanCategory', categoryId));
+    query.descending('rank');
+    query.descending('publicAt');
+    query.first().then(function(result){
+        var maxRank = (result&&result.get('rank')) || 0;
+        var findNewsId = result&&result.id;
+
+        if (newsId != findNewsId) {
+            var targetNews = AV.Object.createWithoutData('News', newsId);
+            targetNews.set('rank', (maxRank+1));
+            return targetNews.save();
+        } else {
+            return AV.Promise.as();
+        }
+    }).then(function(result){
+        res.success();
+    }, function(err){
+        console.error('文章置顶失败：', err);
+        res.error('文章置顶失败,错误码:' + err.code);
+    });
+});
+
+/*
+    获取看吧文章列表
+    函数名：
+        getClanBarList
+    参数：
+        userId          当前用户ID
+        clanId          部落ID
+        categoryId      分类ID
+        skip、limit      分页查询参数
+    返回：[
+            {
+                News: News class object,
+                extra:{
+                    tagNames: array 对应资讯标签名称
+                    isLike: bool    该用户是否点赞过
+                    like: Like class object 对应的点赞对象，若有该对象，则表示用户点赞过
+                }
+            },
+            ...
+    ]
+
+ */
+AV.Cloud.define('getClanBarList', function(req, res){
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var clanId = req.params.clanId;
+    var categoryId = req.params.categoryId;
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
+    var allNews;
+    if (!clanId || !categoryId) {
+        res.error('请传入相关参数!');
+        return;
+    }
+
+    var query = new AV.Query('News');
+    query.select('-contents');
+    query.equalTo('clanId', AV.Object.createWithoutData('Clan', clanId));
+    query.equalTo('clanCateId', AV.Object.createWithoutData('ClanCategory', categoryId));
+    query.equalTo('status', 1);
+    query.descending('rank');
+    query.descending('publicAt');
+    query.skip(skip);
+    query.limit(limit);
+    query.find().then(function(results){
+        allNews = results;
+
+        var newsIds = [];
+        _.each(results, function(newsItem){
+            newsIds.push(newsItem.id);
+        });
+
+        if (_.isEmpty(newsIds)) {
+            return AV.Promise.as();
+        } else {
+            query = new AV.Query('Like');
+            query.equalTo('like_type', 1);
+            query.containedIn('external_id', newsIds);
+            query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            return query.find();
+        }
+    }).then(function(likes){
+        var likeObj = {};
+        _.each(likes, function(likeItem){
+           likeObj[likeItem.get('external_id')] = likeItem;
+        });
+
+        var ret = [];
+        _.each(allNews, function(newsItem){
+            ret.push({
+                News:newsItem._toFullJSON(),
+                extra:{
+                    tagNames:common.tagNameFromId(newsItem.get('tags')),
+                    isLike:likeObj[newsItem.id]?true:false,
+                    like:likeObj[newsItem.id]?newsItem._toFullJSON():undefined
+                }
+            });
+        });
+
+        res.success(ret);
+    }, function(err){
+        console.error(err);
+    });
+});
+
+/*
+    删除看吧文章
+    函数名：
+        deleteClanBarNews
+    参数：
+        newsId： 资讯ID
+    返回：
+        success or fail
+ */
+AV.Cloud.define('deleteClanBarNews', function(req, res){
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var newsId = req.params.newsId;
+
+    var newsObj = AV.Object.createWithoutData('News', newsId);
+    newsObj.set('status', 2);
+    newsObj.save().then(function(){
+       res.success();
+    }, function(err){
+        res.error('删除失败，错误码:'+err.code);
+    });
+});

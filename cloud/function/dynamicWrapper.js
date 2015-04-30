@@ -26,6 +26,7 @@ var _ = AV._;
                 extra:{
                     isLike: true or false
                     tagNames: array  动态tagIds对应的名称
+                    messageId:Integer 该动态对应的事件流ID，在动态首页中用到
                 }
             }
         ]
@@ -144,12 +145,16 @@ AV.Cloud.define('getDynamic2', function(req,res){
             return;
     }
 
+    var msgIds;
     query.find().then(function(results){
         if (dynamicType == 'followeDynamic') {
             dynamics = [];
+            msgIds = [];
+            var i = 0;
             _.each(results, function(item){
                 if (item.data.dynamicNews) {
                     dynamics.push(item.data.dynamicNews);
+                    msgIds[i++] = item.messageId;
                 }
             });
         } else {
@@ -161,6 +166,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
         return common.findLikeDynamicUsers(req.user&&req.user.id, dynamics);
     }).then(function(likeResult){
         var retDynamic = [];
+        var i = 0;
         _.each(dynamics, function(dynamic){
 
             var userId = dynamic.get('user_id');
@@ -175,7 +181,8 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 dynamic:dynamic,
                 extra:{
                     isLike:likeResult[dynamic.objectId]?true:false,
-                    tagNames:common.tagNameFromId(dynamic.tags)
+                    tagNames:common.tagNameFromId(dynamic.tags),
+                    messageId:msgIds?msgIds[i++]:undefined
                 }
             });
         });
@@ -763,7 +770,7 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
     query.first().then(function(dynamic){
         if (!dynamic) {
             console.info('动态 %s 不存在', dynamicId);
-            return res.success({});
+            return AV.Promise.error(new AV.Error(111, '动态不存在!'))
         }
         retDynamic = dynamic;
 
@@ -798,27 +805,29 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
             query.descending('createdAt');
             return query.find();
         } else {
-            res.success(retVal);
-            return;
+            return AV.Promise.as();
         }
     }).then(function(comments){
-        var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
-        var retComment = [];
-        _.each(comments, function(comment){
-            var commentUser = comment.get('user_id');
-            var replyUser = comment.get('reply_userid');
-            comment.unset('user_info');
-            comment.unset('append_replyinfo');
+        if (comments) {
+            var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
+            var retComment = [];
+            _.each(comments, function(comment){
+                var commentUser = comment.get('user_id');
+                var replyUser = comment.get('reply_userid');
+                comment.unset('user_info');
+                comment.unset('append_replyinfo');
 
-            comment = comment._toFullJSON();
-            comment.user_id = _.pick(commentUser._toFullJSON(), pickUserKeys);
-            if (replyUser) {
-                comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
-            }
-            retComment.push(comment);
-        });
+                comment = comment._toFullJSON();
+                comment.user_id = _.pick(commentUser._toFullJSON(), pickUserKeys);
+                if (replyUser) {
+                    comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
+                }
+                retComment.push(comment);
+            });
 
-        retVal.comments = retComment;
+            retVal.comments = retComment;
+        }
+
         res.success(retVal);
 
     }, function(err){

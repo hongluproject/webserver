@@ -381,7 +381,8 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     queryActivity.equalTo('objectId', activityId);
     queryActivity.first().then(function(activity){
         if (!activity) {
-            return res.error('没有找到对应的活动！');
+            res.error('没有找到对应的活动！');
+            return;
         }
         currActivity = activity;
 
@@ -723,7 +724,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
     query.first().then(function(result){
         if (!result) {
             res.error('未找到对应的订单！');
-            return;
+            return AV.Promise.error();
         }
 
         order = result;
@@ -750,7 +751,8 @@ AV.Cloud.define('paymentComplete', function(req, res){
             res.success({
                 paid:true
             });
-            return;
+
+            return AV.Promise.error();
         }
 
         var signupInfo = order.get('signupId');
@@ -773,8 +775,10 @@ AV.Cloud.define('paymentComplete', function(req, res){
                 paid:true
             });
     }, function(err){
-        console.error('处理订单完成失败:', err);
-        res.error('处理订单完成失败,错误码:'+err.code);
+        if (err && err.code) {
+            console.error('处理订单完成失败:', err);
+            res.error('处理订单完成失败,错误码:'+err.code);
+        }
     });
 });
 
@@ -908,6 +912,15 @@ AV.Cloud.define('getStatementDetail', function(req, res){
 
     console.info('getStatementDetail params,bookNo:%s bGetSignup:%d', bookNo, bGetSignup);
 
+    var setResultAndReturn = function() {
+        statement = statement._toFullJSON();
+        statement.activityId = activity._toFullJSON();
+        if (bGetSignup) {
+            statement.signupId = signup._toFullJSON();
+        }
+        res.success(statement);
+    }
+
     var statement, activity, signup, user;
     var query = new AV.Query('StatementAccount');
     query.include('activityId', 'signupId');
@@ -932,61 +945,58 @@ AV.Cloud.define('getStatementDetail', function(req, res){
             return AV.Promise.as();
         }
     }).then(function(result){
-        if (result) {
-            if (result.paid) {  //是否完成支付
-                statement.set('accountStatus', 2);
-                if (result.time_paid) { //支付时间
-                    statement.set('paidTime', new Date(result.time_paid*1000));
-                }
-                if (result.transaction_no) {    //第三方支付的交易流水号
-                    statement.set('transactionNo', result.transaction_no);
-                }
-
-                var order = statement;
-                statement.save().then(function(result){
-                    console.info('查询用户是否已经加入报名列表');
-                    //查询用户是否已经加入，若没有，则将用户加入ActivityUser
-                    query = new AV.Query('ActivityUser');
-                    query.equalTo('user_id', user);
-                    query.equalTo('activity_id', activity);
-                    return query.first();
-                }).then(function(result){
-                    if (result) {
-                        //已经加入，则不用理会
-                        console.info('用户已经加入活动，不用重复加入!');
-                        return;
-                    }
-
-                    //将用户加入ActivityUser
-                    var signupInfo = order.get('signupId');
-                    var ActivityUser = AV.Object.extend('ActivityUser');
-                    var activityUser = new ActivityUser();
-                    activityUser.set('sex', signupInfo.get('sex'));
-                    activityUser.set('real_name', signupInfo.get('realName'));
-                    activityUser.set('phone', signupInfo.get('phone'));
-                    activityUser.set('idcard', signupInfo.get('idcard'));
-                    activityUser.set('signIn', 1);
-                    activityUser.set('passport_card', signupInfo.get('passportCard'));
-                    activityUser.set('mtp', signupInfo.get('mtp'));
-                    activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
-                    activityUser.set('user_id', user._toPointer());
-                    activityUser.set('activity_id', activity._toPointer());
-                    activityUser.set('order_id', order._toPointer());
-                    activityUser.save();
-
-                    console.info('保存在线付费活动用户完成!userId:%s activityId:%s', user.id, activity.id);
-                }, function(err){
-                    console.error('error in process payment:', err);
-                });
+        if (result && result.paid) {    //是否完成支付
+            statement.set('accountStatus', 2);
+            if (result.time_paid) { //支付时间
+                statement.set('paidTime', new Date(result.time_paid*1000));
             }
+            if (result.transaction_no) {    //第三方支付的交易流水号
+                statement.set('transactionNo', result.transaction_no);
+            }
+
+            var order = statement;
+            statement.save().then(function(result){
+                setResultAndReturn();
+
+                console.info('查询用户是否已经加入报名列表');
+                //查询用户是否已经加入，若没有，则将用户加入ActivityUser
+                query = new AV.Query('ActivityUser');
+                query.equalTo('user_id', user);
+                query.equalTo('activity_id', activity);
+                return query.first();
+            }).then(function(result){
+                if (result) {
+                    //已经加入，则不用理会
+                    console.info('用户已经加入活动，不用重复加入!');
+                    return;
+                }
+
+                //将用户加入ActivityUser
+                var signupInfo = order.get('signupId');
+                var ActivityUser = AV.Object.extend('ActivityUser');
+                var activityUser = new ActivityUser();
+                activityUser.set('sex', signupInfo.get('sex'));
+                activityUser.set('real_name', signupInfo.get('realName'));
+                activityUser.set('phone', signupInfo.get('phone'));
+                activityUser.set('idcard', signupInfo.get('idcard'));
+                activityUser.set('signIn', 1);
+                activityUser.set('passport_card', signupInfo.get('passportCard'));
+                activityUser.set('mtp', signupInfo.get('mtp'));
+                activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
+                activityUser.set('user_id', user._toPointer());
+                activityUser.set('activity_id', activity._toPointer());
+                activityUser.set('order_id', order._toPointer());
+                activityUser.save();
+
+                console.info('保存在线付费活动用户完成!userId:%s activityId:%s', user.id, activity.id);
+            }, function(err){
+                console.error('error in process payment:', err);
+            });
+
+            return;
         }
 
-        statement = statement._toFullJSON();
-        statement.activityId = activity._toFullJSON();
-        if (bGetSignup) {
-            statement.signupId = signup._toFullJSON();
-        }
-        res.success(statement);
+        setResultAndReturn();
     }, function(err){
         console.error('getStatementDetail error:', err);
         res.error('查询订单详情失败,错误码:'+err.code);
@@ -1330,7 +1340,7 @@ AV.Cloud.define('canCreateActivity', function(req, res) {
         if (!result) {
             res.success({
                 canCreate:false,
-                errMsg:'您不是酋长，不能发布活动！'
+                errMsg:'只有部落酋长才能发活动哦，快去创建部落吧！'
             });
             return;
         }

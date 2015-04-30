@@ -915,7 +915,7 @@ exports.getMountaineerClubActivityId = function() {
         return '55375588e4b0cafb0a13ad92';
     }
 
-    return '';
+    return '5541c4f2e4b0e2a91580cfdc';
 }
 
 /**

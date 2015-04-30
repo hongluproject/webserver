@@ -50,20 +50,26 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var query = new AV.Query('Activity');
-	query.select('-hasSignupUsers');
-	query.equalTo('54b6046fe4b06e1f629b477d');
+	var query = new AV.Query('_User');
 	query.find().then(function(results){
-		_.each(results, function(result){
-			console.dir(result);
-		})
+		console.info('haha');
+		return AV.Promise.error(new AV.Error(1, '测试'));
+	}).then(function(){
+
+	}, function(err){
+		console.error(err);
 	});
-	res.success();
 });
 
-/**  获取七牛云存储token
- *  云函数名：getQiniuToken
- *  参数：'bucketName',空间名，若没传，则默认为 'hoopeng'
+/*
+ 获取七牛云存储上传token
+ 云函数名：getQiniuToken
+ 参数：
+	 bucketName: string 空间名，若没传，则默认为 'hoopeng'
+ 返回：{
+	 expire:Integer 从当前时间开始的过期时间，以秒为单位
+	 token:string	七牛上传token
+ }
  */
 AV.Cloud.define('getQiniuToken', function(req, res){
 	var bucketName = req.params.bucketName;

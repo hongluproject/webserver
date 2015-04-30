@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/13.
  */
+var _ = AV._;
 
 exports.initializeAvosData = function() {
         AV.HPGlobalParam = AV.HPGlobalParam || {};
@@ -60,6 +61,17 @@ exports.initializeAvosData = function() {
             }
 
             console.info('get level ok,level count:%d', levelResults?levelResults.length:0);
+            //拉取默认部落分类
+            var queryCategory = new AV.Query('ClanCategory');
+            queryCategory.equalTo('status', 1);
+            queryCategory.descending('rank');
+            return queryCategory.find();
+        }).then(function(results){
+            console.info('get clanCategory ok, count:%d', results&&results.length);
+            globalObj.hpClanCategory = [];
+            _.each(results, function(category){
+                globalObj.hpClanCategory.push(category);
+            });
         });
 
 }
@@ -126,8 +138,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var updateInfo = {
         android:{
-            latestVersion:'1.0.7',
-            needUpdate:true
+            latestVersion:'1.0.8',
+            needUpdate:false
         },
         iPhone:{
             latestVersion:'1.0.6',
@@ -142,9 +154,9 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             showAdForIdfa:true,
             updateType:1,
             message:'修复bug，提高应用稳定性。',
-            clickURL:'http://imsahala.com/sahala_1.0.7_20150422_111_0.apk',
+            clickURL:'http://imsahala.com/sahala_1.0.8_20150430_120_0.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'9af09ad9be4a395725c15da3c68c28f0'
+            packageMd5:'3ff19874d1f4c663373b3a04a13dd567'
         });
     } else {
         res.success({
