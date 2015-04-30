@@ -3,6 +3,64 @@
  */
 
 var myutils = require('cloud/utils.js');
+var querystring = require('querystring');
+var common = require('cloud/common');
+
+/** 通过群组ID获取群组名称
+ *  函数名：imGetGroupnameFromId
+ *  参数：
+ *      groupId:objectId 群组ID
+ *  返回：
+ *      {
+ *          groupType:string 'clan':部落 'activity':活动
+ *          id:objectId 部落 or 活动ID
+ *          name:string 名称
+ *          icon:string 头像
+ *      }
+ *  处理流程：
+ *      1、先查询Clan表，看对应ID的object是否存在。
+ *      2、若1失败，再查询Activity表。
+ */
+AV.Cloud.define('imGetGroupnameFromId', function(req, res){
+   var groupId = req.params.groupId;
+    if (!groupId) {
+        res.error('请传入ID！');
+        return;
+    }
+
+    var query = new AV.Query('Clan');
+    query.select('title', 'icon');
+    query.equalTo('objectId', groupId);
+    query.first().then(function(clan){
+        if (clan) {
+            res.success({
+                type:'clan',
+                id:groupId,
+                name:clan.get('title')||'',
+                icon:clan.get('icon')||''
+            })
+        } else {
+            query = new AV.Query('Activity');
+            query.select('title', 'index_thumb_image');
+            query.equalTo('objectId', groupId);
+            return query.first();
+        }
+    }).then(function(activity){
+        if (activity) {
+            res.success({
+                type:'activity',
+                id:groupId,
+                name:activity.get('title')||'',
+                icon:activity.get('index_thumb_image')
+            });
+        } else {
+            res.error('未找到群组名称！');
+        }
+    }, function(err){
+       console.error('getGroupnameFromId error:', err);
+        res.error('获取群组名称失败,错误码:'+err.code);
+    });
+});
 
 /**
  * 获取融云token接口
@@ -27,7 +85,7 @@ AV.Cloud.define('imGetToken', function(req, res){
             var icon = userObj.get('icon');
 
             var rcParam = myutils.getRongCloudParam();
-            console.info("getimtoken:nonce:%d timestamp:%d singature:%s", rcParam.nonce, rcParam.timestamp, rcParam.signature);
+            console.info("getimtoken:", rcParam);
 
             //通过avcloud发送HTTP的post请求
             AV.Cloud.httpRequest({
@@ -39,11 +97,11 @@ AV.Cloud.define('imGetToken', function(req, res){
                     'Timestamp': rcParam.timestamp,
                     'Signature': rcParam.signature
                 },
-                body: {
-                    userId:userobjid,
-                    name:username,
-                    portraitUri:icon
-                },
+                body: querystring.stringify({
+                            userId:userobjid,
+                            name:username,
+                            portraitUri:icon
+                        }),
                 success: function(httpResponse) {
                     console.info('getimtoken:rongcloud response is '+httpResponse.text);
 
@@ -67,6 +125,9 @@ AV.Cloud.define('imGetToken', function(req, res){
             res.error(errmsg);
         }
     });
+
+    //账号登陆时，关注撒哈拉官方小助手
+    common.followSahalaAssistants(req.user.id);
 });
 
 
@@ -138,52 +199,36 @@ AV.Cloud.define('imAddToGroup', function(request, response){
         return;
     }
     console.info('imAddToGroup:userid:%s groupid:%s groupname:%s', userid, groupid, groupname);
+    var rcParam = myutils.getRongCloudParam();
 
-    //校验用户是否存在，根据id查询用户表
-    var hpUser = AV.Object.extend("_User");
-    var query = new AV.Query(hpUser);
-    query.get(userid, {
-        success:function(userObj) {
-            if (!userObj) {
-                response.error('imAddToGroup 用户不存在！');
-                return;
-            }
-            var rcParam = myutils.getRongCloudParam();
+    console.info('imAddToGroup:rong cloud param:%s', JSON.stringify(rcParam));
 
-            console.info('imAddToGroup:rong cloud param:%s', JSON.stringify(rcParam));
-
-            //通过avcloud发送HTTP的post请求
-            AV.Cloud.httpRequest({
-                method: 'POST',
-                url: 'https://api.cn.rong.io/group/join.json',
-                headers: {
-                    'App-Key': rcParam.appKey,
-                    'Nonce': rcParam.nonce,
-                    'Timestamp': rcParam.timestamp,
-                    'Signature': rcParam.signature
-                },
-                body: {
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/join.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify({
                     userId:userid,
                     groupId:groupid,
                     groupName:groupname
-                },
-                success: function(httpResponse) {
-                    console.info('imAddToGroup:rong cloud response is '+httpResponse.text);
-                    if (httpResponse.data.code == 200)
-                        response.success('加入聊天群组成功');
-                    else
-                        response.error('加入聊天群组失败,code='+httpResponse.data.code);
-                },
-                error: function(httpResponse) {
-                    var errmsg = 'Request failed with response code ' + httpResponse.status;
-                    console.error('imAddToGroup:'+errmsg);
-                    response.error(errmsg);
-                }
-            });
+                }),
+        success: function(httpResponse) {
+            console.info('imAddToGroup:rong cloud response is '+httpResponse.text);
+            if (httpResponse.data.code == 200)
+                response.success('加入聊天群组成功');
+            else
+                response.error('加入聊天群组失败,code='+httpResponse.data.code);
         },
-        error:function(object, error) {
-            console.error('用户id：%s 不存在！', userid);
-            response.error('用户不存在');
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('imAddToGroup:'+errmsg);
+            response.error(errmsg);
         }
     });
 
@@ -211,50 +256,35 @@ AV.Cloud.define('imQuitGroup', function(request, response){
     }
     console.info("imQuitGroup:userid:%s groupid:%s", userid, groupid);
 
-    //校验用户是否存在，根据id查询用户表
-    var hpUser = AV.Object.extend("_User");
-    var query = new AV.Query(hpUser);
-    query.get(userid, {
-        success:function(userObj) {
-            if (!userObj) {
-                response.error('imQuitGroup 用户不存在！');
-                return;
-            }
-            var rcParam = myutils.getRongCloudParam();
+    var rcParam = myutils.getRongCloudParam();
 
-            console.info('imQuitGroup:rong cloud param:%s', JSON.stringify(rcParam));
+    console.info('imQuitGroup:rong cloud param:%s', JSON.stringify(rcParam));
 
-            //通过avcloud发送HTTP的post请求
-            AV.Cloud.httpRequest({
-                method: 'POST',
-                url: 'https://api.cn.rong.io/group/quit.json',
-                headers: {
-                    'App-Key': rcParam.appKey,
-                    'Nonce': rcParam.nonce,
-                    'Timestamp': rcParam.timestamp,
-                    'Signature': rcParam.signature
-                },
-                body: {
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/quit.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify({
                     userId:userid,
                     groupId:groupid
-                },
-                success: function(httpResponse) {
-                    console.info('imQuitGroup:rong cloud response is '+httpResponse.text);
-                    if (httpResponse.data.code == 200)
-                        response.success('退出聊天群组成功');
-                    else
-                        response.success('退出聊天群组失败,code='+httpResponse.data.code);
-                },
-                error: function(httpResponse) {
-                    var errmsg = 'Request failed with response code ' + httpResponse.status;
-                    console.error('imQuitGroup:'+errmsg);
-                    response.error(errmsg);
-                }
-            });
+                }),
+        success: function(httpResponse) {
+            console.info('imQuitGroup:rong cloud response is '+httpResponse.text);
+            if (httpResponse.data.code == 200)
+                response.success('退出聊天群组成功');
+            else
+                response.success('退出聊天群组失败,code='+httpResponse.data.code);
         },
-        error:function(object, error) {
-            console.error('用户id：%s 不存在！', userid);
-            response.error('用户不存在');
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('imQuitGroup:'+errmsg);
+            response.error(errmsg);
         }
     });
 });
@@ -293,10 +323,10 @@ AV.Cloud.define('imDismissGroup', function(request, response){
             'Timestamp': rcParam.timestamp,
             'Signature': rcParam.signature
         },
-        body: {
-            userId:userid,
-            groupId:groupid
-        },
+        body: querystring.stringify({
+                    userId:userid,
+                    groupId:groupid
+                }),
         success: function(httpResponse) {
             console.info('imDismissGroup:rong cloud response is '+httpResponse.text);
             if (httpResponse.data.code == 200)
@@ -311,4 +341,43 @@ AV.Cloud.define('imDismissGroup', function(request, response){
         }
     });
 
+});
+
+AV.Cloud.define('imUpdateGroupInfo', function(req, res){
+    var groupId = req.params.groupId;
+    var groupName = req.params.groupName;
+    if (!groupId || !groupName) {
+        res.error('缺少必要参数！');
+        return;
+    }
+
+    var rcParam = myutils.getRongCloudParam();
+    console.info("refreshClan:nonce:%d timestamp:%d singature:%s",
+        rcParam.nonce, rcParam.timestamp, rcParam.signature);
+    var reqBody = {
+        groupId:groupId,
+        groupName:groupName
+    };
+    console.info('Clan afterUpdate request body:', reqBody);
+    //通过avcloud发送HTTP的post请求
+    AV.Cloud.httpRequest({
+        method: 'POST',
+        url: 'https://api.cn.rong.io/group/refresh.json',
+        headers: {
+            'App-Key': rcParam.appKey,
+            'Nonce': rcParam.nonce,
+            'Timestamp': rcParam.timestamp,
+            'Signature': rcParam.signature
+        },
+        body: querystring.stringify(reqBody),
+        success: function(httpResponse) {
+            console.info('refreshRCGroup:rongcloud response is '+httpResponse.text);
+            res.success();
+        },
+        error: function(httpResponse) {
+            var errmsg = 'Request failed with response code ' + httpResponse.status;
+            console.error('refreshRCGroup:'+errmsg);
+            res.error(errmsg);
+        }
+    });
 });

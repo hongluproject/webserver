@@ -39,7 +39,7 @@ AV.Cloud.beforeSave('ClanUser', function(req,res){
                         res.error('部落不存在！');
                         return;
                     }
-                    var userLevel = clan.get("founder_id").get("level");
+                    var userLevel = clan.get("founder_id").get("level") || 1;
                     var maxClanNum = clanParam.getMaxClanUsers(userLevel);
                     var currClanNum = clan.get('current_num');
                     if (currClanNum >= maxClanNum) {
@@ -82,7 +82,7 @@ AV.Cloud.afterSave('ClanUser', function(req){
             console.error('ClanUser afterSave userid %s not found!', userObj.id);
             return;
         }
-
+        user.fetchWhenSave(true);
         user.increment('clanCount');    //部落人数加1
         user.addUnique('clanids', clanObj.id);  //部落ID加入用户表
         user.save();
@@ -110,14 +110,19 @@ AV.Cloud.afterSave('ClanUser', function(req){
 
                 var currUserNum = clan.get('current_num');
                 var maxUserNum = clanParam.getMaxClanUsers(level);
-                if (userLevel != 2) {   //不是创建者，则该部落当前人数加1
+                /*if (userLevel != 2) */
+                {   //不是创建者，则该部落当前人数加1
+                    //这个地方不再考虑是否为创建者，主要有用户进来，用户数就加1 modified by GaryFu on 2014.4.18
+
                     //部落人数加1
+                    clan.fetchWhenSave(true);
                     clan.increment('current_num');
                     currUserNum++;
 
-                    console.info('user %s is not clan founder, clan num increment', userObj.id);
+                    console.info('user joined clan, clan %s num increment', userObj.id);
                 }
                 clan.set('is_full', currUserNum>=maxUserNum);
+                clan.set('lastUserChangeAt', new Date());
                 clan.save();
 
                 //加入融云组群
@@ -127,13 +132,6 @@ AV.Cloud.afterSave('ClanUser', function(req){
                     groupname:clan.get('title')
                 });
 
-                //向部落拥有者发送消息流，告知我已经加入该部落
-                var query = new AV.Query('_User');
-                query.equalTo('objectId', founderId);
-
-                if(userObj.id!=clan.get('founder_id').id){
-                    common.sendStatus('addToClan', userObj, clan.get('founder_id'), query);
-                }
             }
         });
     });
@@ -163,6 +161,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             //删除用户所在的部落
             user.remove('clanids', clanObj.id);
             //用户所在部落数减1
+            user.fetchWhenSave(true);
             user.increment('clanCount', -1);
             user.save();
         }
@@ -170,7 +169,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
 
     //找到该部落的founder
     var queryClan = new AV.Query('Clan');
-    queryClan.select('founder_id', 'current_num', 'max_num', 'is_full');
+    queryClan.select('founder_id', 'current_num', 'max_num', 'is_full', 'title');
     queryClan.get(clanObj.id, {
         success:function(clan) {
             if (!clan) {
@@ -187,11 +186,13 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             var maxUserNum = clan.get('max_num');
 
             //部落成员数减1
+            clan.fetchWhenSave(true);
             clan.increment('current_num', -1);
             currUserNum--;
 
             //设置部落是否满员状态
             clan.set('is_full', currUserNum>=maxUserNum);
+            clan.set('lastUserChangeAt', new Date());
             clan.save();
 
             var currUser = req.user;

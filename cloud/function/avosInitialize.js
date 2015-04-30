@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 14/12/13.
  */
+var _ = AV._;
 
 exports.initializeAvosData = function() {
         AV.HPGlobalParam = AV.HPGlobalParam || {};
@@ -60,6 +61,17 @@ exports.initializeAvosData = function() {
             }
 
             console.info('get level ok,level count:%d', levelResults?levelResults.length:0);
+            //拉取默认部落分类
+            var queryCategory = new AV.Query('ClanCategory');
+            queryCategory.equalTo('status', 1);
+            queryCategory.descending('rank');
+            return queryCategory.find();
+        }).then(function(results){
+            console.info('get clanCategory ok, count:%d', results&&results.length);
+            globalObj.hpClanCategory = [];
+            _.each(results, function(category){
+                globalObj.hpClanCategory.push(category);
+            });
         });
 
 }
@@ -85,6 +97,7 @@ AV.Cloud.define('updateHPParamTimer', function(req, res) {
         message:升级提示
         clickURL:点击链接
         lastVersion:1.0.1 最近版本
+        showManualUpdate: true or false ,APP默认为false,显示手动升级，IOS使用。
     }
  */
 AV.Cloud.define('checkUpdate', function(req, res) {
@@ -93,26 +106,63 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var deviceVersion = req.params.deviceVersion;
     var customer = req.params.customer;
 
+    //compare version1 and version,
+    //  if version2>version1 return 1
+    //  if version2==version1 return 0
+    //  if version2<version1 return -1
+    function compareVersion(version1, version2) {
+        var arr1 = version1.split('.') || [];
+        var arr2 = version2.split('.') || [];
+
+        if (arr1.length > arr2.length) {
+            return 1;
+        } else if (arr1.length < arr2.length) {
+            return -1;
+        } else {
+            for (var i in arr1) {
+                var intVal1 = parseInt(arr1[i]);
+                var intVal2 = parseInt(arr2[i]);
+                if (intVal1 > intVal2) {
+                    return 1;
+                } else if (intVal1 < intVal2) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
+        return 0;
+    }
+
     console.info('checkUpdate params, clientVersion:%s deviceType:%s deviceVersion:%s customer:%s',
         clientVersion, deviceType, deviceVersion, customer);
 
+    var updateInfo = {
+        android:{
+            latestVersion:'1.0.8',
+            needUpdate:false
+        },
+        iPhone:{
+            latestVersion:'1.0.6',
+            needUpdate:false
+        }
+    };
+
     if (deviceType == 'android') {
         res.success({
-            needUpdate:false,
+            needUpdate:updateInfo.android.needUpdate &&
+                        (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
-            message:'1、第一次发布版本\n' +
-            '2、天天向上\n' +
-            '3、我是歌手\n' +
-            '4、奔跑吧兄弟\n' +
-            '5、最强大脑',
-            clickURL:'http://www.imsahala.com/sahala.apk',
-            lastVersion:'1.0.2'
+            message:'修复bug，提高应用稳定性。',
+            clickURL:'http://imsahala.com/sahala_1.0.8_20150430_120_0.apk',
+            lastVersion:updateInfo.android.latestVersion,
+            packageMd5:'3ff19874d1f4c663373b3a04a13dd567'
         });
     } else {
         res.success({
             needUpdate:false,
             showAdForIdfa:true,
+            showManualUpdate:false, //显示手动升级，APP默认为false，若showManualUpdate为true，则显示
             updateType:1,
             message:'1、第一次发布版本\n' +
             '2、天天向上\n' +
@@ -120,7 +170,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
             clickURL:'https://itunes.apple.com/us/app/sa-ha-la-jie-shi-tong-qu-peng/id952260502?mt=8&uo=4',
-            lastVersion:'1.0.3'
+            lastVersion:updateInfo.iPhone.latestVersion
         });
     }
 

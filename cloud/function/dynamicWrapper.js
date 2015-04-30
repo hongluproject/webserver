@@ -1,93 +1,200 @@
 /**
  * Created by fugang on 14/12/12.
  */
+var common = require('cloud/common');
+var _ = AV._;
+/*
+    获取动态
+    函数名：
+        getDynamic2 （替换 getDynamic)
+    参数：
+        dynamicType:    string  查询动态类型
+            followeDynamic  我关注的动态，动态首页显示内容
+            mineDynamic     我的动态
+            clanDynamic     归属到部落的动态
+            favoriteDynamic 收藏的动态
+            commentDynamic  评论过的动态
+            activityDynamic 活动相关动态
+        limit:Integer   本次查询返回数目
+        skip:Integer    本次查询起始偏移
+        maxId:Integer   由于followeDynamic采用事件流获取，需要用maxId替换skip来获取数据
+        favoriteIds:array   查询指定动态列表,在favoriteDynamic里面用到
+    返回：
+        [
+            {
+                dynamic:DynamicNews class object
+                extra:{
+                    isLike: true or false
+                    tagNames: array  动态tagIds对应的名称
+                    messageId:Integer 该动态对应的事件流ID，在动态首页中用到
+                }
+            }
+        ]
+ */
+AV.Cloud.define('getDynamic2', function(req,res){
+    var dynamicType = req.params.dynamicType || 'followeDynamic';	//获取的动态类型
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+    var maxId = req.params.maxId || 0;
+    var retDynamic = [];
+    var dynamics;
+    if (!userId) {
+        res.error('缺少用户信息！');
+        return;
+    }
+
+    var pickActivityKeys = ['objectId','__type', 'title', "className"];
+    var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
+    switch (dynamicType) {
+        case 'followeDynamic':  //查询我关注的动态，需要通过事件流查询
+            //查询事件流，获取用户关注的所有动态
+            var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User',userId));
+            var statusReturn = [];
+            var dynamics;
+            query.equalTo('messageType', 'newPost');
+            query.include('dynamicNews');
+            query.include('source');
+            query.include('dynamicNews.user_id');
+            query.include('dynamicNews.activityId');
+            query.limit(limit);
+            query.maxId(maxId);
+            query.exists('dynamicNews');
+            break;
+
+        case 'mineDynamic':     //我发出的动态
+            var query = new AV.Query('DynamicNews');
+            query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.equalTo('type', 2);
+            query.include('user_id', 'activityId');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            break;
+
+        case 'clanDynamic': //查询部落动态和问答
+            var clanId = req.params.clanId;
+            if (!clanId) {
+                res.error('请输入部落信息！');
+            }
+
+            var queryInClanIds = new AV.Query('DynamicNews');
+            queryInClanIds.equalTo('clan_ids', clanId);
+            var queryEqualToClan = new AV.Query('DynamicNews');
+            if (clanId) {
+                queryEqualToClan.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+            }
+
+            var query = AV.Query.or(queryInClanIds, queryEqualToClan);
+            query.equalTo('type', 2);
+            query.include('user_id', 'activityId');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            break;
+
+        case 'favoriteDynamic': //获取收藏动态或问答信息
+            console.info('favoriteDynamic params:', req.params);
+            var favoriteIds = req.params.favoriteIds || [];
+            if (favoriteIds.length <= 0) {
+                res.error('请输入收藏的动态或问答信息！');
+                return;
+            }
+            var query = new AV.Query('DynamicNews');
+            query.equalTo('type', 2);
+            if (favoriteIds.length > 0) {
+                limit = favoriteIds.length;
+                query.containedIn('objectId', favoriteIds);
+            }
+            query.include('user_id', 'activityId');
+            query.skip(skip);
+            query.limit(limit);
+            query.descending('createdAt');
+            break;
+
+        case 'commentDynamic':  //我评论过的动态
+            var query = new AV.Query('DynamicNews');
+            query.skip(skip);
+            query.limit(limit);
+            query.include('user_id', 'activityId');
+            query.equalTo('commentUsers', userId);
+            query.equalTo('type', 2);
+            query.descending('createdAt');
+            break;
+
+        case 'activityDynamic': // 活动相关动态
+            var activityId = req.params.activityId;
+            if (!activityId) {
+                res.error('缺少必备参数！');
+                return;
+            }
+
+            //查询活动相关动态
+            var query = new AV.Query('DynamicNews');
+            query.include('user_id', 'activityId');
+            query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+            query.equalTo('type', 2);
+            query.descending('createdAt');
+            query.limit(limit);
+            query.skip(skip);
+            break;
+
+        default :
+            console.error('查询类型未知：', dynamicType)
+            res.error('未知的查询类型！');
+            return;
+    }
+
+    var msgIds;
+    query.find().then(function(results){
+        if (dynamicType == 'followeDynamic') {
+            dynamics = [];
+            msgIds = [];
+            var i = 0;
+            _.each(results, function(item){
+                if (item.data.dynamicNews) {
+                    dynamics.push(item.data.dynamicNews);
+                    msgIds[i++] = item.messageId;
+                }
+            });
+        } else {
+            dynamics = results;
+            dynamics = _.reject(dynamics, function(val){
+                return (val == undefined);
+            });
+        }
+        return common.findLikeDynamicUsers(req.user&&req.user.id, dynamics);
+    }).then(function(likeResult){
+        var retDynamic = [];
+        var i = 0;
+        _.each(dynamics, function(dynamic){
+
+            var userId = dynamic.get('user_id');
+            var activity = dynamic.get('activityId');
+            dynamic = dynamic._toFullJSON();
+            dynamic.user_id = _.pick(userId._toFullJSON(), pickUserKeys);
+            if (activityId) {
+                dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
+            }
+
+            retDynamic.push({
+                dynamic:dynamic,
+                extra:{
+                    isLike:likeResult[dynamic.objectId]?true:false,
+                    tagNames:common.tagNameFromId(dynamic.tags),
+                    messageId:msgIds?msgIds[i++]:undefined
+                }
+            });
+        });
+
+        res.success(retDynamic);
+
+    });});
 
 /**
  *  获取动态
  */
 AV.Cloud.define('getDynamic', function(req,res){
-    function addLikesAndReturn(userId, dynamics, response) {
-        var likeTarget = {};	//记录该用户点过赞的id
-        var returnUserItem = {	//动态中发布者信息，可以保留返回的字段
-            objectId:1,
-            username:1,
-            nickname:1,
-            className:1,
-            icon:1,
-            __type:1
-        };
-
-        //为动态或问答加入点赞状态
-        var addLikeTarget = function(dynamics, likeTarget) {
-            var hpTags = AV.HPGlobalParam.hpTags;
-            //将所有动态返回，添加isLike，记录点赞状态，添加tagName字段，去掉user字段中多余的信息
-            for (var i in dynamics) {
-                var currDynamic = dynamics[i];
-                if (likeTarget[currDynamic.id] == true)	//添加点赞状态字段
-                    currDynamic.set('isLike', true);
-                else
-                    currDynamic.set('isLike', false);
-
-                //从tagId转换tagName，并返回给APP
-                if (hpTags) {
-                    var arrayTagName = [];
-                    for (var k in currDynamic.tags) {
-                        arrayTagName.push(hpTags[currDynamic.tags[k]].get('tag_name') || '');
-                    }
-                    if (arrayTagName.length) {
-                        currDynamic.set('tagName', arrayTagName);
-                    }
-                }
-
-                //遍历user_id，去掉不需要返回的字段，减少网络传输
-                var rawUser = currDynamic.get('user_id');
-                if (rawUser && rawUser.id) {
-                    var postUser = AV.Object.createWithoutData('_User', rawUser.id);
-                    postUser.set('icon', rawUser.get('icon'));
-                    postUser.set('nickname', rawUser.get('nickname'));
-                    var jValue = postUser._toFullJSON();
-                    delete jValue.__type;
-                    currDynamic.set('user_id', jValue);
-                }
-
-            }
-        }
-
-        //获取所有动态objectId，再查询该用户对这些动态是否点过赞
-        var dynamicIdArray = [];
-        for (var i=0; i<dynamics.length; i++) {
-            if (dynamics[i].get('user_id')) {
-                dynamicIdArray.push(dynamics[i].id);
-            } else {    //删除不合法的数据
-                dynamics[i] = undefined;
-            }
-        }
-
-        dynamics = AV._.reject(dynamics, function(val){
-            return (val == undefined);
-        });
-
-        //查询点赞表
-        var likeClass = AV.Object.extend("Like");
-        var likeQuery = new AV.Query(likeClass);
-        likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
-        likeQuery.containedIn('external_id', dynamicIdArray);
-        likeQuery.find().then(function(likes) {
-            for (var i in likes) {
-                likeTarget[likes[i].get('external_id')] = true;
-            }
-
-            addLikeTarget(dynamics, likeTarget);
-
-            response.success(dynamics);
-        }, function(error) {
-            console.error('query dynamic like failed:', error);
-            addLikeTarget(dynamics, likeTarget);
-            response.success(dynamics);
-        });
-
-    }
-
     var dynamicType = req.params.dynamicType || 'followeDynamic';	//获取的动态类型
     switch (dynamicType) {
         case "followeDynamic":	//查询我关注的动态，需要通过事件流查询
@@ -98,7 +205,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                  maxId:N default is zero
              }
              */
-            var userId = req.params.userId;
+            var userId = req.params.userId || (req.user?req.user.id:undefined);
             if (!userId) {
                 res.error('缺少用户信息！');
                 return;
@@ -106,23 +213,16 @@ AV.Cloud.define('getDynamic', function(req,res){
             var limit = req.params.limit || 20;
             var maxId = req.params.maxId || 0;
             var likeTarget = {};	//记录该用户点过赞的id
-            var returnUserItem = {	//动态中发布者信息，可以保留返回的字段
-                objectId:1,
-                username:1,
-                nickname:1,
-                className:1,
-                icon:1,
-                __type:1
-            };
             var date1, date2, date3;
 
             //查询事件流，获取用户关注的所有动态
             var query = AV.Status.inboxQuery(AV.User.createWithoutData('_User',userId));
             var statusReturn = [];
+            query.equalTo('messageType', 'newPost');
             query.include('dynamicNews');
-//            query.include('source');
+            query.include('source');
             query.include('dynamicNews.user_id');
-            query.containedIn('messageType', ['newPost', 'newQuestion']);
+            query.include('dynamicNews.activityId');
             query.limit(limit);
             query.maxId(maxId);
             query.exists('dynamicNews');
@@ -132,6 +232,8 @@ AV.Cloud.define('getDynamic', function(req,res){
                     res.success([]);
                     return;
                 }
+
+                console.info("count:%d limit:%d", statuses.length, limit);
 
                 date2 = new Date();
                 console.info("userid:%s dynamic finding use time:%d ms", userId, date2.getTime()-date1.getTime());
@@ -165,14 +267,24 @@ AV.Cloud.define('getDynamic', function(req,res){
                     likeTarget[likes[i].get('external_id')] = true;
                 }
 
-
+                var pickActivityKeys = ['objectId','__type', 'title', "className"];
+                var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
                 var hpTags = AV.HPGlobalParam.hpTags;
+                var _ = AV._;
                 //将所有动态返回，添加isLike，记录点赞状态
                 for (var i in statusReturn) {
                     var currDynamic = statusReturn[i].data.dynamicNews;
                     var user_id = currDynamic.get('user_id');
+                    var activityId = currDynamic.get('activityId');
                     currDynamic = currDynamic._toFullJSON();
-                    currDynamic.user_id = user_id._toFullJSON();
+                    if (user_id) {
+                        currDynamic.user_id = user_id._toFullJSON();
+                        currDynamic.user_id = _.pick(currDynamic.user_id, pickUserKeys);
+                    }
+                    if (activityId) {
+                        activityId = activityId._toFullJSON();
+                        currDynamic.activityId = _.pick(activityId, pickActivityKeys);
+                    }
                     statusReturn[i].data.dynamicNews = currDynamic;
 
                     if (likeTarget[currDynamic.objectId] == true)	//添加点赞状态字段
@@ -191,18 +303,11 @@ AV.Cloud.define('getDynamic', function(req,res){
                         }
                     }
 
-                    //遍历user_id，去掉不需要返回的字段，减少网络传输
-                    for (var k in currDynamic.user_id) {
-                        if (returnUserItem[k] != 1) {
-                            delete currDynamic.user_id[k];
-                        }
-                    }
-
                 }
 
                 res.success(statusReturn);
             }, function(error){
-                res.error('查询点赞状态失败:%o', error);
+                res.error('查询点赞状态失败，错误码：'+error.code);
             });
 
             break;
@@ -220,7 +325,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             var query = new AV.Query('DynamicNews');
             query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
             query.equalTo('type', parseInt(type));
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
             query.descending('createdAt');
@@ -230,7 +335,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
 
-                addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic mineDynamic failed:', error);
                 res.success([]);
@@ -258,7 +363,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             if (type) {
                 query.equalTo('type', parseInt(type));
             }
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
             query.descending('createdAt');
@@ -268,7 +373,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
 
-                addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic mineDynamic failed:', error);
                 res.success([]);
@@ -292,7 +397,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             if (favoriteIds.length > 0) {
                 query.containedIn('objectId', favoriteIds);
             }
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
             query.descending('createdAt');
@@ -302,7 +407,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                     return;
                 }
 
-                addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic favoriteDynamic failed:', error);
                 res.success([]);
@@ -321,7 +426,7 @@ AV.Cloud.define('getDynamic', function(req,res){
             var query = new AV.Query('DynamicNews');
             query.skip(skip);
             query.limit(limit);
-            query.include('user_id');
+            query.include('user_id', 'activityId');
             query.equalTo('commentUsers', userId);
             query.equalTo('type', parseInt(type));
             query.descending('createdAt');
@@ -330,20 +435,166 @@ AV.Cloud.define('getDynamic', function(req,res){
                     res.success([]);
                     return;
                 }
-                addLikesAndReturn(userId, dynamics, res);
+                common.addLikesAndReturn(req.user&&req.user.id, dynamics, res);
             }, function(error) {
                 console.error('getDynamic commentDynamic failed:', error);
                 res.success([]);
             });
             break;
+
+        case 'activityDynamic': // 活动相关动态
+            var userId = req.params.userId;
+            if (!userId && req.user) {
+                userId = req.user.id;
+            }
+            var activityId = req.params.activityId;
+            if (!userId || !activityId) {
+                res.error('缺少必备参数！');
+                return;
+            }
+            var limit = req.params.limit || 20;
+            var skip = req.params.skip || 0;
+            var retVal = {};
+
+            var query = new AV.Query('Activity');
+            query.get(activityId).then(function(result){
+                retVal.activity = result;
+
+                //查询活动相关动态
+                query = new AV.Query('DynamicNews');
+                query.include('user_id', 'activityId');
+                query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+                query.descending('createdAt');
+                query.limit(limit);
+                query.skip(skip);
+                return query.find();
+            }).then(function(results){
+
+                return common.addLikesAndReturn(req.user&&req.user.id, results);
+            }).then(function(dynamics){
+                if (dynamics) {
+                    retVal.dynamics = [];
+                    var _ = AV._;
+                    dynamics.forEach(function(dynamic){
+                        var user_id = dynamic.get('user_id');
+                        var activityId = dynamic.get('activityId');
+
+                        dynamic = dynamic._toFullJSON();
+                        if (activityId) {
+                            activityId.__type = 'Object';
+                            dynamic.activityId = activityId;
+                        }
+                        if (user_id) {
+                            user_id.__type = 'Object';
+                            dynamic.user_id = user_id;
+                        }
+
+                        retVal.dynamics.push(dynamic);
+                    });
+                }
+
+                res.success(retVal);
+            }, function(err){
+                console.error('activityDynamic error:', err);
+
+                res.error('获取活动相关动态失败,错误码:'+err.code);
+            });
+            break;
     }
 });
 
+/*
+    获取动态、资讯、活动等相关评论
+    云函数：
+        getComments2 (用于替换getComments)
+    参数：
+        sourceId:objectId  动态、资讯 or 活动 等ID
+        commentId:objectId 查询指定的评论ID
+        limit、skip:分页查询参数
+        commentType:
+            dynamic:    动态评论
+            news:       资讯评论
+            activity:   活动评论
+    返回：
+        [
+            {
+                comment: comment class object
+            },
+            ...
+        ]
+ */
+AV.Cloud.define('getComments2', function(req, res){
+    var sourceId = req.params.sourceId;
+    var commentId = req.params.commentId;
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+    var commentType = req.params.commentType || 'dynamic';
+
+    if (!sourceId) {
+        res.error('请输入动态ID!');
+        return;
+    }
+    var query;
+    switch (commentType) {
+        case 'news':
+            query = new AV.Query('NewsComment');
+            if (sourceId) {
+                query.equalTo('newsid', AV.Object.createWithoutData('News',sourceId));
+            }
+            break;
+        case 'activity':
+            query = new AV.Query('ActivityComment');
+            if (sourceId) {
+                query.equalTo('activity_id', AV.Object.createWithoutData('Activity',sourceId));
+            }
+            break;
+        case 'dynamic':
+        default :
+            query = new AV.Query('DynamicComment');
+            if (sourceId) {
+                query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews',sourceId));
+            }
+            break;
+    }
+    if (commentId) {    //查询指定的评论ID
+        query.equalTo('objectId', commentId);
+    }
+    query.equalTo('status', 1);
+    query.include('user_id', 'reply_userid');
+    query.skip(skip);
+    query.limit(limit);
+    query.descending('createdAt');
+    query.find().then(function(results){
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        var retVal = [];
+        _.each(results, function(comment){
+            var postUser = comment.get('user_id');
+            var replyUser = comment.get('reply_userid');
+            comment.unset('append_userinfo');
+            comment.unset('append_replyinfo');
+
+            comment = comment._toFullJSON();
+            comment.user_id = _.pick(postUser._toFullJSON(), pickUserKeys);
+            if (replyUser) {
+                comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
+            }
+
+            retVal.push({
+                comment:comment
+            });
+        });
+
+        res.success(retVal);
+    });
+});
 
 /**
  *  获取动态、资讯、活动等相关评论
  */
 AV.Cloud.define('getComments', function(req,res) {
+    console.info('user friend count %d', req.user.get('friendCount'));
+
     var sourceId = req.params.sourceId;
     var commentId = req.params.commentId;
     var limit = req.params.limit || 20;
@@ -438,7 +689,7 @@ AV.Cloud.define('postComment', function(req, res){
             commentObj.set('newsid', AV.Object.createWithoutData('News', sourceId));
             commentObj.set('append_userinfo', {
                 nickname:userNickname,
-                icon:userIcon
+                icon:userIcon||''
             });
             break;
         case 2:
@@ -447,7 +698,7 @@ AV.Cloud.define('postComment', function(req, res){
             commentObj.set('activity_id', AV.Object.createWithoutData('Activity', sourceId));
             commentObj.set('user_info', {
                 nickname:userNickname,
-                icon:userIcon
+                icon:userIcon||''
             });
             break;
         case 3:
@@ -456,7 +707,7 @@ AV.Cloud.define('postComment', function(req, res){
             commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', sourceId));
             commentObj.set('user_info', {
                 nickname:userNickname,
-                icon:userIcon
+                icon:userIcon||''
             });
             break;
         default:
@@ -469,13 +720,118 @@ AV.Cloud.define('postComment', function(req, res){
         commentObj.set('reply_userid', AV.User.createWithoutData('_User', replyUserId));
         commentObj.set('append_replyinfo', {
             nickname:replyUserNickname,
-            icon:replyUserIcon
+            icon:replyUserIcon||''
         });
     }
     commentObj.save().then(function(comment){
         res.success(comment);
     }, function(error){
         console.error('postComment error:', error);
-        res.error(error);
+        res.error('提交评论失败，错误码:'+error.code);
     })
+});
+
+/*
+    获取动态详情
+    函数名:
+        getDynamicDetail
+    参数：
+        userId:objectId 用户ID
+        dynamicId:objectId 动态ID
+        getComment:bool,是否获取动态相关评论
+        limit、skip：评论对应查询偏移和返回数目
+    返回：{
+        dynamic: dynamic class object
+        extra:{
+            isLike: true or false
+            tagNames: array 标签对应的名称
+        },
+        comments:[
+            DynamicComment class object
+        ]
+    }
+ */
+AV.Cloud.define('getDynamicDetail', function(req, res){
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var dynamicId = req.params.dynamicId;
+    if (!userId || !dynamicId) {
+        res.error('请传入相关参数！');
+        return;
+    }
+    var getComment = req.params.getComment;
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+
+    var retVal = {};
+    var retDynamic;
+    var query = new AV.Query('DynamicNews');
+    query.equalTo('objectId', dynamicId);
+    query.include('user_id', 'activityId');
+    query.first().then(function(dynamic){
+        if (!dynamic) {
+            console.info('动态 %s 不存在', dynamicId);
+            return AV.Promise.error(new AV.Error(111, '动态不存在!'))
+        }
+        retDynamic = dynamic;
+
+        return common.findLikeDynamicUsers(userId, dynamic);
+    }).then(function(likeObj){
+        var bLiked = likeObj && likeObj[retDynamic.id];
+        var tags = retDynamic.get('tags');
+        var userPost = retDynamic.get('user_id');
+        var activityId = retDynamic.get('activityId');
+
+        var pickActivityKeys = ['objectId','__type', 'title', "className"];
+        retDynamic = retDynamic._toFullJSON();
+        retDynamic.user_id = userPost._toFullJSON();
+        if (activityId) {
+            retDynamic.activityId = _.pick(activityId._toFullJSON(), pickActivityKeys);
+        }
+
+        retVal = {
+            dynamic: retDynamic,
+            extra:{
+                isLike:bLiked,
+                tagNames:common.tagNameFromId(tags)
+            }
+        };
+        if (getComment) {
+            var query = new AV.Query('DynamicComment');
+            query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews', dynamicId));
+            query.equalTo('status', 1);
+            query.include('user_id', 'reply_userid');
+            query.limit(limit);
+            query.skip(skip);
+            query.descending('createdAt');
+            return query.find();
+        } else {
+            return AV.Promise.as();
+        }
+    }).then(function(comments){
+        if (comments) {
+            var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
+            var retComment = [];
+            _.each(comments, function(comment){
+                var commentUser = comment.get('user_id');
+                var replyUser = comment.get('reply_userid');
+                comment.unset('user_info');
+                comment.unset('append_replyinfo');
+
+                comment = comment._toFullJSON();
+                comment.user_id = _.pick(commentUser._toFullJSON(), pickUserKeys);
+                if (replyUser) {
+                    comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
+                }
+                retComment.push(comment);
+            });
+
+            retVal.comments = retComment;
+        }
+
+        res.success(retVal);
+
+    }, function(err){
+        console.error('查询动态 %s 详情错误:', dynamicId, err);
+        res.success({});
+    });
 });

@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+    <%
+    var title = clan.get('title');
+    var tags = clan.get('tagsName');
+    var icon = clan.get('icon');
+    icon =  (icon && icon.concat('?imageView2/2/w/148')) || '/images/share/logo.png';
+    %>
+    <title>我分享了一个撒哈拉部落--<%=title%></title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0" name="viewport" />
+    <meta content="yes" name="apple-mobile-web-app-capable" />
+    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
+    <meta content="telephone=no" name="format-detection" />
+    <link rel="stylesheet" href="/stylesheets/page.css?2015022801" />
+    <script src="/js/jquery-1.11.2.min.js"></script>
+    <script type="application/javascript" src="/js/layer.m.js"></script>
+</head>
+
+<body>
+
+<div class="share">
+    <div class="top">
+        <h1>SaHaLa</h1>
+        <div class="who">
+            <p><%=user%> ：</p>
+            <p>邀请你加入撒哈拉部落</p>
+        </div>
+        <div class="info">
+            <div class="user">
+                <img src="<%=icon%>" style="width: 148px">
+            </div>
+            <div class="details">
+                <p><%=title%></p>
+                <p><i></i>
+
+                    <% for (var i in tags) {%>
+                    <%= tags[i] %>
+                    <%}%>
+
+
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="accept">
+        <a id="applink" href="javascript:void(0)">接受邀请</a>
+    </div>
+</div>
+
+<script>
+    function getUrlParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+        var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+        if (r != null) return unescape(r[2]); return null; //返回参数值
+    }
+
+    var u = navigator.userAgent, app = navigator.appVersion;
+    var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1; //android终端或者uc浏览器
+    var isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+
+    var applink = $("#applink")[0];
+    function disableAppLink() {
+        applink.style.background = "#F7F7F7";
+        applink.href = "javascript:void(0)";
+        applink.innerText = "无效邀请码";
+        applink.style.color = '#000';
+    }
+
+    var invitationCodeStatus = '<%=invitationCodeStatus %>';
+    var invitationCode = getUrlParam("invitation_id");
+    if (!invitationCodeStatus) {
+        disableAppLink();
+    }
+    else {
+        $(applink).click(function () {
+            if (isiOS) {
+                var page = layer.open({
+                    type: 1,
+                    content: '<div> \
+											<p align="center" style="color: #fff;font-size:18px; line-height:63px;">请长按邀请码复制</p> \
+											<p id="invite_code" style="background-color:#ffffff; color:#D7D7D7; font-size:22px; margin:0px 30px; padding:20px 0px; text-align:center;">' + invitationCode + '</p> \
+											<p align="center" style="color: #fff;font-size:14px; line-height:63px;">复制完后，打开撒哈拉APP加入部落</p> \
+							         	 </div>',
+                    style: 'width:86%; height:200px; border-style:solid; border-width:1px; background-color:#36cad8',
+                    shadeClose:true,
+                    success: function(olayer){
+                        $("#invite_code")[0].oncopy = function () {
+                            window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
+                        };
+                    }
+                });
+            }
+            else if (isAndroid) {
+                var page = layer.open({
+                    type: 1,
+                    content: '<div> \
+											<p align="center" style="color: #fff; font-size:14px; margin-top: 30px;">第一步:</p> \
+											<p align="center" style="color: #fff; font-size:18px; margin-top: 20px;">请长按邀请码复制</p> \
+											<p align="center" style="padding-top:15px;width: 300px;height: 35px ;background-color: #ffffff ;border-radius: 3px;margin:0 auto;font-size: 18px;color: #727272;margin-top:15px;">' + invitationCode + '</p> \
+											<p align="center" style="color: #fff;font-size:14px; margin-top: 30px;">第二步:</p> \
+											<p id="openApp" align="center" style="padding-top:15px;width: 220px;height: 35px ;background-color: #ffffff ;border-radius: 3px;margin:0 auto;font-size: 18px;color: #36cad8;margin-top:15px;">打开撒哈拉APP</p> \
+							          	</div>',
+                    style: 'width:86%; height:340px; border-style:solid; border-width:1px; background-color:#36cad8',
+                    shadeClose:true,
+                    success: function(olayer){
+                        $($("#openApp")[0]).click(function () {
+                            window.location.href = "http://a.app.qq.com/o/simple.jsp?pkgname=com.honglu.sahala";
+                        });
+                    }
+                });
+            }
+            else {
+                window.location.href = "http://www.imsahala.com";
+            }
+        })
+    }
+</script>
+
+</body>
+</html>

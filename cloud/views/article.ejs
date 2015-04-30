@@ -2,10 +2,10 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, minimal-ui" />
-        <title><%= title%></title>
+        <title>我分享了一个撒哈拉精选--<%= title%></title>
         <link rel="stylesheet" href="/stylesheets/style.css?2015022801" type="text/css">
         <script src="/js/jquery-1.11.2.min.js"></script>
-        <script src="/js/common.js?2015021501"></script>
+        <script src="/js/common.js?2015040101"></script>
         <!-- load lazy load javascript -->
         <script src="/js/echo.min.js"></script>
         <script language="JavaScript">
@@ -27,7 +27,9 @@
                     $(this).attr("src", "/images/blank.gif");
                     $(this).attr("alt", "");
                     $(this).attr("data-echo", oldSrc);
-                })
+                });
+
+                $('blockquote>p').unwrap();
 
                 echo.init({
                     offset: 100,

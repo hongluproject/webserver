@@ -15,7 +15,7 @@ AV.Cloud.afterSave('DynamicComment', function(request){
         console.error('DynamicComment 数据非法！');
         return;
     }
-    console.dir(dynamicObj);
+    var targetUser;
 
     //get dynamic object first
     var queryDynamic = new AV.Query('DynamicNews');
@@ -25,6 +25,7 @@ AV.Cloud.afterSave('DynamicComment', function(request){
                 console.error('没有找到对应的动态数据:%s', dynamicObj.id);
                 return;
             }
+            dynamic.fetchWhenSave(true);
             dynamic.increment('comment_count');
             dynamic.addUnique('commentUsers', commentUser.id);
             dynamic.save();
@@ -35,6 +36,7 @@ AV.Cloud.afterSave('DynamicComment', function(request){
                 return;
             }
 
+            targetUser = postUser;
             //向动态发布者发送事件流，告知他的动态被 commentUser 评论了
             var query = new AV.Query('_User');
             if (replyUser) {
@@ -46,7 +48,7 @@ AV.Cloud.afterSave('DynamicComment', function(request){
             } else {
                 query.equalTo('objectId', postUser.id);
             }
-            common.sendStatus('newComment', commentUser, postUser, query, {dynamicNews:dynamicObj,replyUser:replyUser});
+            common.sendStatus('newComment', commentUser, targetUser, query, {dynamicNews:dynamicObj,replyUser:replyUser});
         }
     })
 });
@@ -61,6 +63,7 @@ AV.Cloud.afterDelete('DynamicComment', function(request){
         success:function(dynamicResult) {
             //评论数量必须大于0，才允许减1
             if (dynamicResult && dynamicResult.get('comment_count')>0) {
+                dynamicObj.fetchWhenSave(true);
                 dynamicObj.increment('comment_count', -1);
             }
             dynamicObj.remove('comments', request.object.id);

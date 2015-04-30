@@ -1,0 +1,7 @@
+{
+  "name": "SAHALA",
+  "version": "0.0.1",
+  "dependencies": {
+    "pingpp": "~2.0.1"
+  }
+}

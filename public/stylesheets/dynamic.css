@@ -45,7 +45,7 @@ body{ background:#FAFAFA;}
 .ftContent .info .btn .link1{ background:url('/images/ico3.png') left center no-repeat;}
 .ftContent .info .btn .link2{ background:url('/images/ico4.png') left center no-repeat;}
 
-.plBox{ background:#F0F0F0; border-top:solid 1px #D1D1D1; padding:0 0 120px 20px;}
+.plBox{ background:#F0F0F0; border-top:solid 1px #D1D1D1; padding:0 0 120px 20px; font-size: 20px}
 .plBox dl{ border-bottom:solid 1px #d1d1d1; line-height:32px;}
 .plBox dt{ float:left; width:60px; padding-top:26px;}
 .plBox dd{ float:left; padding-left:10px; width:520px; padding:20px 0 20px 20px;}

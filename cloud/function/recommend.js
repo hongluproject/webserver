@@ -3,7 +3,80 @@
 /**
  * Created by fugang on 14/12/12.
  */
+var common = require('cloud/common');
+var _ = AV._;
 
+/*
+    推荐
+ 函数名
+ getRecommend2 （用于替换getRecommend）
+ 参数：
+ recommendType:string 推荐类型
+           user    推荐用户
+ userId: objectId 用户ID
+ tags: array 用户标签，若为当前登陆用户，可不传
+ skip、limit:翻页查询参数
+ 返回：[
+         {
+             user: user class object
+             dynamics: 用户最近发布的带图片的动态
+             [
+                dynamic class object
+             ]
+         }
+     ]
+ */
+AV.Cloud.define('getRecommend2', function(req, res){
+    var userId = req.params.userId || (req.user && req.user.id);
+    var tags = req.params.tags || (req.user && req.user.get('tags'));
+    var recommendType = req.params.recommendType || 'user';
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
+
+    if (!userId || !tags) {
+        res.success([]);
+        return;
+    }
+
+    console.info('user tags %s', tags);
+
+    var retVal = [];
+    var excludeIds = [userId];
+    var query = new AV.Query('_Followee');
+    query.select('followee');
+    query.equalTo('user', AV.User.createWithoutData('_User', userId));
+    query.limit(1000);
+    query.find().then(function(results){
+        _.each(results, function(followee){
+            excludeIds.push(followee.get('followee').id);
+        });
+
+        var queryOr = [];
+        _.each(tags, function(tag){
+            var query = new AV.Query('_User');
+            query.equalTo('tags', tag);
+            query.exists('tags');
+            queryOr.push(query);
+        });
+
+        var queryUser = AV.Query.or.apply(null, queryOr);
+        queryUser.notContainedIn('objectId', excludeIds);
+        queryUser.skip(skip);
+        queryUser.limit(limit);
+        queryUser.descending('friendCount');
+        return queryUser.find();
+    }).then(function(users){
+        _.each(users, function(user){
+           retVal.push({
+               user: user._toFullJSON()
+           });
+        });
+
+        res.success(retVal);
+    });
+
+
+});
 
 AV.Cloud.define("getRecommend",function(req, res){
     //共用
@@ -23,8 +96,7 @@ AV.Cloud.define("getRecommend",function(req, res){
 
     var ret = {
         recommendUser:{},
-        recommendDynamic:{},
-        recommendAsk:{}
+        recommendDynamic:{}
     };
     var getRecommendAsk = function(){
         var query = new AV.Query(Dynamic);
@@ -94,37 +166,17 @@ AV.Cloud.define("getRecommend",function(req, res){
         query.greaterThan('createdAt',searchDate);
         query.limit(2);
         query.descending("up_count");
-        query.include('user_id');
+        query.include('user_id', 'activityId');
         query.find({
-            success:function(result){
-                var dynamicResult = [];
-                for (var i = 0; result && i < result.length; i++) {
-                    var outChannel = {};
-                    outChannel       = result[i];
-
-                    //遍历user_id，去掉不需要返回的字段，减少网络传输
-                    var user =  outChannel.get("user_id");
-                    if (!user || !user.id) {
-                        continue;
-                    }
-                    var rawUser = user;
-                    if (rawUser && rawUser.id) {
-                        var postUser = AV.Object.createWithoutData('_User', rawUser.id);
-                        postUser.set('icon', rawUser.get('icon'));
-                        postUser.set('nickname', rawUser.get('nickname'));
-                        var jValue = postUser._toFullJSON();
-                        delete jValue.__type;
-                        outChannel.set('user_id', jValue);
-                    }
-
-                    dynamicResult.push(outChannel);
-                }
-                ret.recommendDynamic = dynamicResult;
-                getRecommendAsk();
+            success:function(dynamicResults){
+                common.addLikesAndReturn(userid, dynamicResults).then(function(results){
+                    ret.recommendDynamic = results;
+                    res.success(ret);
+                })
             },
             error:function(){
                 ret.recommendDynamic = [];
-                getRecommendAsk();
+                res.success(ret);
             }
         })
     }
@@ -188,4 +240,51 @@ AV.Cloud.define("getRecommend",function(req, res){
         });
     }
     getRecommendUser();
+});
+
+/** 获取推荐的活动
+ * 函数名：getRecommendActivity
+ * 参数：{
+ *  userId:用户ID，若未当前登陆用户，可不传
+ *  tags:用户所关注标签，若未当前登陆用户，可不传
+ * }
+ * 返回：
+ * [{ActivityRecommend 1, ActivityRecommend 2,...}]
+ */
+AV.Cloud.define('getRecommendActivity', function(req, res){
+    var userId = req.params.userId;
+    if (!userId && req.user && req.user.id) {
+        userId = req.user.id;
+    }
+    var tags = req.params.tags;
+    if (!tags && req.user) {
+        tags = req.user.get('tags');
+    }
+
+    var retVal = [];
+    var query = new AV.Query('ActivityRecommend');
+    query.lessThan('status', 1); //小于1表示出于上线状态
+    query.include('activityId');
+    query.limit(5);
+    query.descending('updatedAt');
+    query.find().then(function(results){
+        if (!results) {
+            res.success();
+            return;
+        }
+
+        results.forEach(function(item){
+
+            var activity = item.get('activityId');
+            item = item._toFullJSON();
+            item.activityId = activity._toFullJSON();
+
+            retVal.push(item);
+        });
+
+        res.success(retVal);
+    }, function(err){
+        console.error('getRecommendActivity error:', err);
+        res.error('查询推荐活动失败，错误码:'+err.code);
+    });
 });

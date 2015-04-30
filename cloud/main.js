@@ -4,10 +4,15 @@ var name = require('cloud/name.js');
 require('cloud/app.js');
 var qiniu = require('qiniu');
 var common = require('cloud/common.js');
+var myutils = require('cloud/utils');
+var querystring = require('querystring');
+var _ = AV._;
 
 //初始化avos相关参数，并每隔1小时更新一次数据
 var globalParam = require('cloud/function/avosInitialize.js');
 globalParam.initializeAvosData();
+
+console.info('appId:%s', AV.applicationId);
 
 /*
 	require hook & function files
@@ -25,6 +30,7 @@ require('cloud/hook/Activity.js');
 require('cloud/hook/ActivityComment.js');
 require('cloud/hook/ActivityUser.js');
 require('cloud/hook/_User.js');
+require('cloud/hook/ActivitySignUpUser.js');
 
 require('cloud/function/imInterface.js');
 require('cloud/function/dynamicWrapper.js');
@@ -38,17 +44,32 @@ require('cloud/function/imWrapper.js');
 require('cloud/function/clanWrapper.js');
 require('cloud/function/followeeWrapper.js');
 require('cloud/function/sahalaScript.js');
+require('cloud/function/userWrapper.js');
 
 /** 测试返回多个class数据
  *
  */
-AV.Cloud.define("hello", function(request, response) {
-	response.success('test');
+AV.Cloud.define("hello", function(req, res) {
+	var query = new AV.Query('_User');
+	query.find().then(function(results){
+		console.info('haha');
+		return AV.Promise.error(new AV.Error(1, '测试'));
+	}).then(function(){
+
+	}, function(err){
+		console.error(err);
+	});
 });
 
-/**  获取七牛云存储token
- *  云函数名：getQiniuToken
- *  参数：'bucketName',空间名，若没传，则默认为 'hoopeng'
+/*
+ 获取七牛云存储上传token
+ 云函数名：getQiniuToken
+ 参数：
+	 bucketName: string 空间名，若没传，则默认为 'hoopeng'
+ 返回：{
+	 expire:Integer 从当前时间开始的过期时间，以秒为单位
+	 token:string	七牛上传token
+ }
  */
 AV.Cloud.define('getQiniuToken', function(req, res){
 	var bucketName = req.params.bucketName;

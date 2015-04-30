@@ -2,6 +2,8 @@
  * Created by gary on 2014/11/15.
  */
 var crypto = require('crypto');
+var common = require('cloud/common');
+var _ = AV._;
 
 exports.printObject = function() {
     console.log("hehe");
@@ -225,6 +227,12 @@ exports.getRongCloudParam = function() {
     var rongCloudAppKey = 'pwe86ga5er6m6';
     var rongCloudAppSecret = 'ScUoRd65VLv';
 
+    //如果是DEV环境，则需要用融云的测试key
+    if (common.isSahalaDevEnv()) {
+        rongCloudAppKey = '4z3hlwrv3fl9t';
+        rongCloudAppSecret = 'NmT0nxJblVO05i';
+    }
+
     //融云校验信息
     var appSecret = rongCloudAppSecret; // 开发者平台分配的 App Secret。
     var nonce = Math.floor(Math.random()*100000); // 获取随机数。
@@ -249,3 +257,65 @@ exports.calcStatusSignature = function(userId, messageType, statusTime) {
     return md5.digest('hex');
 }
 
+exports.printAbnormalityActivity = function() {
+    var query = new AV.Query('Activity');
+    query.limit(1000);
+    var printfVal = {};
+    var outputVal = [];
+
+    function printValue() {
+        outputVal = _.sortBy(outputVal, function(item){
+            return -item.createdAt.getTime();
+        });
+        outputVal.forEach(function(printItem){
+            console.error('ActivityUser error %s,current_num is %d,real count is %d, createAt %d %s',
+                printItem.title,
+                printItem.currNum,
+                printItem.realNum,
+                printItem.createdAt.getTime(),
+                printItem.createdAt);
+        })
+    }
+
+    query.find().then(function(results){
+        var count = results && results.length || 0;
+        for (var i in results) {
+            var activity = results[i];
+            var joinUsers = activity.get('joinUsers');
+            var joinUsersNum = joinUsers&&joinUsers.length || 0;
+            var joinNum = activity.get('current_num') || 0;
+            var numInfo = {
+                title:activity.get('title'),
+                currNum:joinNum,
+                joinUsersNum:joinUsersNum,
+                createdAt:activity.createdAt
+            };
+            printfVal[activity.id] = numInfo;
+
+
+            queryUser = new AV.Query('ActivityUser');
+            queryUser.equalTo('activity_id', activity);
+            queryUser.find().then(function(activityUsers){
+                --count;
+                if (!activityUsers || !activityUsers.length) {
+                    if (count == 0) {
+                        printValue();
+                    }
+                    return;
+                }
+                var activityIn = activityUsers[0].get('activity_id');
+                var numInfo = printfVal[activityIn.id];
+                var joinNum = numInfo.currNum;
+                var userCount = (activityUsers&&activityUsers.length) || 0;
+                numInfo.realNum = userCount;
+                if (userCount!=joinNum) {
+                    outputVal.push(numInfo);
+                }
+
+                if (count == 0) {
+                    printValue();
+                }
+            });
+        };
+    });
+}

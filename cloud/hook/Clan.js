@@ -1,7 +1,7 @@
 /**
  * Created by fugang on 14/12/15.
  */
-
+var common = require('cloud/common.js');
 var clanParam = require('cloud/common.js').clanParam;
 var myutils = require('cloud/utils.js');
 
@@ -9,6 +9,11 @@ var myutils = require('cloud/utils.js');
  *
  */
 AV.Cloud.beforeSave('Clan', function(req,res) {
+    if (!req.user || !req.user.id) {
+        res.error('请登录账号!');
+        return;
+    }
+
     var clanObj = req.object;
     var founderUser = req.object.get('founder_id');
     if (!founderUser || !founderUser.id) {
@@ -24,9 +29,14 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
             }
 
             //根据用户等级，修改该部落可以最多加入的人数
-            var userLevel = userResult.get('level');
+            var userLevel = userResult.get('level') || 1;
             var nMaxClanUser = clanParam.getMaxClanUsers(userLevel);
+            var fouderUserInfo = {
+                icon:founderUser.get('icon') || '',
+                nickname:founderUser.get('nickname') || ''
+            };
 
+            clanObj.set('founder_userinfo', fouderUserInfo);
             clanObj.set('max_num', nMaxClanUser);
 
             res.success();
@@ -57,6 +67,11 @@ AV.Cloud.afterSave('Clan', function(req) {
         userResult.save();
     });
 
+    //保存部落分享链接
+    var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/clan/':'http://api.imsahala.com/clan/';
+    clanObj.set('shareUrl', urlPath.concat(clanObj.id));
+    clanObj.save();
+
     //创建者信息加入到ClanUser表中
     var ClanUser = AV.Object.extend('ClanUser');
     var clanUser = new ClanUser();
@@ -64,6 +79,7 @@ AV.Cloud.afterSave('Clan', function(req) {
     clanUser.set('clan_id', clanObj._toPointer());
     clanUser.set('user_id', clanObj.get('founder_id'));
     clanUser.save();
+
 });
 
 /** 用户删除部落后，用户表里面的部落信息也需要去除
@@ -80,45 +96,6 @@ AV.Cloud.afterDelete('Clan', function(req){
             userResult.remove('clanids', clanId);
             userResult.remove('createdClanIds', clanId);
             userResult.save();
-        }
-    });
-});
-
-
-/* 用户修改部落信息后：如果名称发生变更，将对应融云保存的群组名称也同步更新
-*
- */
-AV.Cloud.afterUpdate('Clan', function(req){
-    var clanObj = req.object;
-    if (!clanObj.get('title')) {
-        return;
-    }
-
-    var rcParam = myutils.getRongCloudParam();
-    console.info("refreshClan:nonce:%d timestamp:%d singature:%s",
-        rcParam.nonce, rcParam.timestamp, rcParam.signature);
-    var reqBody = {
-        groupId:clanObj.id,
-        groupName:clanObj.get('title')
-    };
-    console.info('Clan afterUpdate request body:', reqBody);
-    //通过avcloud发送HTTP的post请求
-    AV.Cloud.httpRequest({
-        method: 'POST',
-        url: 'https://api.cn.rong.io/group/refresh.json',
-        headers: {
-            'App-Key': rcParam.appKey,
-            'Nonce': rcParam.nonce,
-            'Timestamp': rcParam.timestamp,
-            'Signature': rcParam.signature
-        },
-        body: reqBody,
-        success: function(httpResponse) {
-            console.info('refreshRCGroup:rongcloud response is '+httpResponse.text);
-        },
-        error: function(httpResponse) {
-            var errmsg = 'Request failed with response code ' + httpResponse.status;
-            console.error('refreshRCGroup:'+errmsg);
         }
     });
 });

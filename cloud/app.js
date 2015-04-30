@@ -152,7 +152,6 @@ app.get('/dynamic/:objId', function(req, res) {
             tagsName.push(tagName?tagName:'');
         }
         dynamicResult.set('tagsName', tagsName);
-        console.dir(tagsName);
 
         renderObj = dynamicResult;
         //获取该动态最近10个评论
@@ -176,10 +175,89 @@ app.get('/dynamic/:objId', function(req, res) {
     });
 });
 
+
+
+
+
+
 /**
- *  活动详情
+ *  部落分享
+ */
+app.get('/clan/:objId', function(req,res) {
+    var clanId = req.param('objId');
+    var invitationCode = req.param('invitation_id');
+    if (!clanId) {
+        console.error('clan id has not input!');
+        res.writeHead(404);
+        res.end();
+    }
+
+
+    var query = new AV.Query('Clan');
+    query.get(clanId, {
+        success: function(clanResult) {
+            if (!clanResult) {
+                console.error('clan %s has not found!', clanId);
+                res.writeHead(404);
+                res.end();
+                return;
+            }
+
+            var tags = clanResult.get('tags');
+            var tagsName = [];
+            for (var i in tags) {
+                var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+                tagsName.push(tagName?tagName:'');
+            }
+            clanResult.set('tagsName', tagsName);
+
+            var InvitationCode = AV.Object.extend("InvitationCode");
+            var query = new AV.Query(InvitationCode);
+            query.equalTo("invitationCode",invitationCode);
+            var today=new Date();
+            var t=today.getTime()-1000*60*60*24*7;
+            var searchDate=new Date(t);
+            query.greaterThan('createdAt',searchDate);
+            query.include('userId');
+            query.descending("createdAt");
+            query.first({
+                success: function(object) {
+                    var optionUser = object.get('userId');
+                    var userName = optionUser.get('nickname');
+                    if(object){
+                        res.render('clan', {clan:clanResult,user:userName,invitationCodeStatus:true});
+                    }else{
+                        res.render('clan', {clan:clanResult,user:userName,invitationCodeStatus:false});
+                    }
+                },
+                error: function(error) {
+                    console.error('clan %s has not found!', clanId);
+                    res.writeHead(404);
+                    res.end();
+                    return;
+                }
+        });
+        },
+        error: function(error) {
+            console.error('clan %s has not found!', clanId);
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+    });
+
+});
+
+
+
+
+
+
+/**
+ *  活动分享
  */
 app.get('/activity/:objId', function(req,res) {
+    var invitationCode = req.param('invitation_id');
     var activityId = req.param('objId');
     if (!activityId) {
         console.error('activity id has not input!');
@@ -189,23 +267,60 @@ app.get('/activity/:objId', function(req,res) {
 
     var query = new AV.Query('Activity');
     query.include('user_id');
-    query.get(activityId).then(function(activityResult) {
-        if (!activityResult) {
+    query.get(activityId, {
+        success: function(activityResult) {
+            if (!activityResult) {
+                console.error('activity %s has not found!', activityId);
+                res.writeHead(404);
+                res.end();
+                return;
+            }
+
+            var tags = activityResult.get('tags');
+            var tagsName = [];
+            for (var i in tags) {
+                if(AV.HPGlobalParam.hpTags[tags[i]]){
+                    var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
+                    tagsName.push(tagName?tagName:'');
+                }
+            }
+            activityResult.set('tagsName', tagsName);
+            var InvitationCode = AV.Object.extend("InvitationCode");
+            var query = new AV.Query(InvitationCode);
+            query.equalTo("invitationCode",invitationCode);
+            var today=new Date();
+            var t=today.getTime()-1000*60*60*24*7;
+            var searchDate=new Date(t);
+            query.greaterThan('createdAt',searchDate);
+            query.include('userId');
+            query.descending("createdAt");
+            query.first({
+                success: function(object) {
+                    var optionUser = object.get('userId');
+                    var userName = optionUser.get('nickname');
+                    if(object){
+                        res.render('activity', {activity:activityResult,user:userName,invitationCodeStatus:true});
+                    }else{
+                        res.render('activity', {activity:activityResult,user:userName,invitationCodeStatus:false});
+                    }
+                },
+                error: function(error) {
+                    console.error('activity %s has not found!', clanId);
+                    res.writeHead(404);
+                    res.end();
+                    return;
+                }
+            });
+
+        },
+        error: function(error) {
             console.error('activity %s has not found!', activityId);
             res.writeHead(404);
             res.end();
             return;
         }
-
-        var tags = activityResult.get('tags');
-        var tagsName = [];
-        for (var i in tags) {
-            var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
-            tagsName.push(tagName?tagName:'');
-        }
-        activityResult.set('tagsName', tagsName);
-        res.render('activity', {activity:activityResult});
     });
+
 });
 
 /**
@@ -265,13 +380,97 @@ var name = req.body.name;
 	}
 });
 
-/* test code
-var queryUser = new AV.Query('_User');
-queryUser.get('54abc651e4b0154cef59f695').then(function(user){
-    user.unset('clanids');
-    user.save();
+/** pingxx交易异步通知（暂时不作用，由雪松那边的后台接收异步通知）
+ *  post request body
+ *  {
+ *      pingxx charge object
+ *  }
+ */
+app.post('/api/ping/notify', function(req, res){
+    console.info('pingxx notify data:', req.body);
+
+    var resp = function (ret, http_code) {
+        http_code = typeof http_code == "undefined" ? 200 : http_code;
+        res.writeHead(http_code, {
+            "Content-Type": "text/plain;charset=utf-8"
+        });
+        res.end(ret);
+    }
+
+    var order;
+    var notifyType = req.body.object;
+    var query = new AV.Query('StatementAccount');
+    query.include('signupId');
+    switch(notifyType) {
+        case 'charge':
+            query.equalTo('serialNumber', req.body.id);
+            break;
+
+        case 'refund':
+            query.equalTo('refundNumber', req.body.id);
+            break;
+
+        default:
+            resp('fail');
+            return;
+    }
+    query.first().then(function(result){
+        if (!result) {
+            resp('fail');
+            return;
+        }
+
+        order = result;
+
+        if (notifyType == 'charge') {
+            if (req.body.paid) {
+                // 支付完成，改写数据库支付状态、以及支付时间
+                order.set('accountStatus', 2);
+                order.set('paidTime', new Date(req.body.time_paid*1000));
+                order.set('transactionNo', req.body.transaction_no);
+            }
+        } else if (notifyType == 'refund') {
+            if (req.body.refunded) {
+                //交易成功，回写账户当前支付状态
+                order.set('accountStatus', 4);
+            }
+        }
+
+        order.save();
+
+        //先检测该记录是否已经存在,将该用户加入活动报名列表
+        var user = order.get('userId');
+        var activity = order.get('activityId');
+        query = new AV.Query('ActivityUser');
+        query.equalTo('user_id', user);
+        query.equalTo('activity_id', activity);
+        query.first().then(function(activityUser){
+            if (activityUser) {
+                console.info('用户已加入活动列表!');
+                return;
+            }
+
+            //若不存在，添加AcvitityUser数据
+            var signupInfo = order.get('signupId');
+            var ActivityUser = AV.Object.extend('ActivityUser');
+            var activityUser = new ActivityUser();
+            activityUser.set('sex', signupInfo.get('sex'));
+            activityUser.set('real_name', signupInfo.get('realName'));
+            activityUser.set('phone', signupInfo.get('phone'));
+            activityUser.set('idcard', signupInfo.get('idcard'));
+            activityUser.set('signIn', 1);
+            activityUser.set('passport_card', signupInfo.get('passportCard'));
+            activityUser.set('two_way_permit', signupInfo.get('twoWayPermit'));
+            activityUser.set('user_id', user._toPointer());
+            activityUser.set('activity_id', activity._toPointer());
+            activityUser.set('order_id', order._toPointer());
+            activityUser.save();
+        });
+
+        resp('success');
+    });
+
 });
-*/
 
 // This line is required to make Express respond to http requests.
 app.listen({"static":{maxAge:2592000000}});
