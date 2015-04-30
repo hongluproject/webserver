@@ -139,7 +139,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var updateInfo = {
         android:{
             latestVersion:'1.0.8',
-            needUpdate:false
+            needUpdate:true
         },
         iPhone:{
             latestVersion:'1.0.6',
@@ -153,10 +153,10 @@ AV.Cloud.define('checkUpdate', function(req, res) {
                         (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
-            message:'修复bug，提高应用稳定性。',
-            clickURL:'http://imsahala.com/sahala_1.0.8_20150430_120_0.apk',
+            message:'修复一些讨厌的问题，提升应用稳定性。',
+            clickURL:'http://imsahala.com/sahala_1.0.8_20150430_121_0.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'3ff19874d1f4c663373b3a04a13dd567'
+            packageMd5:'0764859de76f1588403646553e0b6156'
         });
     } else {
         res.success({
