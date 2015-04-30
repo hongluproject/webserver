@@ -173,7 +173,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             var activity = dynamic.get('activityId');
             dynamic = dynamic._toFullJSON();
             dynamic.user_id = _.pick(userId._toFullJSON(), pickUserKeys);
-            if (activityId) {
+            if (activity) {
                 dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
             }
 
