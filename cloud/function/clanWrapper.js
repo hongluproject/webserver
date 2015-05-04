@@ -5,6 +5,7 @@ var common = require('cloud/common.js');
 var myutils = require('cloud/utils.js');
 var querystring = require('querystring');
 var _ = AV._;
+var Promise = AV.Promise;
 
 /** 判断用户是否可创建部落
  *
@@ -570,5 +571,74 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
        res.success();
     }, function(err){
         res.error('删除失败，错误码:'+err.code);
+    });
+});
+
+/*
+    保存更新的分类名称
+    函数名:
+        saveCategory
+    参数：
+        categoryNames:array 保存的分类名称
+        [
+            {
+                oldCategoryId:objectId  修改前分类ID，若为新增，可不传
+                newCategoryName:string  修改后分类名称
+            }
+        ]
+    返回：
+        [
+            ClanCategory class object,
+            ...
+        ]
+ */
+AV.Cloud.define('saveCategory', function(req, res){
+    var categoryNames = req.params.categoryNames;
+    var newCategoryNames = [];
+    _.each(categoryNames, function(categoryItem){
+       newCategoryNames.push(categoryItem.newCategoryName);
+    });
+
+    var categoryObj = {};   //key:name value:category class object
+
+    var query = new AV.Query('ClanCategory');
+    query.containedIn('cateName', newCategoryNames);
+    query.find().then(function(results){
+        var findCategoryNames = [];
+        _.each(results, function(categoryItem){
+            var cateName = categoryItem.get('cateName');
+            findCategoryNames.push(cateName);
+            categoryObj[cateName] = categoryItem;
+        });
+
+        //找到尚未注册的名称，并为之注册
+        var unregisterCateNames = _.difference(newCategoryNames, findCategoryNames);
+        var promises = [];
+        _.each(unregisterCateNames, function(cateName){
+            var ClanCategory = AV.Object.extend('ClanCategory');
+            var clanCategory = new ClanCategory();
+            clanCategory.set('cateName', cateName);
+            promises.push(clanCategory.save());
+        });
+
+        return Promise.all(promises);
+    }).then(function(results){
+        //every name has been saved
+        _.each(results, function(result){
+            var cateName = result.get('cateName');
+            categoryObj[cateName] = result;
+        });
+
+        var rets = [];
+        _.each(newCategoryNames, function(cateName){
+            var clanCategory = categoryObj[cateName];
+            if (clanCategory) {
+                rets.push(clanCategory._toFullJSON());
+            }
+        });
+
+        res.success(rets);
+    }).catch(function(err){
+        res.error('保存分类失败，错误码:'+err.code);
     });
 });
