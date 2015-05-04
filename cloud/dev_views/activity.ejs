@@ -92,6 +92,9 @@ var optionUser = user;
                 <div class="join_person">
                     <ul>
                         <% if (activityUser){ %>
+
+
+                        <% console.log(activityUser);%>
                         <% activityUser.forEach(function (item){ %>
                         <li>
                             <a>
@@ -102,7 +105,7 @@ var optionUser = user;
                                             src="<%= item.get('user_id').get('icon') ? item.get('user_id').get('icon') : "/suaxu/gg.png" %>"
                                             style="height:50px;width:50px;"></a>
                             </div>
-                            <div class="person_name"><%= item.get('real_name') %></div>
+                            <div class="person_name"><%= item.get('user_id').get('nickname') %></div>
                         </li>
                         <% })
                         } %>
