@@ -1,61 +1,306 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-    <%
-    var title = activity.get('title');
-    var tags = activity.get('tagsName');
-    var thumbImage = activity.get('index_thumb_image');
-    thumbImage = thumbImage && thumbImage.concat('?imageView2/2/w/148');
-    var index_thumb_image = thumbImage || '/images/share/logo.png';
-    %>
-    <title>我分享了一个撒哈拉活动--<%=title%></title>
-    <meta charset="utf-8" />
-    <meta content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0" name="viewport" />
-    <meta content="yes" name="apple-mobile-web-app-capable" />
-    <meta content="black" name="apple-mobile-web-app-status-bar-style" />
-    <meta content="telephone=no" name="format-detection" />
-    <link rel="stylesheet" href="/stylesheets/page.css?2015022801" />
+    <title>撒哈拉活动</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script src="/js/jquery-1.11.2.min.js"></script>
-    <script type="application/javascript" src="/js/layer.m.js"></script>
+    <link rel="stylesheet" href="/stylesheets/page.css?2015022801"/>
+    <script type="text/javascript" charset="utf-8" src="/suaxu/function.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/suaxu/common.js"></script>
+    <link rel="stylesheet" href="/suaxu/mobile_common.css" type="text/css">
+    <link rel="stylesheet" href="/suaxu/mobile_act.css" type="text/css">
+    <script src="/js/layer.m.js"></script>
 </head>
-
 <body>
+<link type="text/css" href="/suaxu/act_detail.css" rel="stylesheet">
 
-<div class="share">
-    <div class="top">
-        <h1>SaHaLa</h1>
-        <div class="who">
-            <p><%=user%> ：</p>
-            <p>邀请你加入撒哈拉活动</p>
-        </div>
-        <div class="info">
-            <div class="user">
-                <img src="<%=index_thumb_image%>" width="148">
+<%
+var title = activity.get('title');
+var tags = activity.get('tagsName');
+var index_thumb_image = activity.get('index_thumb_image') || '/images/share/test.png';
+var thumb_images = activity.get('thumb_images') ;
+
+var pay_type = activity.get('pay_type');
+var price = '';
+if (pay_type == 1) {
+    price = '免费';
+} else if (pay_type == 2 || pay_type == 3) {
+    price = activity.get('price');
+}
+var optionUser = user;
+%>
+
+<script type="text/javascript">
+    var startTime = new Date(<%=activity.get('activity_time').getTime() %>).format('yyyy-mm-dd hh:MM:ss');
+    var endTime = new Date(<%=activity.get('activity_end_time').getTime() %>).format('yyyy-mm-dd hh:MM:ss');
+    var deadTime = new Date(<%=activity.get('dead_time').getTime() %>).format('yyyy-mm-dd hh:MM:ss');
+
+</script>
+
+
+<div id="act_detail">
+    <div id="actContent" class="auto-center">
+        <div class="mtitle">
+            <div class="mimg">
+                <img src="<%= index_thumb_image %>" style="display:block;" width="100%">
+
+                <div class="leader_img">
+                    <a href="#"><img src="<%= optionUser.get('icon') %>"></a>
+                    <span><%= optionUser.get('nickname') %></span>
+                </div>
             </div>
-            <div class="details">
-                <p><%=title%></p>
-                <p><i></i>
 
-                    <% for (var i in tags) {%>
-                    <%= tags[i] %>
-                    <%}%>
+            <div class="mcobtn">
+                <div id="actName"><p
+                            style="font-size:14px;padding:5px 10px 0 10px;color:#000;line-height:20px;"><%= activity.get('title') %></p>
+                </div>
+                <div style="margin-top:8px;margin-bottom: 3px;">
+                    <span style="margin-left:15px;"><font color="#f68a1e" size="4pt;"><%= price %></font></span>
+        <span style="display: block;font-size:14px;float:right;color:#898989;margin-right:15px;">
+        <span id="acttime" style="color:#898989">报名截止时间:<script language="javascript">document.write(deadTime)</script></span></span>
+                </div>
+            </div>
+
+            <!---------------------------------------------------------------------------->
+            <div id="act_title" class="uc-important-box">
+                <div class="title_left">
+                    <img src="/suaxu/04.png" width="20">
+
+                    <p><span style="color:#898989;"><script language="javascript">document.write(startTime)</script>- <script
+                                    language="javascript">document.write(endTime)</script></span></p>
+                    <img src="/suaxu/lx.jpg" style="margin-top:3px;" width="20">
+
+                    <p>
+                        <% for (var i in tags) { %>
+                        <%= tags[i] %>
+                        <% } %>
+                    </p>
+                </div>
+                <div style="clear:both;"></div>
+            </div>
+            <div style="background-color:#F9F9F9;height:10px;"></div>
+            <!--参加人员-->
+            <div class="uc-recommend-box">
+                <div class="recommend-title">
+                    <span style="">他们也报名了（<%= activity.get('current_num') %>人）</span>
+
+                    </a>
+                </div>
+                <div class="join_person">
+                    <ul>
+                        <% if (activityUser){ %>
+                        <% activityUser.forEach(function (item){ %>
+                        <li>
+                            <a>
+                            </a>
+
+                            <div class="radius"><a>
+                                </a><a href="#"><img
+                                            src="<%= item.get('user_id').get('icon') ? item.get('user_id').get('icon') : "/suaxu/gg.png" %>"
+                                            style="height:50px;width:50px;"></a>
+                            </div>
+                            <div class="person_name"><%= item.get('real_name') %></div>
+                        </li>
+                        <% })
+                        } %>
+                    </ul>
+                    <div style="clear:both;"></div>
+                </div>
+            </div>
 
 
-                </p>
+            <!---------------------------------------------------------------------------->
+            <div id="dy_details">
+                <div style="background-color:#F9F9F9;height:10px;"></div>
+
+                <div class="uc-rebox-box">
+
+                    <div id="actDetailBoxNav_bulid" class="rebox-title">
+                        <div>
+                            <ul class="rebox-ul actDetailBoxNav">
+                                <li class="active" data-value="rebox-journey"><a class="rebox-in">图集</a></li>
+                                <li class="" data-value="rebox-cost"><a class="rebox-in">详情</a></li>
+                                <li class="" data-value="rebox-notice"><a class="rebox-in">费用</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <div style="display: none;" id="actDetailBoxNav" class="rebox-title">
+                        <div>
+                            <ul class="rebox-ul actDetailBoxNav">
+                                <li class="active" data-value="rebox-journey"><a class="rebox-in">图集</a></li>
+                                <li class="" data-value="rebox-cost"><a class="rebox-in">详情</a></li>
+                                <li class="" data-value="rebox-notice"><a class="rebox-in">费用</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <div style="clear:both"></div>
+                    <div class="rebox-intro" style=" overflow:hidden;padding:0 10px;">
+                        <!--行程-->
+                        <div id="rebox-journey" class="rebox-journey" style="display: block;">
+
+                            <% if (thumb_images){ %>
+                            <% thumb_images.forEach(function (item){ %>
+                            <img src="<%=item%>" style="padding-bottom: 10px;">
+                            <% })
+                            } %>
+                        </div>
+                        <!--费用-->
+                        <div id="rebox-cost" class="rebox-cost" style="display:none;">
+                            <div class="rebox-detail">
+                                <div class="rebox-forin">
+                                    <p style="clear: both; white-space: normal;">
+                                        【活动开始时间】：
+                                        <script language="javascript">document.write(startTime)</script>
+                                    </p>
+
+                                    <p style="clear: both; white-space: normal;">
+                                        【活动开始结束】：
+                                        <script language="javascript">document.write(endTime)</script>
+                                    </p>
+                                    <p style="clear: both; white-space: normal;">
+                                        【活动地点】：<%= activity.get('place') %>
+                                    </p>
+
+                                    <p style="clear: both; white-space: normal;">
+                                        【报名进度】：<%= activity.get('current_num') %>
+                                        /<%= activity.get('max_num')==0?'无限制':activity.get('max_num') %>
+                                    </p>
+
+                                    <p style="clear: both; white-space: normal;">
+                                        【活动详情】：<%- activity.get('intro') %>
+                                    </p>
+
+                                </div>
+                            </div>
+                        </div>
+                        <!--须知-->
+                        <div id="rebox-notice" class="rebox-notice" style="display:none;">
+                            <div class="rebox-detail">
+                                <div class="rebox-forin">
+                                    <p style="clear: both; white-space: normal;">
+                                        【支付方式】:
+                                        <% if (activity.get('pay_type') == 1){ %>
+                                        免费
+                                        <% } else if (activity.get('pay_type') == 2) { %>
+                                        在线支付
+                                        <% } else if (activity.get('pay_type') == 3) { %>
+                                        线下支付
+                                        <% } %>
+                                    </p>
+
+                                    <p style="clear: both; white-space: normal;">
+                                        【活动费用】：<%= activity.get('price')?activity.get('price'):'' %>
+                                    </p>
+
+                                    <p style="clear: both; white-space: normal;">
+                                        【费用描述】：<%= activity.get('price_info')?activity.get('price_info'):'' %>
+                                    </p>
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                </div>
+                <div style="background-color:#F9F9F9;height:10px;"></div>
+
             </div>
         </div>
-    </div>
-
-    <div class="accept">
-        <a id="applink" href="javascript:void(0)">接受邀请</a>
     </div>
 </div>
 
-<script>
+
+<div class="download" id="downloadDiv">
+    <div class="accept">
+        <a id="applink" href="javascript:void(0)">接受邀请</a>
+    </div>
+
+</div>
+
+
+<script type="text/javascript">
+    //计算dt和当前时间的间距，表示方式为 x天,xx.xx.xx
+    //dt 为标准的日期格式的字符串,containerID为内容显示的ID,frequency为频率
+    var intervalId = '';
+    function clockInt(endDate, id) {
+        this.container = document.getElementById(id);
+        this.end = new Date(endDate.replace(/-/g, "/")).getTime();
+        this.star = new Date().getTime();
+        this.getCurentTxt = function () {
+            var mills = this.end - this.star;
+            if (mills <= 0) {
+                this.container.innerHTML = "截止报名";
+                if (intervalId) {
+                    window.clearInterval(intervalId);
+                }
+                return;
+            }
+            var v = {};
+            v.d = Math.floor(mills / (24 * 60 * 60 * 1000));
+            v.h = Math.floor((mills - v.d * 24 * 60 * 60 * 1000) / (60 * 60 * 1000));//获得小时数据
+            v.m = Math.floor((mills - v.d * 24 * 60 * 60 * 1000 - v.h * 60 * 60 * 1000) / (60 * 1000));//分钟数
+            v.s = Math.floor((mills - v.d * 24 * 60 * 60 * 1000 - v.h * 60 * 60 * 1000 - v.m * 60 * 1000) / 1000);//秒数
+            this.container.innerHTML = "报名剩余时间:" + v.d + "天" + v.h + ":" + v.m + ":" + v.s;
+            this.star += 1000;
+        }
+    }
+
+
+    var clickObj = new clockInt(endTime, "acttime");
+    window.setInterval("clickObj.getCurentTxt()", 1000);
+
+    $('.actDetailBoxNav li').bind('click', function () {
+        var i = $(this).index();
+        var value = $(this).attr('data-value');
+        $('.actDetailBoxNav li').removeClass('active');
+        $('#actDetailBoxNav li').eq(i).addClass('active');
+        $('#actDetailBoxNav_bulid li').eq(i).addClass('active');
+        $('.rebox-intro').children().hide();
+        $('.' + value).show();
+        var scrollTop = $('#actDetailBoxNav_bulid').length ? $('#actDetailBoxNav_bulid').offset().top : 0;
+        $("html,body").scrollTop(scrollTop);
+        setTimeout(function () {
+            $(window).trigger('scroll');
+        }, 100);
+    });
+
+    var nav_child = $('#actDetailBoxNav_bulid .actDetailBoxNav').children().length;
+    $(window).bind('scroll touchmove touchend', function () {
+        if (nav_child > 1) {
+            var scrollTop = $('#actDetailBoxNav_bulid').length ? $('#actDetailBoxNav_bulid').offset().top : 0;
+            var docScrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            if (docScrollTop >= scrollTop) {
+                $('#actDetailBoxNav').show();
+            } else {
+                if ($('.actDetailBoxNav').length > 0) {
+                    $('#actDetailBoxNav').hide();
+                }
+            }
+        }
+    }).trigger('touchend');
+
+    if (nav_child == 0 || nav_child == 1) {
+        $('.uc-rebox-box .rebox-title').hide();
+    }
+    $('.rebox-intro').children().hide();
+    var value = $('#actDetailBoxNav_bulid li.active').attr('data-value');
+    $('.' + value).show();
+
+
     function getUrlParam(name) {
         var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
         var r = window.location.search.substr(1).match(reg);  //匹配目标参数
-        if (r != null) return unescape(r[2]); return null; //返回参数值
+        if (r != null) return unescape(r[2]);
+        return null; //返回参数值
     }
 
     var u = navigator.userAgent, app = navigator.appVersion;
@@ -72,11 +317,13 @@
 
     var invitationCodeStatus = '<%=invitationCodeStatus %>';
     var invitationCode = getUrlParam("invitation_id");
+
+
     if (!invitationCodeStatus) {
         disableAppLink();
     }
     else {
-        $(applink).click(function () {
+        $("#applink").click(function () {
             if (isiOS) {
                 var page = layer.open({
                     type: 1,
@@ -118,7 +365,8 @@
             }
         })
     }
-</script>
 
+</script>
 </body>
+
 </html>

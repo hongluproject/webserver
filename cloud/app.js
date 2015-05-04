@@ -264,7 +264,6 @@ app.get('/activity/:objId', function(req,res) {
         res.writeHead(404);
         res.end();
     }
-
     var query = new AV.Query('Activity');
     query.include('user_id');
     query.get(activityId, {
@@ -275,7 +274,6 @@ app.get('/activity/:objId', function(req,res) {
                 res.end();
                 return;
             }
-
             var tags = activityResult.get('tags');
             var tagsName = [];
             for (var i in tags) {
@@ -297,12 +295,27 @@ app.get('/activity/:objId', function(req,res) {
             query.first({
                 success: function(object) {
                     var optionUser = object.get('userId');
-                    var userName = optionUser.get('nickname');
-                    if(object){
-                        res.render('activity', {activity:activityResult,user:userName,invitationCodeStatus:true});
-                    }else{
-                        res.render('activity', {activity:activityResult,user:userName,invitationCodeStatus:false});
-                    }
+                    query = new AV.Query('ActivityUser');
+                    query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
+                    query.limit(10);
+                    query.include('user_id');
+                    query.descending('createdAt');
+                    query.find({
+                        success: function(results){
+
+                            console.log(results)
+                            if(object){
+
+                                res.render('activity', {activity:activityResult,user:optionUser,invitationCodeStatus:true,activityUser:results});
+                            }else{
+                                res.render('activity', {activity:activityResult,user:optionUser,invitationCodeStatus:false,activityUser:results});
+                            }
+                        },
+                        error: function(error){
+                            console.log(error);
+                            res.render('500',500);
+                        }
+                    });
                 },
                 error: function(error) {
                     console.error('activity %s has not found!', clanId);
