@@ -157,11 +157,6 @@ AV.Cloud.define('quitActivity', function(req, res) {
 AV.Cloud.define('signUpActivity', function(req, res) {
     console.info('signUpActivity params:', req.params);
 
-    if (!req.user || !req.user.id) {
-        res.error('请登录账号!');
-        return;
-    }
-
     //取得用户传入的参数
     var userId = req.params.userId;
     var teamId = req.params.teamId;
@@ -181,9 +176,6 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     var orderNo;
     var activity;
     var signupUserObj;
-
-    console.info('signUpActivity param, userId:%s activityId:%s payMode:%d accountStatus:%d "userGroup:',
-        userId, activityId, payMode, accountStatus, userGroup);
 
     var query = new AV.Query('Activity');
     query.get(activityId).then(function(result){
