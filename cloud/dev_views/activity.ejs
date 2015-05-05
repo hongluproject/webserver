@@ -118,7 +118,7 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
 
                             <div class="radius"><a>
                                 </a><a href="#"><img
-                                            src="<%= item.get('user_id').get('icon') ? item.get('user_id').get('icon') : "/suaxu/gg.png" %>"
+                                            src="<%= item.get('user_id').get('icon') ? item.get('user_id').get('icon').concat('?imageView2/2/w/50') : "/suaxu/gg.png" %>"
                                             style="height:50px;width:50px;"></a>
                             </div>
                             <div class="person_name"><%= item.get('user_id').get('nickname') %></div>
