@@ -252,7 +252,6 @@ app.get('/clan/:objId', function(req,res) {
 
 
 
-
 /**
  *  活动分享
  */
@@ -333,6 +332,7 @@ app.get('/activity/:objId', function(req,res) {
     });
 
 });
+
 
 /**
  *      测试返回json

@@ -7,6 +7,7 @@ var common = require('cloud/common.js');
 var myutils = require('cloud/utils');
 var querystring = require('querystring');
 var _ = AV._;
+var Promise = AV.Promise;
 
 //初始化avos相关参数，并每隔1小时更新一次数据
 var globalParam = require('cloud/function/avosInitialize.js');
@@ -50,14 +51,16 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var query = new AV.Query('_User');
-	query.find().then(function(results){
-		console.info('haha');
-		return AV.Promise.error(new AV.Error(1, '测试'));
-	}).then(function(){
-
-	}, function(err){
+	var TestClass = AV.Object.extend('TestClass');
+	var testClass = new TestClass();
+	testClass.id = '55477a30e4b0fe51386b2cad';
+	testClass.fetch().then(function(result){
+		result.addUnique('testArray', '456');
+		result.save();
+		res.success(result);
+	}).catch(function(err){
 		console.error(err);
+		res.error('save data error:'+err.message);
 	});
 });
 

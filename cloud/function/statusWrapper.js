@@ -137,22 +137,24 @@ AV.Cloud.define('getFriendList2', function(req, res){
         //保留的user keys
         var pickUserKeys = ["objectId", "clanids", "nickname", 'noRemoveFromFriend', "className", "icon", "__type"];
         _.each(followees, function(user){
-            user = _.pick(user._toFullJSON(), pickUserKeys);
+            if (user) {
+                user = _.pick(user._toFullJSON(), pickUserKeys);
 
-            var bFriend = false;
-            if (userId == findFriendId) {
-                bFriend = true;
-            } else if (friendObj && friendObj[user.objectId]) {
-                bFriend = true;
-            }
-            var retObj = {
-                user:user,
-                extra:{
-                    isFriend:bFriend
+                var bFriend = false;
+                if (userId == findFriendId) {
+                    bFriend = true;
+                } else if (friendObj && friendObj[user.objectId]) {
+                    bFriend = true;
                 }
-            };
+                var retObj = {
+                    user:user,
+                    extra:{
+                        isFriend:bFriend
+                    }
+                };
 
-            ret.push(retObj);
+                ret.push(retObj);
+            }
         });
 
         res.success(ret);
