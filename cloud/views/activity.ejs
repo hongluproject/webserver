@@ -39,7 +39,8 @@ Date.prototype.format = function(fmt)
 }
 var title = activity.get('title');
 var tags = activity.get('tagsName');
-var index_thumb_image = activity.get('index_thumb_image') || '/images/share/test.png';
+var index_thumb_image = '/suaxu/suaxu.png';
+
 var thumb_images = activity.get('thumb_images') ;
 
 var pay_type = activity.get('pay_type');
@@ -166,7 +167,7 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
 
                             <% if (thumb_images){ %>
                             <% thumb_images.forEach(function (item){ %>
-                            <img src="<%=item%>" style="padding-bottom: 10px;">
+                            <img src="<%=item.concat('?imageView2/2/w/780')%>" style="padding-bottom: 10px;">
                             <% })
                             } %>
                         </div>
