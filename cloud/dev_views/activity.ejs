@@ -30,17 +30,11 @@ if (pay_type == 1) {
     price = activity.get('price');
 }
 var optionUser = user;
-console.info(11111);
 
-console.info(activity.get('activity_time'));
-console.info(activity.get('activity_time').Format('yyyy-MM-dd hh:mm:ss'));
-return;
+var startTime = (new Date()).Format("yyyy-M-d h:m:s.S");
 
-
-var startTime = activity.get('activity_time').Format('yyyy-MM-dd hh:mm:ss');
-
-var endTime = activity.get('activity_end_time').Format('yyyy-MM-dd hh:mm:ss');
-var deadTime = activity.get('dead_time').Format('yyyy-MM-dd hh:mm:ss');
+var endTime =  (new Date()).Format("yyyy-M-d h:m:s.S");
+var deadTime =  (new Date()).Format("yyyy-M-d h:m:s.S");
 
 
 
