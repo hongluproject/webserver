@@ -435,10 +435,21 @@ function removeReviewClanUser(userid, clanid, callback) {
     });
 }
 
-
-
-
-//
+/*
+    加入部落
+    函数名：
+        joinClan
+    参数：
+        userid:objectId 用户ID
+        clanid:objectId 部落ID
+    返回：
+        error:加入失败
+        success:
+            {
+                code: Integer  0:加入成功  1:发送成功，酋长审核中 2:已经申请过，等待酋长审核
+                describe:string 描述
+            }
+ */
 AV.Cloud.define("joinClan", function (req, res) {
     if (!req.user || !req.user.id) {
         res.error('请登录账号!');
@@ -490,7 +501,9 @@ AV.Cloud.define("joinClan", function (req, res) {
                             var queryUser = new AV.Query('_User');
                             queryUser.equalTo('objectId', clan.get('founder_id').id);
                             common.sendStatus('addToClan', AV.User.createWithoutData('_User',userid), clan.get('founder_id'), queryUser,{clan:clan});
-                            res.success();
+                            res.success({
+                                code:0
+                            });
                         }
                     });
                     break;
@@ -500,7 +513,10 @@ AV.Cloud.define("joinClan", function (req, res) {
                     query.equalTo("clan_id", AV.Object.createWithoutData("ClanUser", clanid, false));
                     query.count().then(function(count){
                         if(count>0){
-                            res.success('已申请过部落');
+                            res.success({
+                                code:2,
+                                describe:'已申请过部落'
+                            });
                             return;
                         }else{
                             var query = new AV.Query('_User');
@@ -511,7 +527,10 @@ AV.Cloud.define("joinClan", function (req, res) {
                                             common.postRCMessage(userid, clan.get("founder_id").id,
                                                 "请求加入"+clan.get("title"),'requestJoinClan',clanid
                                             );
-                                            res.success('已经发送申请');
+                                            res.success({
+                                                code:1,
+                                                describe: '已经发送申请'
+                                            });
                                         }
                                         else {
                                             res.error('加入部落失败');
