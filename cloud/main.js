@@ -51,7 +51,17 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-
+	var TestClass = AV.Object.extend('TestClass');
+	var testClass = new TestClass();
+	testClass.id = '55477a30e4b0fe51386b2cad';
+	testClass.fetch().then(function(result){
+		result.addUnique('testArray', '456');
+		result.save();
+		res.success(result);
+	}).catch(function(err){
+		console.error(err);
+		res.error('save data error:'+err.message);
+	});
 });
 
 /*

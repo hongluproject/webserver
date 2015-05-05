@@ -63,8 +63,14 @@ AV.Cloud.afterSave('Clan', function(req) {
             return;
         }
 
+        userResult.fetchWhenSave(true);
         userResult.addUnique('createdClanIds', clanObj.id);
-        userResult.save();
+        userResult.save().catch(function(err){
+            console.error('save user %s error ', reqUser.id, err);
+        });
+
+    }, function(err){
+        console.error('find user %s error ', reqUser.id, err);
     });
 
     //保存部落分享链接

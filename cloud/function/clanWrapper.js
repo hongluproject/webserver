@@ -593,6 +593,7 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
         ]
  */
 AV.Cloud.define('saveCategory', function(req, res){
+    var clanId = req.params.clanId;
     var categoryNames = req.params.categoryNames;
     var newCategoryNames = [];
     _.each(categoryNames, function(categoryItem){
@@ -630,14 +631,24 @@ AV.Cloud.define('saveCategory', function(req, res){
         });
 
         var rets = [];
+        var clanCategoryIds = [];
         _.each(newCategoryNames, function(cateName){
             var clanCategory = categoryObj[cateName];
             if (clanCategory) {
                 rets.push(clanCategory._toFullJSON());
+                clanCategoryIds.push(clanCategory.id);
             }
         });
 
-        res.success(rets);
+        //保存到部落里面去
+        var Clan = AV.Object.extend('Clan');
+        var clan = new Clan();
+        clan.id = clanId;
+        clan.set('clanCateIds', clanCategoryIds);
+        clan.save().then(function(result){
+            res.success(rets);
+        });
+
     }).catch(function(err){
         res.error('保存分类失败，错误码:'+err.code);
     });
