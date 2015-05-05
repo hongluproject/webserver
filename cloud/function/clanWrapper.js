@@ -5,6 +5,7 @@ var common = require('cloud/common.js');
 var myutils = require('cloud/utils.js');
 var querystring = require('querystring');
 var _ = AV._;
+var Promise = AV.Promise;
 
 /** 判断用户是否可创建部落
  *
@@ -221,11 +222,6 @@ AV.Cloud.define('userUpdate', function(req, res){
         userId:objectId 当前用户ID
     返回：{
         clan:clan class object
-        extra:{
-            catalogs:[
-                ClanCategory class object,...
-            ]
-        }
         clanUsers: [
             user class object,
             ...
@@ -303,27 +299,10 @@ AV.Cloud.define('getClanDetail', function(req, res){
                 retClan.set('clanCateIds', categoryIds);
                 retClan.save();
             }
-            var queryCategory = new AV.Query('ClanCategory');
-            queryCategory.containedIn('objectId', categoryIds);
-            return queryCategory.find();
-        } else {
-            return AV.Promise.as();
         }
+
+        return AV.Promise.as();
     }).then(function(results){
-        if (results) {
-            var categoryObj = {};
-            _.each(results, function(category){
-                categoryObj[category.id] = category._toFullJSON();
-            });
-
-            var categorys = [];
-            _.each(categoryIds, function(categoryId){
-                categorys.push(categoryObj[categoryId]);
-            });
-
-            ret.extra.categorys = categorys;
-        }
-
         //查询看吧里面最近的一篇文章
         var queryNews = new AV.Query('News');
         queryNews.greaterThan('from', 0);           //非系统抓取
@@ -572,3 +551,167 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
         res.error('删除失败，错误码:'+err.code);
     });
 });
+
+/*
+    保存更新的分类名称
+    函数名:
+        saveCategory
+    参数：
+        clanId:objectId     部落ID
+        categoryNames:array 保存的所有分类名称
+        hideCategoryNames:array 需要隐藏的分类名称
+    返回：
+        [
+            {
+                category:ClanCategory class object,
+                extra:{
+                    visible:true or false,默认为true
+                }
+            }
+            ...
+        ]
+ */
+AV.Cloud.define('saveCategory', function(req, res){
+    var clanId = req.params.clanId;
+    var categoryNames = req.params.categoryNames;
+    var hideCategoryNames = req.params.hideCategoryNames;
+
+    var categoryObj = {};   //key:name value:category class object
+    var hideCateObj = {};   //key:name value:true
+
+    _.each(hideCategoryNames, function(cateName){
+        hideCateObj[cateName] = true;
+    })
+
+    var query = new AV.Query('ClanCategory');
+    query.containedIn('cateName', categoryNames);
+    query.find().then(function(results){
+        var findCategoryNames = [];
+        _.each(results, function(categoryItem){
+            var cateName = categoryItem.get('cateName');
+            findCategoryNames.push(cateName);
+            categoryObj[cateName] = categoryItem;
+        });
+
+        //找到尚未注册的名称，并为之注册
+        var unregisterCateNames = _.difference(categoryNames, findCategoryNames);
+        var promises = [];
+        _.each(unregisterCateNames, function(cateName){
+            var ClanCategory = AV.Object.extend('ClanCategory');
+            var clanCategory = new ClanCategory();
+            clanCategory.set('cateName', cateName);
+            promises.push(clanCategory.save());
+        });
+
+        return Promise.all(promises);
+    }).then(function(results){
+        //every name has been saved
+        _.each(results, function(result){
+            var cateName = result.get('cateName');
+            categoryObj[cateName] = result;
+        });
+
+        var rets = [];
+        var clanCategoryIds = [], hideClanCategoryIds = [];
+        _.each(categoryNames, function(cateName){
+            var clanCategory = categoryObj[cateName];
+            if (clanCategory) {
+                rets.push({
+                        category:clanCategory._toFullJSON(),
+                        extra:{
+                            visible:hideCateObj[cateName]?false:true
+                        }
+                    });
+                clanCategoryIds.push(clanCategory.id);
+                if (hideCateObj[cateName]) {
+                    hideClanCategoryIds.push(clanCategory.id);
+                }
+            }
+        });
+
+        //保存到部落里面去
+        var Clan = AV.Object.extend('Clan');
+        var clan = new Clan();
+        clan.id = clanId;
+        clan.set('clanCateIds', clanCategoryIds);
+        clan.set('hideCateIds', hideClanCategoryIds);
+        clan.save().then(function(result){
+            res.success(rets);
+        });
+
+    }).catch(function(err){
+        res.error('保存分类失败，错误码:'+err.code);
+    });
+});
+
+/*
+    获取部落分类列表
+    函数名:
+        getClanCategory
+    参数:
+        clanId:objectId 部落ID
+    返回:
+    [
+        {
+            category: ClanCategory class object
+            extra:{
+                visible:true or false,默认为true
+            }
+        }
+    ]
+ */
+AV.Cloud.define('getClanCategory', function(req, res){
+    var clanId = req.params.clanId;
+    if (!clanId) {
+        res.error('请传入部落信息!');
+        return;
+    }
+
+    var clanCateIds = [], hideCateIds = [];
+    var clanCateObj = {}, hideCateObj = {};
+    var query = new AV.Query('Clan');
+    query.select('clanCateIds', 'hideCateIds');
+    query.get(clanId).then(function(clan){
+        if (!clan) {
+            return AV.Promise.error(new AV.Error(-1, '部落不存在!'));
+        }
+
+        clanCateIds = clan.get('clanCateIds') || [];
+        hideCateIds = clan.get('hideCateIds') || [];
+
+        _.each(hideCateIds, function(clanCateId){
+            hideCateObj[clanCateId] = true;
+        });
+
+        query = new AV.Query('ClanCategory');
+        query.containedIn('objectId', clanCateIds);
+        return query.find();
+    }).then(function(clanCates){
+        _.each(clanCates, function(clanCate){
+            var clanCateId = clanCate.id;
+            clanCateObj[clanCateId] = clanCate;
+        });
+
+        var ret = [];
+        _.each(clanCateIds, function(clanCateId){
+            var clanCate = clanCateObj[clanCateId];
+            if (clanCate) {
+                ret.push({
+                        category:clanCate._toFullJSON(),
+                        extra:{
+                            visible:hideCateObj[clanCateId]?false:true
+                        }
+                });
+            }
+        });
+
+        res.success(ret);
+    }).catch(function(err){
+        if (err.code > 0) {
+            res.error('获取分类列表失败，错误码:'+err.code);
+        } else {
+            res.error(err.message);
+        }
+    });
+});
+
