@@ -1,0 +1,255 @@
+.auto-center{
+	margin:0 auto;
+	max-width:800px;
+	width:100%;
+	height:auto;
+    /*background: none repeat scroll 0 0 #f6f6f6;*/
+	/*min-height:500px;*/
+}
+/*头部标题和图标start*/
+.uc-head{
+	width:100%;
+/*	background: none repeat scroll 0 0 #f68a1e;
+	border-top:1px solid #f68a1e;*/
+	background: none repeat scroll 0 0 #ffffff;
+	border-bottom: 1px solid #dcdcdc;
+	height: 45px;
+	text-align: center;
+}
+.uc-head .uc-title{
+	height: 45px;
+	margin:0 auto;
+	position: relative;
+}
+.uc-head .uc-title-icon{
+	position: absolute;
+	left: -23px;
+	top: 0px;
+}
+.uc-head .uc-title-text{
+	height:45px;
+	line-height: 45px;
+	color: #000000;
+	font-family: 微软雅黑;
+	font-size: 16px;
+	position: relative;	
+}
+.uc-head .uc-title-icon img{
+	display:block;
+}
+.uc-head .uc-more-icon {
+	display:block;
+    width:30px;
+    height:25px;
+    vertical-align:middle;
+}
+/*头部标题和图标end*/
+
+/*错误提示 start*/
+.error{position:fixed;left:0;top:50%;display:none;z-index:9999;text-align:center;width:100%;}
+.error span{background:#333;color:#fff;padding:10px 30px;border-radius:.4em;margin:0 50px;display:block;}
+/*错误提示 end*/
+
+/*按钮start*/
+.uc-btn{
+	text-align:center;
+	margin-bottom:30px;
+}
+.uc-btn a{
+	display: inline-block;
+	vertical-align: middle;
+	width: 115px;
+	border-radius: 5px;
+	cursor:pointer;
+}
+
+.uc-btn .uc-grey-btn{
+	background: none repeat scroll 0 0 #eceeee;
+	border: 1px solid #c1c4c4;
+	margin-right:5px;
+
+}
+.uc-btn .uc-grey-btn .uc-btn-text{
+	color:#8c9594;
+}
+
+.uc-btn .uc-green-btn{
+	background: none repeat scroll 0 0 #6ed3c9;
+	border: 1px solid #15897c;
+	text-align:center;
+}
+.uc-btn .uc-green-btn .uc-btn-text{
+	color:#ffffff;
+}
+
+.uc-btn .uc-btn-inner{
+	height: 35px;
+	line-height: 35px;
+	padding: 0;
+}
+.uc-btn .uc-btn-text{
+	font-family: 微软雅黑;
+	font-size: 16px;
+	font-weight: normal;
+}
+/*按钮end*/
+
+.uc .uc-listview{
+	margin:5px 10px;
+	list-style: none outside none;
+    padding: 0;
+	border-radius: 6px;
+}
+.uc .uc-listview .ui-li{
+	padding: 5px 30px 5px 10px;
+	border-radius:0;
+	border:1px solid #e9e9e9;
+	background:#fff;
+	border-top:0px;
+	position:relative;
+	display:block;
+	height:30px;
+}
+.uc .uc-listview{border-top:1px solid #e9e9e9;}
+.uc .uc-listview .ui-li input{
+	float:right;
+	width:100%;
+	margin-top:9px;
+	color:#000000;
+	font-family:微软雅黑;
+	font-weight:normal;
+	text-align:right;
+	font-size: 14px;
+	border:0px none;
+	background:none;
+	margin-right: 0px;
+}
+.uc .uc-listview .ui-li label.ui-input-text{
+	display:block;
+	line-height: 30px;
+	font-size: 14px;
+	font-family:微软雅黑;
+	font-weight:normal;
+	color:#000;
+	white-space: normal;
+	margin:0;
+	text-align:left;
+	position:absolute;
+	left:10px;
+	top:5px;
+	
+}
+.uc .uc-arrow {
+	position: absolute;
+	right: 9px;
+	top: 12px;
+}
+/*性别start*/
+.uc .uc-controlgroup.ui-mini{margin:0;}
+.uc .uc-controlgroup{float:right;overflow:hidden;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-radio {
+	border-top-left-radius: 8px;
+	border-bottom-left-radius: 8px;
+}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-radio label{border: 1px solid #f79b40;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-btn-active{background: #f79b40;border: 1px solid #f79b40;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-btn-active.ui-first-child{border-right:0px;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-btn-active.ui-last-child{border-left:0px;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-radio input{margin:0;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-radio .ui-btn-inner{padding: 5px 15px;}
+.uc .uc-controlgroup .ui-controlgroup-controls .ui-radio .ui-btn-inner .ui-btn-text{font-size: 14px;font-weight:normal;font-family:微软雅黑;}
+/*性别start*/
+
+/*确认，返回，查看按钮start*/
+.uc .uc-btn-item{
+	text-align:right;
+}
+.uc .uc-btn-item .uc-btn-a.uc-btn-back{
+	border:1px solid #cbd6d4;
+	background:#FFFFFF;
+}
+.uc .uc-btn-item .uc-btn-a.uc-btn-view{
+	border:1px solid #d8d8d8;
+	background:#fff;
+}
+.uc .uc-btn-item .uc-btn-a{
+	border:1px solid #f79b40;
+	background:#f79b40;
+}
+.uc .uc-btn-item .uc-btn-a .ui-btn-text{
+	font-size: 16px;
+	font-family:微软雅黑;
+	font-weight:normal;
+	padding-left: 25px;
+}
+.uc .uc-btn-item .uc-btn-a.uc-btn-back .ui-btn-text{color:#8C9594;}
+.uc .uc-btn-item .uc-btn-a.uc-btn-view .ui-btn-text{color:#717171;}
+.uc .uc-btn-item .uc-btn-a .ui-btn-text{color:#ffffff;}
+.uc .uc-btn-item .ui-btn-inner{
+	height: 35px;
+	line-height: 35px;
+	padding: 0;
+}
+.uc .uc-btn-item .uc-btn-back{
+	width: 115px;
+}
+.uc .uc-btn-item .uc-btn-pay{
+	width: 115px;
+}
+
+.uc .uc-btn-item .uc-btn-view{
+	width: 150px;
+}
+.uc .uc-btn-item .uc-btn-search{
+	width: 115px;
+}
+.uc .uc-btn-item .uc-btn-back .uc-icon-back{
+	position:absolute;
+	top:2px;
+	left:27px;
+}
+.uc .uc-btn-item .uc-btn-pay .uc-icon-pay{
+	position:absolute;
+	top:2px;
+	left:27px;
+}
+.uc .uc-btn-item .uc-btn-view .uc-icon-view{
+	position:absolute;
+	top:-2px;
+	left:0;
+}
+.uc .uc-btn-item .uc-btn-search .uc-icon-search{
+	position:absolute;
+	top:-2px;
+	left:0;
+}
+/*确认，返回，查看按钮start*/
+
+/*弹出式提示start*/
+.uc-shade-tip{display:none;}
+.uc-btn-grey .ui-btn-inner{background-color:#f79b40;border:1px solid #f79b40;}
+.uc-btn-grey .ui-btn-text{color:#FFFFFF;}
+.uc-btn-white .ui-btn-inner{background-color:#e2e7e6;border:1px solid #cbd6d4;}
+.uc-btn-white .ui-btn-text{color:#a4a9a8;}
+.uc-popup{position:absolute;left:8%;top:50%;width:84%; filter:dropshadow(color=#666666,offx=3,offy=3,positive=2);z-index:1000;}
+.uc-popup h3{color:#536e6b;padding-top:25px;padding-bottom: 10px;}
+.uc-popup .msg{text-align:center;height:auto;background-color:#fafafa;border-radius: 8px;}
+.uc-shade{ background:#000;width:100%; height:100%; top:0; left:0;position:absolute; z-index:500;opacity:0.3;overflow:hidden;filter:Alpha(opacity=30);}
+/*弹出式提示end*/
+
+.copyright{bottom: 0;
+    color: #999999;
+    position: absolute;
+    text-align: center;
+    position: relative;
+    width: 100%;}
+.copyright div{   		
+	/*background-color:#F2F2F2;*/
+	margin-bottom:40px;
+	font-size: 12px;
+    height: 40px;
+    line-height: 40px;
+    margin: 0 auto;
+    text-align: center;
+	clear:both;
+   }
