@@ -1,0 +1,62 @@
+/*page*/
+*{
+	margin:0;
+	padding:0;
+}
+a{
+    text-decoration:none;
+}
+img{
+    border:none;
+}
+ul li,ul{
+    list-style:none;
+}
+.c:after{
+    clear:both;
+    height:0;
+    display:block;
+    visibility:hidden;
+    content:'.';
+}
+
+
+
+
+.download {
+    position: fixed;
+    bottom: 0px;
+    max-width: 700px;
+    left: 0px;
+    right: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    background: none repeat scroll 0% 0% #36CAD8;
+    height: 60px;
+    background-repeat: repeat-x;
+    opacity: 0.9;
+    border-radius:7px;
+}
+
+.download img{max-height:55px;margin:0 auto;padding-top: 0px;padding-bottom: 0px}
+.download a{margin-left:10px;margin-right:10px;padding-top: 3px;padding-bottom: 0px}
+
+
+
+
+
+
+.download  .accept a {
+    display: block;
+    background: none repeat scroll 0% 0% #36CAD8;
+    color: #FFF;
+    font-size: 18px;
+    text-decoration: none;
+    text-align: center;
+    margin-bottom: 20px;
+    height: 50px;
+    line-height: 50px;
+    border-radius: 7px;
+}
+
+
