@@ -21,7 +21,6 @@ var title = activity.get('title');
 var tags = activity.get('tagsName');
 var index_thumb_image = activity.get('index_thumb_image') || '/images/share/test.png';
 var thumb_images = activity.get('thumb_images') ;
-
 var pay_type = activity.get('pay_type');
 var price = '';
 if (pay_type == 1) {
@@ -30,13 +29,14 @@ if (pay_type == 1) {
     price = activity.get('price');
 }
 var optionUser = user;
-var startTime = activity.get('activity_time').Format('yyyy-MM-dd hh:mm:ss');
 
+console.log(activity.get('activity_time'));
+console.log(activity.get('activity_time').Format('yyyy-MM-dd hh:mm:ss'));
+return;
+
+var startTime = activity.get('activity_time').Format('yyyy-MM-dd hh:mm:ss');
 var endTime = activity.get('activity_end_time').Format('yyyy-MM-dd hh:mm:ss');
 var deadTime = activity.get('dead_time').Format('yyyy-MM-dd hh:mm:ss');
-
-
-
 %>
 
 
