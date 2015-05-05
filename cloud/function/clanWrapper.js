@@ -580,12 +580,6 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
         saveCategory
     参数：
         categoryNames:array 保存的分类名称
-        [
-            {
-                oldCategoryId:objectId  修改前分类ID，若为新增，可不传
-                newCategoryName:string  修改后分类名称
-            }
-        ]
     返回：
         [
             ClanCategory class object,
@@ -595,15 +589,11 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
 AV.Cloud.define('saveCategory', function(req, res){
     var clanId = req.params.clanId;
     var categoryNames = req.params.categoryNames;
-    var newCategoryNames = [];
-    _.each(categoryNames, function(categoryItem){
-       newCategoryNames.push(categoryItem.newCategoryName);
-    });
 
     var categoryObj = {};   //key:name value:category class object
 
     var query = new AV.Query('ClanCategory');
-    query.containedIn('cateName', newCategoryNames);
+    query.containedIn('cateName', categoryNames);
     query.find().then(function(results){
         var findCategoryNames = [];
         _.each(results, function(categoryItem){
@@ -613,7 +603,7 @@ AV.Cloud.define('saveCategory', function(req, res){
         });
 
         //找到尚未注册的名称，并为之注册
-        var unregisterCateNames = _.difference(newCategoryNames, findCategoryNames);
+        var unregisterCateNames = _.difference(categoryNames, findCategoryNames);
         var promises = [];
         _.each(unregisterCateNames, function(cateName){
             var ClanCategory = AV.Object.extend('ClanCategory');
@@ -632,7 +622,7 @@ AV.Cloud.define('saveCategory', function(req, res){
 
         var rets = [];
         var clanCategoryIds = [];
-        _.each(newCategoryNames, function(cateName){
+        _.each(categoryNames, function(cateName){
             var clanCategory = categoryObj[cateName];
             if (clanCategory) {
                 rets.push(clanCategory._toFullJSON());
