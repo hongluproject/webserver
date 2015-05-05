@@ -45,7 +45,7 @@ var thumb_images = activity.get('thumb_images') ;
 var pay_type = activity.get('pay_type');
 var price = '';
 if (pay_type == 1) {
-    price = '免费';  0
+    price = '免费';
 } else if (pay_type == 2 || pay_type == 3) {
     price = activity.get('price');
 }
@@ -111,7 +111,6 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                         <% if (activityUser){ %>
 
 
-                        <% console.log(activityUser);%>
                         <% activityUser.forEach(function (item){ %>
                         <li>
                             <a>
