@@ -8,7 +8,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <script src="/js/jquery-1.11.2.min.js"></script>
     <link rel="stylesheet" href="/stylesheets/page.css?2015022801"/>
-    <script type="text/javascript" charset="utf-8" src="/suaxu/function.js"></script>
     <script type="text/javascript" charset="utf-8" src="/suaxu/common.js"></script>
     <link rel="stylesheet" href="/suaxu/mobile_common.css" type="text/css">
     <link rel="stylesheet" href="/suaxu/mobile_act.css" type="text/css">
@@ -26,19 +25,20 @@ var thumb_images = activity.get('thumb_images') ;
 var pay_type = activity.get('pay_type');
 var price = '';
 if (pay_type == 1) {
-    price = '免费';
+    price = '免费';  0
 } else if (pay_type == 2 || pay_type == 3) {
     price = activity.get('price');
 }
 var optionUser = user;
+var startTime = activity.get('activity_time').Format('yyyy-MM-dd hh:mm:ss');
+
+var endTime = activity.get('activity_end_time').Format('yyyy-MM-dd hh:mm:ss');
+var deadTime = activity.get('dead_time').Format('yyyy-MM-dd hh:mm:ss');
+
+
+
 %>
 
-<script type="text/javascript">
-    var startTime = new Date(<%=activity.get('activity_time').getTime() %>).format('yyyy-mm-dd hh:MM:ss');
-    var endTime = new Date(<%=activity.get('activity_end_time').getTime() %>).format('yyyy-mm-dd hh:MM:ss');
-    var deadTime = new Date(<%=activity.get('dead_time').getTime() %>).format('yyyy-mm-dd hh:MM:ss');
-
-</script>
 
 
 <div id="act_detail">
@@ -60,7 +60,7 @@ var optionUser = user;
                 <div style="margin-top:8px;margin-bottom: 3px;">
                     <span style="margin-left:15px;"><font color="#f68a1e" size="4pt;"><%= price %></font></span>
         <span style="display: block;font-size:14px;float:right;color:#898989;margin-right:15px;">
-        <span id="acttime" style="color:#898989">报名截止时间:<script language="javascript">document.write(deadTime)</script></span></span>
+        <span id="acttime" style="color:#898989">报名截止时间:<%=deadTime%></span></span>
                 </div>
             </div>
 
@@ -69,10 +69,8 @@ var optionUser = user;
                 <div class="title_left">
                     <img src="/suaxu/04.png" width="20">
 
-                    <p><span style="color:#898989;"><script language="javascript">document.write(startTime)</script>- <script
-                                    language="javascript">document.write(endTime)</script></span></p>
+                    <p><span style="color:#898989;"><%=activity.get('activity_time').Format('yyyy-MM-dd')%>   至  <%=activity.get('activity_end_time').Format('yyyy-MM-dd')%></span></p>
                     <img src="/suaxu/lx.jpg" style="margin-top:3px;" width="20">
-
                     <p>
                         <% for (var i in tags) { %>
                         <%= tags[i] %>
@@ -258,7 +256,7 @@ var optionUser = user;
     }
 
 
-    var clickObj = new clockInt(endTime, "acttime");
+    var clickObj = new clockInt("<%=endTime%>", "acttime");
     window.setInterval("clickObj.getCurentTxt()", 1000);
 
     $('.actDetailBoxNav li').bind('click', function () {

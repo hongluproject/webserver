@@ -302,8 +302,6 @@ app.get('/activity/:objId', function(req,res) {
                     query.descending('createdAt');
                     query.find({
                         success: function(results){
-
-                            console.log(results)
                             if(object){
 
                                 res.render('activity', {activity:activityResult,user:optionUser,invitationCodeStatus:true,activityUser:results});
