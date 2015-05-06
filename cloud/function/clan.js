@@ -446,7 +446,7 @@ function removeReviewClanUser(userid, clanid, callback) {
         error:加入失败
         success:
             {
-                code: Integer
+                retCode: Integer
                     0:加入成功
                     1:发送成功，酋长审核中
                     2:已经申请过，等待酋长审核
@@ -474,7 +474,7 @@ AV.Cloud.define("joinClan", function (req, res) {
     query.first().then(function(clanUser){
         if (clanUser) {
             res.success({
-                code:0,
+                retCode:0,
                 describe:'您已经加入部落！'
             });
             return;
@@ -508,7 +508,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                             queryUser.equalTo('objectId', clan.get('founder_id').id);
                             common.sendStatus('addToClan', AV.User.createWithoutData('_User',userid), clan.get('founder_id'), queryUser,{clan:clan});
                             res.success({
-                                code:0
+                                retCode:0
                             });
                         }
                     });
@@ -520,7 +520,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                     query.count().then(function(count){
                         if(count>0){
                             res.success({
-                                code:2,
+                                retCode:2,
                                 describe:'已申请过加入部落'
                             });
                             return;
@@ -534,7 +534,7 @@ AV.Cloud.define("joinClan", function (req, res) {
                                                 "请求加入"+clan.get("title"),'requestJoinClan',clanid
                                             );
                                             res.success({
-                                                code:1,
+                                                retCode:1,
                                                 describe: '已经发送申请'
                                             });
                                         }
