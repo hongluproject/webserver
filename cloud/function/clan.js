@@ -473,7 +473,7 @@ AV.Cloud.define("joinClan", function (req, res) {
     query.equalTo('user_id', AV.User.createWithoutData('_User', userid));
     query.first().then(function(clanUser){
         if (clanUser) {
-            res.error({
+            res.success({
                 code:0,
                 describe:'您已经加入部落！'
             });
