@@ -139,7 +139,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var updateInfo = {
         android:{
             latestVersion:'1.0.8',
-            needUpdate:true
+            needUpdate:false
         },
         iPhone:{
             latestVersion:'1.0.6',
