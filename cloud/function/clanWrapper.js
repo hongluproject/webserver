@@ -254,7 +254,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
         var founder;
         if (clan) {
             retClan = clan;
-            categoryIds = clan.get('catalogIds');
+            categoryIds = clan.get('clanCateIds');
             founder = clan.get('founder_id');
             clan = clan._toFullJSON();
             clan.founder_id = founder._toFullJSON();
@@ -640,6 +640,7 @@ AV.Cloud.define('saveCategory', function(req, res){
         });
 
     }).catch(function(err){
+        console.error('保存分类失败:', err);
         res.error('保存分类失败，错误码:'+err.code);
     });
 });
