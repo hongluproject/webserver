@@ -139,7 +139,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var updateInfo = {
         android:{
             latestVersion:'1.0.9',
-            needUpdate:false
+            needUpdate:true
         },
         iPhone:{
             latestVersion:'1.0.6',
@@ -153,10 +153,10 @@ AV.Cloud.define('checkUpdate', function(req, res) {
                         (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
-            message:'修复一些讨厌的问题，提升应用稳定性。',
-            clickURL:'http://imsahala.com/sahala_1.0.9_20150505_126_0.apk',
+            message:'1.兴趣部落全面改版 \n2.更多同趣伙伴和部落推荐，找朋友、找圈子更容易 \n3.优化一些细节体验',
+            clickURL:'http://imsahala.com/sahala_1.0.9_20150506_126_0.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'9983fbc2d0d21a9718e3edb0e777f15c'
+            packageMd5:'89a24462c0def11d791d09410bdd8a5c'
         });
     } else {
         res.success({
