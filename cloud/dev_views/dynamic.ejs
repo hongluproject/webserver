@@ -28,7 +28,7 @@
                 userIcon = userId.get('icon');
             }
             var userName = userId.get('nickname');
-            var tagsName = dynamic.get('tagsName');
+            var tagNames = dynamic.get('tagNames');
             var dynamicContent = dynamic.get('content')||"";
             var thumbs = dynamic.get('thumbs');
             var voice = dynamic.get('voice') || '';
@@ -56,8 +56,8 @@
         <dl class="cf">
             <dt><%= userName %></dt>
             <dd>
-                <% for (var i in tagsName) {%>
-                    <span class="key">[<%= tagsName[i] %>]</span>
+                <% for (var i in tagNames) {%>
+                    <span class="key">[<%= tagNames[i] %>]</span>
                 <%}%>
             </dd>
         </dl>

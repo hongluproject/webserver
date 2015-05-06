@@ -236,7 +236,7 @@ AV.Cloud.define("getClan",function(req, res){
                                 arrayTagName.push(name);
                             }
                             if (arrayTagName.length) {
-                                result[i].set('tagsName', arrayTagName);
+                                result[i].set('tagNames', arrayTagName);
                             }
 
                             var founderObj = result[i].get('founder_id');
@@ -323,7 +323,7 @@ AV.Cloud.define("getClan",function(req, res){
                     arrayTagName.push(name);
                 }
                 if (arrayTagName.length) {
-                    result[i].set('tagsName', arrayTagName);
+                    result[i].set('tagNames', arrayTagName);
                 }
                 outResult       = result[i];
                 var founderObj = result[i].get('founder_id');

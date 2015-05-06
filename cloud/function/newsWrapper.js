@@ -3,6 +3,126 @@
  */
 
 var common = require('cloud/common.js');
+var _ = AV._;
+
+/*
+    获取资讯列表
+    函数名：
+        getNews2  (用于替换getNews)
+    参数：
+        userId:object 用户ID，若不传，则为当前登录用户
+        tags:array    筛选tags，若不传，则为当前登录用户的兴趣标签
+        skip、limit:   分页查询参数
+        cates:array   筛选的cate
+        areas:array   筛选指定area
+        favoriteIds:array 查询指定收藏的资讯
+ 返回：[
+         {
+             news: News class object,
+             extra:{
+                 tagNames: array 对应资讯标签名称
+                 isLike: bool    该用户是否点赞过
+                 like: Like class object 对应的点赞对象，若有该对象，则表示用户点赞过
+             }
+         },
+         ...
+     ]
+ */
+AV.Cloud.define('getNews2', function(req, res){
+    var HPGlobalParam = AV.HPGlobalParam || {};
+    var userId = req.params.userId || (req.user && req.user.id);
+    var limit = req.params.limit || 20;
+    var skip = req.params.skip || 0;
+    var areas = req.params.areas;
+    var tags = req.params.tags || (req.user&&req.user.get('tags'));
+    var cates = req.params.cates;
+    var favoriteIds = req.params.favoriteIds || [];
+    var likeTarget = {};	//记录该用户点过赞的id
+    var newsResults = [];
+    var queryOr = [];
+    var newsClass = AV.Object.extend('News');
+    if (areas) {
+        var areaOr = null;
+        for(var i=0;i<areas.length;i++){
+            var areaOr = new AV.Query(newsClass);
+            areaOr.equalTo("areas", areas[i]);
+            queryOr.push(areaOr);
+        }
+    }
+    if (tags) {
+        var tagOr = null;
+        for(var i=0;i<tags.length;i++){
+            var tagOr = new AV.Query(newsClass);
+            tagOr.equalTo("tags", tags[i]);
+            queryOr.push(tagOr);
+        }
+    }
+    if (cates) {
+        var cateOr = null;
+        for(var i=0;i<cates.length;i++){
+            var cateOr = new AV.Query(newsClass);
+            cateOr.equalTo("cateids", cates[i]);
+            queryOr.push(cateOr);
+        }
+    }
+
+    if(areas||tags||cates){
+        var queryNews= AV.Query.or.apply(null, queryOr);
+    }else{
+        var queryNews= new AV.Query(newsClass);
+
+    }
+    queryNews.select(["comment_count","cateids","title","up_count","list_pic",
+        "allow_comment","areas","contents_url","allow_forward","tags","rank"]);
+    queryNews.limit(limit);
+    queryNews.skip(skip);
+    queryNews.equalTo('status', 1);
+    queryNews.descending('publicAt');
+    if (favoriteIds.length > 0) {
+        queryNews.containedIn('objectId', favoriteIds);
+    }
+
+    var allNews;
+    queryNews.find().then(function(results){
+        allNews = results;
+
+        var newsIds = [];
+        _.each(results, function(newsItem){
+            newsIds.push(newsItem.id);
+        });
+
+        if (_.isEmpty(newsIds)) {
+            return AV.Promise.as();
+        } else {
+            var query = new AV.Query('Like');
+            query.equalTo('like_type', 1);
+            query.containedIn('external_id', newsIds);
+            query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            return query.find();
+        }
+    }).then(function(likes){
+        var likeObj = {};
+        _.each(likes, function(likeItem){
+            likeObj[likeItem.get('external_id')] = likeItem;
+        });
+
+        var ret = [];
+        _.each(allNews, function(newsItem){
+            ret.push({
+                news:newsItem._toFullJSON(),
+                extra:{
+                    tagNames:common.tagNameFromId(newsItem.get('tags')),
+                    isLike:likeObj[newsItem.id]?true:false,
+                    like:likeObj[newsItem.id]?newsItem._toFullJSON():undefined
+                }
+            });
+        });
+
+        res.success(ret);
+    }, function(err){
+        console.error(err);
+    });
+});
 /*
  获取资讯列表包装函数
  request params:
