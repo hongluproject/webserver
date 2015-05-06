@@ -43,11 +43,10 @@ var index_thumb_image = '/suaxu/suaxu.png';
 var thumb_images = activity.get('thumb_images') ;
 
 var pay_type = activity.get('pay_type');
-var price = '';
-if (pay_type == 1) {
+ if (pay_type == 1) {
     price = '免费';
 } else if (pay_type == 2 || pay_type == 3) {
-    price = activity.get('price');
+    price = '￥'+activity.get('price')+'/人';
 }
 var optionUser = user;
 var startTime = activity.get('activity_time').format('yyyy-MM-dd hh:mm:ss');
