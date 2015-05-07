@@ -293,7 +293,7 @@ app.get('/activity/:objId', function(req,res) {
             query.descending("createdAt");
             query.first({
                 success: function(object) {
-                    var optionUser = object.get('userId');
+                    var optionUser = activityResult.get('user_id');
                     query = new AV.Query('ActivityUser');
                     query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
                     query.limit(10);
