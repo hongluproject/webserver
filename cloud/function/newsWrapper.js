@@ -72,12 +72,12 @@ AV.Cloud.define('getNews2', function(req, res){
         var queryNews= new AV.Query(newsClass);
 
     }
-    queryNews.select(["comment_count","cateids","title","up_count","list_pic",
-        "allow_comment","areas","contents_url","allow_forward","tags","rank"]);
+    queryNews.select(["-contents"]);
     queryNews.limit(limit);
     queryNews.skip(skip);
     queryNews.equalTo('status', 1);
     queryNews.descending('publicAt');
+    queryNews.include('clanCateId', 'clanId');
     if (favoriteIds.length > 0) {
         queryNews.containedIn('objectId', favoriteIds);
     }
@@ -106,14 +106,20 @@ AV.Cloud.define('getNews2', function(req, res){
             likeObj[likeItem.get('external_id')] = likeItem;
         });
 
+        var pickClanKeys = ["objectId", "founder_id", "title", "className", "__type"];
         var ret = [];
         _.each(allNews, function(newsItem){
+            var clan = newsItem.get('clanId');
+            var category = newsItem.get('clanCateId');
+            newsItem = newsItem._toFullJSON();
+            newsItem.clanId = clan && _.pick(clan._toFullJSON(), pickClanKeys);
+            newsItem.clanCateId = category && category._toFullJSON();
             ret.push({
-                news:newsItem._toFullJSON(),
+                news:newsItem,
                 extra:{
-                    tagNames:common.tagNameFromId(newsItem.get('tags')),
-                    isLike:likeObj[newsItem.id]?true:false,
-                    like:likeObj[newsItem.id]?newsItem._toFullJSON():undefined
+                    tagNames:common.tagNameFromId(newsItem.tags),
+                    isLike:likeObj[newsItem.objectId]?true:false,
+                    like:likeObj[newsItem.objectId]?newsItem:undefined
                 }
             });
         });

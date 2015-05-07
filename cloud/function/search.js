@@ -253,7 +253,7 @@ AV.Cloud.define("getSearch",function(req,res){
 
     };
 
-    if(tagId){
+    if(tagId || type=='5' || type=='user'){
         switchTab(type, res);
     }else if(kw){
         var query = new AV.Query(Tag);
@@ -556,7 +556,7 @@ AV.Cloud.define('getSearch2', function(req, res){
 
     };
 
-    if(tagId){
+    if(tagId || type=='user'){
         //标签筛选
         switchTab(type, res);
     } else if(kw){
