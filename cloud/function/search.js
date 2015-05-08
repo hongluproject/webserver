@@ -196,7 +196,8 @@ AV.Cloud.define("getSearch",function(req,res){
             query.matches("title",  re);
         }
         query.skip(skip);
-        query.descending('createdAt');
+         query.descending('activity_end_time');
+        query.addDescending('createdAt');
          query.find().then(function(results){
              if (!results) {
                  res.success();

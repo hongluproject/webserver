@@ -486,7 +486,7 @@ AV.Cloud.define('getClanBarList', function(req, res){
     query.equalTo('clanCateId', AV.Object.createWithoutData('ClanCategory', categoryId));
     query.equalTo('status', 1);
     query.descending('rank');
-    query.descending('publicAt');
+    query.addDescending('publicAt');
     query.skip(skip);
     query.limit(limit);
     query.find().then(function(results){

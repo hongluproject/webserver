@@ -774,6 +774,102 @@ AV.Cloud.define('paymentComplete', function(req, res){
     });
 });
 
+/*
+    获取活动报名用户列表
+    函数名：
+        getActivityUsers2   (用于替换 getActivityUsers)
+    参数：
+        userId:objectId     用户ID，若不传，则默认为当前登录用户
+        activityId:objectId 活动ID
+        limit skip:分页查询参数
+    返回：
+    [
+        {
+            activityUser: ActivityUser class object
+            extra:{
+                isFriend:bool 与当前用户的好友关系
+            }
+        }
+    ]
+ */
+AV.Cloud.define('getActivityUsers2', function(req, res){
+    var userId = req.params.userId || (req.user && req.user.id);
+    var activityId = req.params.activityId;
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
+    var retVal = [];
+
+    if (!activityId) {
+        res.error('请传入活动信息！');
+        return;
+    }
+
+    var query = new AV.Query('ActivityUser');
+    query.include('user_id');
+    query.include('order_id.signupId');
+    query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
+    query.skip(skip);
+    query.limit(limit);
+    query.find().then(function(results){
+        if (!results) {
+            res.success();
+            return;
+        }
+
+        var followees = [];
+        results.forEach(function(item) {
+            var user = item.get('user_id');
+            if (user) {
+                var userInfo = {
+                    nickname:user.get('nickname') || '',
+                    icon:user.get('icon')||''
+                };
+                item.set('user_info', userInfo);
+                var order = item.get('order_id');
+                if (order) {
+                    var signupInfo = order.get('signupId');
+                    if (signupInfo) {
+                        item.set('sex', signupInfo.get('sex'));
+                        item.set('phone', signupInfo.get('phone'));
+                        item.set('idcard', signupInfo.get('idcard'));
+                        item.set('two_way_permit', signupInfo.get('twoWayPermit'));
+                        item.set('passport_card', signupInfo.get('passportCard'));
+                        item.set('mtp', signupInfo.get('mtp'));
+                        item.set('real_name', signupInfo.get('realName'));
+                    }
+                }
+
+                followees.push(user);
+            }
+
+        });
+
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type", "actual_position"];
+        common.findFriendShipForUsers(userId, followees).then(function(friendObj){
+            _.each(results, function(item){
+                var user = item.get('user_id');
+                if (user) {
+                    item = item._toFullJSON();
+                    item.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+
+                    retVal.push({
+                        activityUser:item,
+                        extra:{
+                            isFriend:friendObj[user.id]
+                        }
+                    });
+                }
+            });
+
+            res.success(retVal);
+        });
+
+    }, function(err){
+        console.error('处理订单完成失败:', err);
+        res.error('获取活动用户失败,错误码:'+err.code);
+    });
+});
+
 /**
  * 获得活动报名用户列表  函数名：getActivityUsers
  * @param activityId:活用ID
@@ -833,7 +929,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
                 retVal.push(item);
             }
 
-        })
+        });
 
         res.success(retVal);
     }, function(err){
