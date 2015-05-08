@@ -146,12 +146,12 @@ app.get('/dynamic/:objId', function(req, res) {
 
         //加标签名
         var tags = dynamicResult.get('tags');
-        var tagsName = [];
+        var tagNames = [];
         for (var i in tags) {
             var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
-            tagsName.push(tagName?tagName:'');
+            tagNames.push(tagName?tagName:'');
         }
-        dynamicResult.set('tagsName', tagsName);
+        dynamicResult.set('tagNames', tagNames);
 
         renderObj = dynamicResult;
         //获取该动态最近10个评论
@@ -204,12 +204,12 @@ app.get('/clan/:objId', function(req,res) {
             }
 
             var tags = clanResult.get('tags');
-            var tagsName = [];
+            var tagNames = [];
             for (var i in tags) {
                 var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
-                tagsName.push(tagName?tagName:'');
+                tagNames.push(tagName?tagName:'');
             }
-            clanResult.set('tagsName', tagsName);
+            clanResult.set('tagNames', tagNames);
 
             var InvitationCode = AV.Object.extend("InvitationCode");
             var query = new AV.Query(InvitationCode);
@@ -274,14 +274,14 @@ app.get('/activity/:objId', function(req,res) {
                 return;
             }
             var tags = activityResult.get('tags');
-            var tagsName = [];
+            var tagNames = [];
             for (var i in tags) {
                 if(AV.HPGlobalParam.hpTags[tags[i]]){
                     var tagName = AV.HPGlobalParam.hpTags[tags[i]].get('tag_name');
-                    tagsName.push(tagName?tagName:'');
+                    tagNames.push(tagName?tagName:'');
                 }
             }
-            activityResult.set('tagsName', tagsName);
+            activityResult.set('tagNames', tagNames);
             var InvitationCode = AV.Object.extend("InvitationCode");
             var query = new AV.Query(InvitationCode);
             query.equalTo("invitationCode",invitationCode);
@@ -293,7 +293,7 @@ app.get('/activity/:objId', function(req,res) {
             query.descending("createdAt");
             query.first({
                 success: function(object) {
-                    var optionUser = object.get('userId');
+                    var optionUser = activityResult.get('user_id');
                     query = new AV.Query('ActivityUser');
                     query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
                     query.limit(10);

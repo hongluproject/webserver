@@ -196,7 +196,8 @@ AV.Cloud.define("getSearch",function(req,res){
             query.matches("title",  re);
         }
         query.skip(skip);
-        query.descending('createdAt');
+         query.descending('activity_end_time');
+        query.addDescending('createdAt');
          query.find().then(function(results){
              if (!results) {
                  res.success();
@@ -253,7 +254,7 @@ AV.Cloud.define("getSearch",function(req,res){
 
     };
 
-    if(tagId){
+    if(tagId || type=='5' || type=='user'){
         switchTab(type, res);
     }else if(kw){
         var query = new AV.Query(Tag);
@@ -556,7 +557,7 @@ AV.Cloud.define('getSearch2', function(req, res){
 
     };
 
-    if(tagId){
+    if(tagId || type=='user'){
         //标签筛选
         switchTab(type, res);
     } else if(kw){

@@ -457,7 +457,7 @@ AV.Cloud.define('bringNewsToTop', function(req, res){
         skip、limit      分页查询参数
     返回：[
             {
-                News: News class object,
+                news: News class object,
                 extra:{
                     tagNames: array 对应资讯标签名称
                     isLike: bool    该用户是否点赞过
@@ -486,7 +486,7 @@ AV.Cloud.define('getClanBarList', function(req, res){
     query.equalTo('clanCateId', AV.Object.createWithoutData('ClanCategory', categoryId));
     query.equalTo('status', 1);
     query.descending('rank');
-    query.descending('publicAt');
+    query.addDescending('publicAt');
     query.skip(skip);
     query.limit(limit);
     query.find().then(function(results){
@@ -515,7 +515,7 @@ AV.Cloud.define('getClanBarList', function(req, res){
         var ret = [];
         _.each(allNews, function(newsItem){
             ret.push({
-                News:newsItem._toFullJSON(),
+                news:newsItem._toFullJSON(),
                 extra:{
                     tagNames:common.tagNameFromId(newsItem.get('tags')),
                     isLike:likeObj[newsItem.id]?true:false,

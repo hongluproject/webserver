@@ -38,8 +38,8 @@ Date.prototype.format = function(fmt)
     return fmt;
 }
 var title = activity.get('title');
-var tags = activity.get('tagsName');
-var index_thumb_image = activity.get('index_thumb_image') || '/images/share/test.png';
+var tags = activity.get('tagNames');
+var index_thumb_image = '/suaxu/suaxu.png';
 var thumb_images = activity.get('thumb_images') ;
 
 var pay_type = activity.get('pay_type');
@@ -47,7 +47,7 @@ var price = '';
 if (pay_type == 1) {
     price = '免费';
 } else if (pay_type == 2 || pay_type == 3) {
-    price = activity.get('price');
+    price = '￥'+activity.get('price')+'/人';
 }
 var optionUser = user;
 var startTime = activity.get('activity_time').format('yyyy-MM-dd hh:mm:ss');
@@ -117,8 +117,8 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                             </a>
 
                             <div class="radius"><a>
-                                </a><a href="#"><img
-                                            src="<%= item.get('user_id').get('icon') ? item.get('user_id').get('icon') : "/suaxu/gg.png" %>"
+                                </a><a href="javascript:void(0)"><img
+                                            src="<%= item.get('user_id').get('icon') ? item.get('user_id').get('icon').concat('?imageView2/2/w/50') : "/suaxu/gg.png" %>"
                                             style="height:50px;width:50px;"></a>
                             </div>
                             <div class="person_name"><%= item.get('user_id').get('nickname') %></div>
@@ -140,9 +140,9 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                     <div id="actDetailBoxNav_bulid" class="rebox-title">
                         <div>
                             <ul class="rebox-ul actDetailBoxNav">
-                                <li class="active" data-value="rebox-journey"><a class="rebox-in">图集</a></li>
-                                <li class="" data-value="rebox-cost"><a class="rebox-in">详情</a></li>
-                                <li class="" data-value="rebox-notice"><a class="rebox-in">费用</a></li>
+                                <li class="active" data-value="rebox-journey"><span class="rebox-in" >图集</span></li>
+                                <li class="" data-value="rebox-cost"><span class="rebox-in">详情</span></li>
+                                <li class="" data-value="rebox-notice"><span class="rebox-in">费用</span></li>
                             </ul>
                         </div>
                     </div>
@@ -151,9 +151,9 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                     <div style="display: none;" id="actDetailBoxNav" class="rebox-title">
                         <div>
                             <ul class="rebox-ul actDetailBoxNav">
-                                <li class="active" data-value="rebox-journey"><a class="rebox-in">图集</a></li>
-                                <li class="" data-value="rebox-cost"><a class="rebox-in">详情</a></li>
-                                <li class="" data-value="rebox-notice"><a class="rebox-in">费用</a></li>
+                                <li class="active" data-value="rebox-journey"><span class="rebox-in">图集</span></li>
+                                <li class="" data-value="rebox-cost"><span class="rebox-in">详情</span></li>
+                                <li class="" data-value="rebox-notice"><span class="rebox-in">费用</span></li>
                             </ul>
                         </div>
                     </div>
@@ -166,7 +166,8 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
 
                             <% if (thumb_images){ %>
                             <% thumb_images.forEach(function (item){ %>
-                            <img src="<%=item%>" style="padding-bottom: 10px;">
+                            <img src="<%=item%>" style="padding-bottom: 10px;" width="100%">
+
                             <% })
                             } %>
                         </div>
@@ -215,7 +216,7 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                                     </p>
 
                                     <p style="clear: both; white-space: normal;">
-                                        【活动费用】：<%= activity.get('price')?activity.get('price'):'' %>
+                                        【活动费用】：<%= price %>
                                     </p>
 
                                     <p style="clear: both; white-space: normal;">
@@ -285,8 +286,8 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
         $('#actDetailBoxNav_bulid li').eq(i).addClass('active');
         $('.rebox-intro').children().hide();
         $('.' + value).show();
-        var scrollTop = $('#actDetailBoxNav_bulid').length ? $('#actDetailBoxNav_bulid').offset().top : 0;
-        $("html,body").scrollTop(scrollTop);
+       /* var scrollTop = $('#actDetailBoxNav_bulid').length ? $('#actDetailBoxNav_bulid').offset().top : 0;
+        $("html,body").scrollTop(scrollTop);*/
         setTimeout(function () {
             $(window).trigger('scroll');
         }, 100);

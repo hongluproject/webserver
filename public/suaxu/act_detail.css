@@ -408,12 +408,12 @@ body{ background:#f9f9f9}
 }
 .join_person li .radius{
     position:relative;
-    border-radius:50%;
+    border-radius:5px;
     width:50px;
     height:50px;
     overflow:hidden;
 }
-.join_person li .radius img{border-radius:50%;}
+.join_person li .radius img{border-radius:5px;}
 .join_person li .xiedai{
     position:absolute;
     bottom:0;
