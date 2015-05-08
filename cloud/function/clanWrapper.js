@@ -228,6 +228,9 @@ AV.Cloud.define('userUpdate', function(req, res){
         ],
         activity:activity class object,
         news: News class object 部落里面最近的看吧文章
+        extra:{
+            hasJoined:bool 是否为该部落成员
+        }
     }
  */
 AV.Cloud.define('getClanDetail', function(req, res){
@@ -259,6 +262,13 @@ AV.Cloud.define('getClanDetail', function(req, res){
             clan = clan._toFullJSON();
             clan.founder_id = founder._toFullJSON();
             ret.clan = clan;
+
+            if (founder.id != userId) {
+                var clanIds = req.user && req.user.get('clanids');
+                if (clanIds && _.indexOf(clanIds, clanId)>=0) {
+                    ret.extra.hasJoined = true;
+                }
+            }
         }
 
         //查询部落成员
@@ -426,7 +436,7 @@ AV.Cloud.define('bringNewsToTop', function(req, res){
     query.equalTo('clanId', AV.Object.createWithoutData('Clan', clanId));
     query.equalTo('clanCateId', AV.Object.createWithoutData('ClanCategory', categoryId));
     query.descending('rank');
-    query.descending('publicAt');
+    query.addDescending('publicAt');
     query.first().then(function(result){
         var maxRank = (result&&result.get('rank')) || 0;
         var findNewsId = result&&result.id;
