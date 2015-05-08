@@ -593,8 +593,8 @@ AV.Cloud.define("reviewClan", function (req, res) {
             }
             NotInClan(userid, clanid, function(success) {
                 if (!success) {
-                    res.error('已加入过部落');
-                    return
+                    res.success('已加入过部落');
+                    return;
                 }
             });
         },
