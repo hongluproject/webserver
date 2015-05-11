@@ -446,6 +446,7 @@ AV.Cloud.define('getSearch2', function(req, res){
     //部落
     var getClan = function(){
         var query = new AV.Query('Clan');
+        query.include('founder_id');
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');
@@ -458,12 +459,14 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.find({
             success: function(results) {
                 var retResult = [];
+                //保留的user keys
+                var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type", "tags"];
                 _.each(results, function(clanItem){
-                    var fouder = clanItem.get('founder_id');
+                    var founder = clanItem.get('founder_id');
                     var clanIds = req.user && req.user.get('clanids');
                     var reviewClanIds = req.user && req.user.get('review_clanids');
                     var clanType = 0;
-                    if (fouder.id != req.user.id) {
+                    if (founder.id != req.user.id) {
                         if (clanIds && _.indexOf(clanIds,clanItem.id)>=0) {
                             clanType = 2;   //部落成员
                         } else if (reviewClanIds && _.indexOf(reviewClanIds,clanItem.id)>=0) {
@@ -473,8 +476,11 @@ AV.Cloud.define('getSearch2', function(req, res){
                     } else {
                         clanType = 1;       //部落创建者
                     }
+
+                    clanItem = clanItem._toFullJSON();
+                    clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
                     retResult.push({
-                        clan:clanItem._toFullJSON(),
+                        clan:clanItem,
                         extra:{
                             clanType:clanType
                         }

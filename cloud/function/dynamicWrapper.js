@@ -46,6 +46,8 @@ AV.Cloud.define('getDynamic2', function(req,res){
     }
 
     var findDynamicAndReturn = function(query) {
+        var pickActivityKeys = ['objectId','__type', 'title', "className"];
+        var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
         var msgIds;
         query.find().then(function(results){
             if (dynamicType == 'followeDynamic') {
@@ -93,8 +95,6 @@ AV.Cloud.define('getDynamic2', function(req,res){
         });
     }
 
-    var pickActivityKeys = ['objectId','__type', 'title', "className"];
-    var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
     switch (dynamicType) {
         case 'squareDynamic':   //查询用户兴趣相关的广场动态
             var tags = req.user.get('tags');
@@ -115,6 +115,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);
+            query.include('user_id', 'activityId');
             query.limit(limit).skip(skip);
             query.descending('createdAt');
             break;
