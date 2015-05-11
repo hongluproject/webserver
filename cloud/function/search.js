@@ -326,6 +326,13 @@ AV.Cloud.define("getSearch",function(req,res){
     resClan:[
         {
             clan:clan class object
+            extra:{
+                clanType:Integer
+                    0：未加入
+                    1：部落创建者
+                    2：部落成员
+                    3：申请加入待审核
+            }
         },
         ...
     ]
@@ -452,8 +459,25 @@ AV.Cloud.define('getSearch2', function(req, res){
             success: function(results) {
                 var retResult = [];
                 _.each(results, function(clanItem){
+                    var fouder = clanItem.get('founder_id');
+                    var clanIds = req.user && req.user.get('clanids');
+                    var reviewClanIds = req.user && req.user.get('review_clanids');
+                    var clanType = 0;
+                    if (fouder.id != req.user.id) {
+                        if (clanIds && _.indexOf(clanIds,clanItem.id)>=0) {
+                            clanType = 2;   //部落成员
+                        } else if (reviewClanIds && _.indexOf(reviewClanIds,clanItem.id)>=0) {
+                            clanType = 3;   //申请加入待审核
+                        }
+
+                    } else {
+                        clanType = 1;       //部落创建者
+                    }
                     retResult.push({
-                        clan:clanItem._toFullJSON()
+                        clan:clanItem._toFullJSON(),
+                        extra:{
+                            clanType:clanType
+                        }
                     });
                 })
 

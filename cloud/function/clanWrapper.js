@@ -229,7 +229,11 @@ AV.Cloud.define('userUpdate', function(req, res){
         activity:activity class object,
         news: News class object 部落里面最近的看吧文章
         extra:{
-            hasJoined:bool 是否为该部落成员
+             clanType:Integer
+                 0：未加入
+                 1：部落创建者
+                 2：部落成员
+                 3：申请加入待审核
         }
     }
  */
@@ -263,12 +267,17 @@ AV.Cloud.define('getClanDetail', function(req, res){
             clan.founder_id = founder._toFullJSON();
             ret.clan = clan;
 
-            if (founder.id != userId) {
-                var clanIds = req.user && req.user.get('clanids');
-                if (clanIds && _.indexOf(clanIds, clanId)>=0) {
-                    ret.extra.hasJoined = true;
+            var clanType = 0;
+            if (founder.id == req.user.id) {
+                clanType = 1;
+            } else {
+                if (_.indexOf(req.user.get('clanids'), clan.objectId) >= 0) {
+                    clanType = 2;
+                } else if (_.indexOf(req.user.get('review_clanids'), clan.objectId) >= 0) {
+                    clanType = 3;
                 }
             }
+            ret.extra.clanType = clanType;
         }
 
         //查询部落成员

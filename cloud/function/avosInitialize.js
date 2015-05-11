@@ -84,7 +84,10 @@ AV.Cloud.define('updateHPParamTimer', function(req, res) {
     res.success();
 });
 
-/*  查询升级信息，APP每次启动的时候调用。
+/*
+    查询升级信息，APP每次启动的时候调用。
+    函数名:
+        checkUpdate
     @params:
         clientVersion:client Version
         deviceType: ios or android
@@ -98,6 +101,11 @@ AV.Cloud.define('updateHPParamTimer', function(req, res) {
         clickURL:点击链接
         lastVersion:1.0.1 最近版本
         showManualUpdate: true or false ,APP默认为false,显示手动升级，IOS使用。
+        launchOpt:{
+            show:bool           是否显示启动图
+            showSeconds:Integer 显示秒数
+            picUrl:string       启动图URL
+        }
     }
  */
 AV.Cloud.define('checkUpdate', function(req, res) {
@@ -147,6 +155,11 @@ AV.Cloud.define('checkUpdate', function(req, res) {
         }
     };
 
+    var launchOpt = {
+        show:true,
+        showSeconds:3,
+        picUrl:'http://hoopeng.qiniudn.com/7FFE1A8EFE7C38E213EC03CDAE3E9731.png'
+    };
     if (deviceType == 'android') {
         res.success({
             needUpdate:updateInfo.android.needUpdate &&
@@ -156,7 +169,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             message:'1.兴趣部落全面改版 \n2.更多同趣伙伴和部落推荐，找朋友、找圈子更容易 \n3.优化一些细节体验',
             clickURL:'http://imsahala.com/sahala_1.1.0_20150506_128_0.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'f03e6c3aa527fc5f7a828fe49646950c'
+            packageMd5:'f03e6c3aa527fc5f7a828fe49646950c',
+            launchOpt:launchOpt
         });
     } else {
         res.success({
@@ -170,7 +184,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '4、奔跑吧兄弟\n' +
             '5、最强大脑',
             clickURL:'https://itunes.apple.com/us/app/sa-ha-la-jie-shi-tong-qu-peng/id952260502?mt=8&uo=4',
-            lastVersion:updateInfo.iPhone.latestVersion
+            lastVersion:updateInfo.iPhone.latestVersion,
+            launchOpt:launchOpt
         });
     }
 
