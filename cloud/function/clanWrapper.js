@@ -562,11 +562,30 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
     var userId = req.params.userId || (req.user&&req.user.id);
     var newsId = req.params.newsId;
 
-    var newsObj = AV.Object.createWithoutData('News', newsId);
-    newsObj.set('status', 2);
-    newsObj.save().then(function(){
-       res.success();
-    }, function(err){
+    var query = new AV.Query('News');
+    query.select('status', 'clanCateId');
+    query.get(newsId).then(function(newsItem){
+        //分类文章数减1
+        var clanCategory = newsItem.get('clanCateId');
+        var clan = newsItem.get('clanId');
+        if (clanCategory && clan) {
+            query = new AV.Query('ClanCategoryCount');
+            query.equalTo('clanId', clan.id);
+            query.equalTo('clanCateId', clanCategory.id);
+            query.first().then(function(clanCategoryCountItem){
+                clanCategoryCountItem.fetchWhenSave(true);
+                clanCategoryCountItem.increment('cateCount', -1);
+                clanCategoryCountItem.save();
+            });
+        }
+
+        //文章设置为删除状态
+        newsItem.set('status', 2);
+        return newsItem.save();
+    }).then(function(result){
+        res.success();
+    }).catch(function(err){
+        console.error('删除文章失败:', err);
         res.error('删除失败，错误码:'+err.code);
     });
 });
@@ -676,6 +695,7 @@ AV.Cloud.define('saveCategory', function(req, res){
             category: ClanCategory class object
             extra:{
                 visible:true or false,默认为true
+                cateCount:Integer 对应部落下该分类的文章数量
             }
         }
     ]
@@ -688,7 +708,7 @@ AV.Cloud.define('getClanCategory', function(req, res){
     }
 
     var clanCateIds = [], hideCateIds = [];
-    var clanCateObj = {}, hideCateObj = {};
+    var clanCateObj = {}, hideCateObj = {}, clanCategoryCountObj = {};
     var query = new AV.Query('Clan');
     query.select('clanCateIds', 'hideCateIds');
     query.get(clanId).then(function(clan){
@@ -703,13 +723,29 @@ AV.Cloud.define('getClanCategory', function(req, res){
             hideCateObj[clanCateId] = true;
         });
 
+        var promises = [];
+        //查找分类对应的对象
         query = new AV.Query('ClanCategory');
         query.containedIn('objectId', clanCateIds);
-        return query.find();
-    }).then(function(clanCates){
+        promises.push(query.find());
+
+        //查找分类对应的数量
+        query = new AV.Query('ClanCategoryCount');
+        query.containedIn('clanCateId', clanCateIds);
+        query.equalTo('clanId', clanId);
+        promises.push(query.find());
+
+        return Promise.all(promises);
+    }).then(function(results){
+        var clanCates = results[0];
         _.each(clanCates, function(clanCate){
             var clanCateId = clanCate.id;
             clanCateObj[clanCateId] = clanCate;
+        });
+
+        var clanCategoryCounts = results[1];
+        _.each(clanCategoryCounts, function(clanCategoryCountItem){
+            clanCategoryCountObj[clanCategoryCountItem.get('clanCateId')] = clanCategoryCountItem.get('cateCount');
         });
 
         var ret = [];
@@ -719,7 +755,8 @@ AV.Cloud.define('getClanCategory', function(req, res){
                 ret.push({
                         category:clanCate._toFullJSON(),
                         extra:{
-                            visible:hideCateObj[clanCateId]?false:true
+                            visible:hideCateObj[clanCateId]?false:true,
+                            cateCount:clanCategoryCountObj[clanCateId]
                         }
                 });
             }
