@@ -81,6 +81,8 @@ app.get('/news/:objId', function(req, res) {
     console.info("begin find news:%s", articleId);
     var query = new AV.Query('News');
     query.equalTo('objectId', articleId);
+    query.include('clanId');
+    query.include('userId');
     query.find().then(function(results){
         //根据传进来的articleId，找到对应的资讯记录
         if (!results || results.length<=0)
@@ -96,6 +98,8 @@ app.get('/news/:objId', function(req, res) {
                     common.pad((publicAt.getDate()),2);
             renderObj.newsContent = obj.get('contents');
             renderObj.fromWhere = obj.get('source'),
+            renderObj.userInfo = obj.get('userId'),
+            renderObj.clanInfo = obj.get('clanId'),
             tagIds = obj.get('tags');
 
             break;

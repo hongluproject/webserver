@@ -58,6 +58,10 @@ article { display: block; }
 .a-container { padding: 10px 0 0 0; }
 .article-doc h1 { font-size: 22px; line-height: 1.4; font-weight: 300; color: #222; padding: 0; margin: 0; margin-bottom: 20px; }
 .a-source { font-size: 1.1em; margin-right: 10px; }
+.a-from { font-size: 1.7em; margin-bottom:40px; }
+.a-from a { color: #3261a3; }
+
+
 .a-date { font-size: 1.1em; margin-right: 12px; }
 .a-tag { float: left; }
 .a-tag a { margin-right: 5px; border: 1px solid #bbc8db; padding: 0 10px; border-radius: 16px; white-space: nowrap; float: left; height: 20px; line-height: 20px; margin-bottom: 12px; color: #3261a3; }
