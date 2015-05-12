@@ -563,7 +563,7 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
     var newsId = req.params.newsId;
 
     var query = new AV.Query('News');
-    query.select('status', 'clanCateId');
+    query.select('status', 'clanCateId', 'clanId');
     query.get(newsId).then(function(newsItem){
         //分类文章数减1
         var clanCategory = newsItem.get('clanCateId');
@@ -603,7 +603,8 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
             {
                 category:ClanCategory class object,
                 extra:{
-                    visible:true or false,默认为true
+                    visible:true or false,默认为true,
+                    cateCount:Integer 对应分类文章数量
                 }
             }
             ...
@@ -616,6 +617,7 @@ AV.Cloud.define('saveCategory', function(req, res){
 
     var categoryObj = {};   //key:name value:category class object
     var hideCateObj = {};   //key:name value:true
+    var clanCateCountObj = {}; //key:category id value:news count
 
     _.each(hideCategoryNames, function(cateName){
         hideCateObj[cateName] = true;
@@ -649,17 +651,35 @@ AV.Cloud.define('saveCategory', function(req, res){
             categoryObj[cateName] = result;
         });
 
+        //query clan category news count
+        var clanCateIds = [];
+        var clanCates = _.values(categoryObj);
+        _.each(clanCates, function(clanCategory){
+           clanCateIds.push(clanCategory.id);
+        });
+        var query = new AV.Query('ClanCategoryCount');
+        query.equalTo('clanId', clanId);
+        query.containedIn('clanCateId', clanCateIds);
+        return query.find();
+    }).then(function(results){
+        //set clanCateCountObj from results
+        _.each(results, function(clanCateCountItem){
+            clanCateCountObj[clanCateCountItem.get('clanCateId')] = clanCateCountItem.get('cateCount');
+        });
+
+        //set return data
         var rets = [];
         var clanCategoryIds = [], hideClanCategoryIds = [];
         _.each(categoryNames, function(cateName){
             var clanCategory = categoryObj[cateName];
             if (clanCategory) {
                 rets.push({
-                        category:clanCategory._toFullJSON(),
-                        extra:{
-                            visible:hideCateObj[cateName]?false:true
-                        }
-                    });
+                    category:clanCategory._toFullJSON(),
+                    extra:{
+                        visible:hideCateObj[cateName]?false:true,
+                        cateCount:clanCateCountObj[clanCategory.id]
+                    }
+                });
                 clanCategoryIds.push(clanCategory.id);
                 if (hideCateObj[cateName]) {
                     hideClanCategoryIds.push(clanCategory.id);
@@ -676,7 +696,6 @@ AV.Cloud.define('saveCategory', function(req, res){
         clan.save().then(function(result){
             res.success(rets);
         });
-
     }).catch(function(err){
         console.error('保存分类失败:', err);
         res.error('保存分类失败，错误码:'+err.code);
