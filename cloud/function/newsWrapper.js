@@ -76,7 +76,9 @@ AV.Cloud.define('getNews2', function(req, res){
     queryNews.limit(limit);
     queryNews.skip(skip);
     queryNews.equalTo('status', 1);     //只显示上线的内容
-    queryNews.notEqualTo('from', 1);      //只显示系统爬取的内容
+    if (_.isEmpty(favoriteIds)) {
+        queryNews.notEqualTo('from', 1);      //只显示系统爬取的内容
+    }
     queryNews.descending('publicAt');
     queryNews.include('clanCateId', 'clanId');
     if (favoriteIds.length > 0) {

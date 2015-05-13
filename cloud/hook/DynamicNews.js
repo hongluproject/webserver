@@ -14,6 +14,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
     if (!userObj || !postUser) {
         return;
     }
+    var clanOfDynamic = request.object.get('clan_ids');
 
     //该用户发布动态数加1
     var messageType = 'newPost';
@@ -25,6 +26,7 @@ AV.Cloud.afterSave('DynamicNews', function(request){
         userObj.save();
     }
 
+    /*
     //如果用户没有设置动态所归属的部落，则需要将该动态自动加入所属标签的部落中
     var clansOfUser = userObj.get('clanids');
     var tagsOfDynamic = request.object.get('tags');
@@ -53,7 +55,9 @@ AV.Cloud.afterSave('DynamicNews', function(request){
             }
             DynamicObj.save();
         });
-    } else {
+    } else
+    */
+    {
         var DynamicObj = request.object;
         var DynamicObjId = DynamicObj.id;
         var urlPath = common.isSahalaDevEnv()?'http://apidev.imsahala.com/dynamic/':'http://api.imsahala.com/dynamic/';

@@ -42,6 +42,9 @@
             });
         </script>
     </head>
+
+
+
     <body ryt14206="1">
         <div class="container">
             <div class="wrapper article-wrapper">
@@ -53,6 +56,8 @@
                                 <span class="a-source"><%= fromWhere%></span>
                                 <span class="a-date"><%= publicDate%></span>
                             </div>
+
+
                             <div id="doc-container">
                                 <div class="a-tags">
                                     <% for(var i in tagList) { %>
@@ -61,6 +66,19 @@
                                     <% }%>
                                     <div class="clear"></div>
                                 </div>
+
+                                <% if (clanInfo||userInfo){ %>
+                                <div class="a-from">
+                                    <% if (clanInfo){ %>
+                                    <p>来自部落看吧：<span class="a-user"><a href="javascript:doFilter('jumpInfo','clan', '<%= clanInfo.id %>', '<%= clanInfo.get("title")%>');"><%= clanInfo.get('title')%></a></span></p>
+                                    <% }%>
+
+                                    <% if (userInfo){ %>
+                                    <p>发布者：<span class="a-clan"><a href="javascript:doFilter('jumpInfo','user', '<%= userInfo.id %>', '<%= userInfo.get("nickname")%>');"><%= userInfo.get('nickname')%></a></span></p>
+                                    <% }%>
+                                </div>
+                                <% }%>
+
                                 <div class="article-content">
                                     <div class="doc-content"> <%- newsContent %> </div>
                                 </div>

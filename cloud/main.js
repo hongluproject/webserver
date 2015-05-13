@@ -51,10 +51,19 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var query = new AV.Query('News');
-	query.notEqualTo('status', 1);
-	query.find().then(function(results){
-		console.info(results);
+	var NewsClass = AV.Object.extend('News');
+	var newsObj = new NewsClass();
+	newsObj.id = '5552ce6be4b058f8985a3271';
+	newsObj.fetch({
+		keys:'title,tags',
+		include:''
+	}, {
+		success:function(result) {
+			console.dir(result);
+		},
+		error:function(err){
+			console.dir(err);
+		}
 	});
 });
 

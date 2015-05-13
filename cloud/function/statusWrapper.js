@@ -34,7 +34,7 @@ AV.Cloud.define('getStatus', function(req, res) {
     //保留的user keys
     var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
     //保留的clan keys
-    var pickClanKeys = ['objectId','__type', 'title', "className"];
+    var pickClanKeys = ['objectId','__type', 'title', "className", "icon"];
     //保留的activity keys
     var pcickActivityKeys = ['objectId','__type', 'title', "className"];
 
