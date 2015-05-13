@@ -477,7 +477,8 @@ function removeReviewClanUser(userid, clanid, callback) {
     参数：
         userid:objectId 用户ID
         clanid:objectId 部落ID
-        invitationCode:string 部落邀请码
+        invitationCode:string 部落邀请码，若酋长通过第三方平台分享，用户可直接加入
+        fromUserId:objectId 分享部落的用户ID，若酋长通过撒哈拉内部聊天分享，则用户可直接加入
     返回：
         error:加入失败
         success:
@@ -498,6 +499,7 @@ AV.Cloud.define("joinClan", function (req, res) {
     var userid = req.params.userid;
     var clanid = req.params.clanid;
     var invitationCode = req.params.invitationCode;
+    var fromUserId = req.params.fromUserId;
 
     if (!userid || !clanid) {
         res.error("传入的参数有误");
@@ -572,6 +574,14 @@ AV.Cloud.define("joinClan", function (req, res) {
                                return;
                            }
                        }
+                        if (fromUserId) {
+                            //若分享发起方是酋长，则用户可直接加入
+                            var founder = clan.get('founder_id');
+                            if (founder && founder.id==fromUserId) {
+                                joinClanDirectly();
+                                return;
+                            }
+                        }
 
                        var query = new AV.Query('ClanReviewUser');
                        query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
