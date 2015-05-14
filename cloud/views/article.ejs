@@ -70,11 +70,11 @@
                         <% if (clanInfo||userInfo){ %>
                         <div class="a-from">
                             <% if (clanInfo){ %>
-                            <p>来自部落看吧：<span class="a-user"><a href="javascript:doFilter('jumpInfo','clan', '<%= clanInfo.id %>', '<%= clanInfo.get("title")%>');"><%= clanInfo.get('title')%></a></span></p>
+                            <p>来自部落看吧：<span class="a-user"><a onclick="javascript:doFilter('jumpInfo','clan', '<%= clanInfo.id %>', '<%= clanInfo.get("title")%>');" href="#"><%= clanInfo.get('title')%></a></span></p>
                             <% }%>
 
                             <% if (userInfo){ %>
-                            <p>发布者：<span class="a-clan"><a href="javascript:doFilter('jumpInfo','user', '<%= userInfo.id %>', '<%= userInfo.get("nickname")%>');"><%= userInfo.get('nickname')%></a></span></p>
+                            <p>发布者：<span class="a-clan"><a href="#" onclick="javascript:doFilter('jumpInfo','user', '<%= userInfo.id %>', '<%= userInfo.get("nickname")%>');"><%= userInfo.get('nickname')%></a></span></p>
                             <% }%>
                         </div>
                         <% }%>
