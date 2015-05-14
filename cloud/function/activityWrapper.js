@@ -1004,14 +1004,18 @@ AV.Cloud.define('getStatementDetail', function(req, res){
         statement = statement._toFullJSON();
         statement.activityId = activity._toFullJSON();
         if (bGetSignup) {
+            var signupUser = signup.get('userId');
             statement.signupId = signup._toFullJSON();
+            //保留的user keys
+            var pickUserKeys = ["objectId", "username", "nickname", "className", "icon"];
+            statement.signupId.userId = _.pick(signupUser._toFullJSON(), pickUserKeys);
         }
         res.success(statement);
     }
 
     var statement, activity, signup, user;
     var query = new AV.Query('StatementAccount');
-    query.include('activityId', 'signupId');
+    query.include('activityId', 'signupId', 'signupId.userId');
     query.equalTo('bookNumber', bookNo);
     query.first().then(function(result){
         if (!result) {

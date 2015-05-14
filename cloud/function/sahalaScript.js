@@ -346,6 +346,13 @@ AV.Cloud.define('queryPingXX', function(req, res){
     3、执行加入活动的操作。
     注：该函数可重复执行，不会产生冗余数据。
 
+    函数名：
+        joinMountaineerActivity
+    参数：
+        无
+    返回：
+        success or fail
+
  */
 AV.Cloud.define('joinMountaineerActivity', function(req, res){
     AV.Cloud.httpRequest({
@@ -355,6 +362,7 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
         console.info('joinMountaineerActivity http status code %d ', response.status);
         if (response.status != 200) {
             console.error('joinMountaineerActivity error:%d', response.status);
+            res.error('joinMountaineerActivity error:'+response.status);
             return;
         }
 
@@ -411,6 +419,8 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
 
             });
         }
+
+        res.success();
     });
 });
 
