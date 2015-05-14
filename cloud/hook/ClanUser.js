@@ -147,6 +147,8 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     var clanObj = req.object.get('clan_id');
     var userObj = req.object.get('user_id');
 
+    console.info('enter afterDelete ClanUser hook,userId is %s,clanId is %s', userObj.id, clanObj.id);
+
     //从用户表的部落数组里面，删除当前的部落再保存。
     //查找到对应的用户object
     var query = new AV.Query('_User');
@@ -154,7 +156,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     query.get(userObj.id, {
         success:function(user) {
             if (!user) {
-                console.warn('ClanUser afterDelete user id %s not found!', userObj.id);
+                console.error('ClanUser afterDelete user id %s not found!', userObj.id);
                 return;
             }
 
@@ -163,7 +165,9 @@ AV.Cloud.afterDelete('ClanUser', function(req){
             //用户所在部落数减1
             user.fetchWhenSave(true);
             user.increment('clanCount', -1);
-            user.save();
+            user.save().catch(function(err){
+                console.error('save user error after ClanUser Save:', err);
+            });
         }
     });
 
@@ -173,7 +177,7 @@ AV.Cloud.afterDelete('ClanUser', function(req){
     queryClan.get(clanObj.id, {
         success:function(clan) {
             if (!clan) {
-                console.warn('ClanUser afterDelete userid %s not found!', userObj.id);
+                console.error('ClanUser afterDelete userid %s not found!', userObj.id);
                 return;
             }
             var founder = clan.get('founder_id');

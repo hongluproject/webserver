@@ -51,15 +51,18 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var NewsClass = AV.Object.extend('News');
-	var newsObj = new NewsClass();
-	newsObj.id = '5552ce6be4b058f8985a3271';
-	newsObj.fetch({
-		keys:'title,tags',
-		include:''
-	}, {
+	var TestClass = AV.Object.extend('TestClass');
+	var testObj = new TestClass();
+	testObj.id = '55477a30e4b0fe51386b2cad';
+	testObj.fetch({
 		success:function(result) {
-			console.dir(result);
+			if (result) {
+				result.fetchWhenSave(true);
+				result.remove('testArray', '123');
+				result.save().then(function(result){
+					console.dir(result);
+				});
+			}
 		},
 		error:function(err){
 			console.dir(err);
