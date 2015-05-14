@@ -253,12 +253,12 @@ AV.Cloud.define('getClanDetail', function(req, res){
     };
 
     var retClan;
+    var founder;
     var categoryIds;
     var queryClan = new AV.Query('Clan');
     queryClan.include('founder_id');
     queryClan.equalTo('objectId', clanId);
     queryClan.first().then(function(clan){
-        var founder;
         if (clan) {
             retClan = clan;
             categoryIds = clan.get('clanCateIds');
@@ -296,32 +296,37 @@ AV.Cloud.define('getClanDetail', function(req, res){
             ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
         });
 
+        var queryOr = [];
         //查询该部落最近一次的活动
         var queryActivity = new AV.Query('Activity');
-        queryActivity.limit(1);
         queryActivity.notEqualTo('removed', true);
         queryActivity.equalTo('allow_join_type', 2);    //活动归属于部落
         queryActivity.equalTo('allow_join_data', clanId);
+        queryOr.push(queryActivity);
+
+        queryActivity = new AV.Query('Activity');
+        queryActivity.equalTo('allow_join_type', 1);
+        queryActivity.equalTo('user_id', founder);
+        queryActivity.notEqualTo('removed', true);
+        queryOr.push(queryActivity);
+
+        queryActivity = AV.Query.or.apply(null, queryOr);
         queryActivity.descending('createdAt');
         return queryActivity.first();
     }).then(function(activity){
         ret.activity = activity && activity._toFullJSON();
 
         //查询分类对应的名称，若部落没有分类，则用默认的分类代替
-        if (common.isSahalaDevEnv()) {
-            if (_.isEmpty(categoryIds)) {
-                categoryIds = [];
-                _.each(AV.HPGlobalParam.hpClanCategory, function(category){
-                    categoryIds.push(category.id);
-                });
+        if (_.isEmpty(categoryIds)) {
+            categoryIds = [];
+            _.each(AV.HPGlobalParam.hpClanCategory, function(category){
+                categoryIds.push(category.id);
+            });
 
-                retClan.set('clanCateIds', categoryIds);
-                retClan.save();
-            }
+            retClan.set('clanCateIds', categoryIds);
+            retClan.save();
         }
 
-        return AV.Promise.as();
-    }).then(function(results){
         //查询看吧里面最近的一篇文章
         var queryNews = new AV.Query('News');
         queryNews.greaterThan('from', 0);           //非系统抓取

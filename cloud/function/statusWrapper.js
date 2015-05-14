@@ -119,10 +119,14 @@ AV.Cloud.define('getFriendList2', function(req, res){
     query.include('followee');
     query.select('followee');
     query.descending('priority');   //优先级高者，排在前面
+    query.addDescending('createdAt');//按照加好友时间倒序显示
     query.limit(limit);
     query.skip(skip);
     query.find().then(function(results) {
         _.each(results, function(result){
+            if (!result.get('followee')) {
+                console.error('this user %s has been deleted!', result.id);
+            }
             followees.push(result.get('followee'));
         });
 
