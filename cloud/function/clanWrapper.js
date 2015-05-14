@@ -578,9 +578,11 @@ AV.Cloud.define('deleteClanBarNews', function(req, res){
             query.equalTo('clanId', clan.id);
             query.equalTo('clanCateId', clanCategory.id);
             query.first().then(function(clanCategoryCountItem){
-                clanCategoryCountItem.fetchWhenSave(true);
-                clanCategoryCountItem.increment('cateCount', -1);
-                clanCategoryCountItem.save();
+                if (clanCategoryCountItem) {
+                    clanCategoryCountItem.fetchWhenSave(true);
+                    clanCategoryCountItem.increment('cateCount', -1);
+                    clanCategoryCountItem.save();
+                }
             });
         }
 
