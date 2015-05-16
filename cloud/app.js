@@ -4,6 +4,7 @@ var app = express();
 var name = require('cloud/name.js');
 var common = require('cloud/common.js');
 //var avosExpressHttpsRedirect = require('avos-express-https-redirect');
+var _ = AV._;
 
 // App全局配置
 //设置模板目录
@@ -485,6 +486,26 @@ app.post('/api/ping/notify', function(req, res){
         resp('success');
     });
 
+});
+
+app.get('/getTags', function(req, res){
+    var tags = [];
+    var query = new AV.Query('Tag');
+    query.find().then(function(results){
+        _.each(results, function(tag){
+            tag = tag._toFullJSON();
+            delete tag.__type;
+            tags.push(tag);
+        });
+
+        res.writeHead(200, {
+            "Content-Type":'application/json; charset=utf-8'
+        });
+        res.write(JSON.stringify({
+            result:tags
+        }));
+        res.end();
+    });
 });
 
 // This line is required to make Express respond to http requests.

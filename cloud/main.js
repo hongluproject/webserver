@@ -57,11 +57,7 @@ AV.Cloud.define("hello", function(req, res) {
 	testObj.fetch({
 		success:function(result) {
 			if (result) {
-				result.fetchWhenSave(true);
-				result.remove('testArray', '123');
-				result.save().then(function(result){
-					console.dir(result);
-				});
+				res.success(result._toFullJSON());
 			}
 		},
 		error:function(err){
