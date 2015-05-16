@@ -156,7 +156,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     };
 
     var launchOpt = {
-        show:true,
+        show:false,
         showSeconds:3,
         picUrl:'http://hoopeng.qiniudn.com/image/201505122236458232.jpg'
     };
