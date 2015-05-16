@@ -1007,7 +1007,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
             var signupUser = signup.get('userId');
             statement.signupId = signup._toFullJSON();
             //保留的user keys
-            var pickUserKeys = ["objectId", "username", "nickname", "className", "icon"];
+            var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
             statement.signupId.userId = _.pick(signupUser._toFullJSON(), pickUserKeys);
         }
         res.success(statement);

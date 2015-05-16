@@ -33,29 +33,33 @@ AV.Cloud.define('imGetGroupnameFromId', function(req, res){
     query.equalTo('objectId', groupId);
     query.first().then(function(clan){
         if (clan) {
-            res.success({
-                type:'clan',
-                id:groupId,
-                name:clan.get('title')||'',
-                icon:clan.get('icon')||''
-            })
+            return AV.Promise.as(clan);
         } else {
             query = new AV.Query('Activity');
             query.select('title', 'index_thumb_image');
             query.equalTo('objectId', groupId);
             return query.first();
         }
-    }).then(function(activity){
-        if (activity) {
-            res.success({
-                type:'activity',
-                id:groupId,
-                name:activity.get('title')||'',
-                icon:activity.get('index_thumb_image')
-            });
-        } else {
-            res.error('未找到群组名称！');
+    }).then(function(result){
+        if (result) {
+            if (result.className == 'Clan') {
+
+                res.success({
+                    type:'clan',
+                    id:groupId,
+                    name:result.get('title')||'',
+                    icon:result.get('icon')||''
+                })
+            } else if (result.className == 'Activity') {
+                res.success({
+                    type:'activity',
+                    id:groupId,
+                    name:result.get('title')||'',
+                    icon:result.get('index_thumb_image')||''
+                });
+            }
         }
+
     }, function(err){
        console.error('getGroupnameFromId error:', err);
         res.error('获取群组名称失败,错误码:'+err.code);

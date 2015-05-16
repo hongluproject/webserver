@@ -3,6 +3,116 @@
  */
 var common = require('cloud/common');
 var _ = AV._;
+
+/*
+    获取活动详情，并且返回活动信息
+    函数名：
+        getDynamicWithActivity
+    参数:
+        activityId:objectId 活动ID
+        userId:object   用户ID，若不传，则为当前登录用户
+        limit:Integer   本次查询返回数目
+        skip:Integer    本次查询起始偏移
+        getActivity:bool 是否获取活动信息
+    返回：{
+        activity:activity class object
+        extra:{
+            hasSignup:bool 是否已经报名
+        }
+        dynamic:[
+            {
+                 dynamic:DynamicNews class object
+                 extra:{
+                     isLike: true or false
+                     tagNames: array  动态tagIds对应的名称
+                 }
+            }
+        ]
+    }
+ */
+AV.Cloud.define('getDynamicWithActivity', function(req, res){
+    var userId = req.params.userId || (req.user && req.user.id);
+    var activityId = req.params.activityId;
+    var limit = req.params.limit;
+    var skip = req.params.skip;
+    var getActivity = req.params.getActivity || false;
+
+    if (!activityId) {
+        res.error('请传入活动信息!');
+        return;
+    }
+
+    var pickActivityKeys = ['objectId','__type', 'title', "className"];
+    var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
+    var ret = {};
+    var promise = AV.Promise.as();
+    promise.then(function(){
+        if (getActivity) {
+            var query = new AV.Query('Activity');
+            query.select('-hasSignupUsers');
+            query.include('user_id');
+            return query.get(activityId);
+        }
+    }).then(function(activity){
+        if (activity) {
+            var user = activity.get('user_id');
+            ret.activity = activity._toFullJSON();
+            if (user) {
+                ret.activity.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+            }
+            var joinUsers = activity.get('joinUsers');
+            if (_.indexOf(joinUsers, req.user&&req.user.id) >= 0) {
+                ret.extra = {
+                    hasSignup:true
+                };
+            }
+        }
+        //查询活动相关动态
+        var query = new AV.Query('DynamicNews');
+        query.include('user_id', 'activityId');
+        query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+        query.equalTo('type', 2);
+        query.descending('createdAt');
+        query.limit(limit);
+        query.skip(skip);
+        return query.find();
+    }).then(function(results){
+        dynamics = _.reject(results, function(val){
+            return (val == undefined);
+        });
+        return common.findLikeDynamicUsers(req.user&&req.user.id, dynamics);
+    }).then(function(likeResult){
+        var retDynamic = [];
+        var i = 0;
+        _.each(dynamics, function(dynamic){
+
+            var userId = dynamic.get('user_id');
+            var activity = dynamic.get('activityId');
+            dynamic = dynamic._toFullJSON();
+            if (userId) {
+                dynamic.user_id = _.pick(userId._toFullJSON(), pickUserKeys);
+            }
+            if (activity) {
+                dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
+            }
+
+            retDynamic.push({
+                dynamic:dynamic,
+                extra:{
+                    isLike:likeResult[dynamic.objectId]?true:false,
+                    tagNames:common.tagNameFromId(dynamic.tags)
+                }
+            });
+        });
+        ret.dynamic = retDynamic;
+
+        res.success(ret);
+
+    }).catch(function(err){
+        console.error('获取活动及动态失败:', err);
+        res.error('获取活动及信息失败，错误码:'+err.code);
+    });
+});
 /*
     获取动态
     函数名：

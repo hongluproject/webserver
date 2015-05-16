@@ -487,6 +487,9 @@ function removeReviewClanUser(userid, clanid, callback) {
                     0:加入成功
                     1:发送成功，酋长审核中
                     2:已经申请过，等待酋长审核
+                joinType:Integer 在retCode为0时有效
+                        0   直接加入
+                        1   已经加入此部落
                 describe:string 描述
             }
  */
@@ -514,6 +517,7 @@ AV.Cloud.define("joinClan", function (req, res) {
         if (clanUser) {
             res.success({
                 retCode:0,
+                joinType:1,
                 describe:'您已经加入部落！'
             });
             return;
@@ -544,7 +548,8 @@ AV.Cloud.define("joinClan", function (req, res) {
                         queryUser.equalTo('objectId', clan.get('founder_id').id);
                         common.sendStatus('addToClan', AV.User.createWithoutData('_User',userid), clan.get('founder_id'), queryUser,{clan:clan});
                         res.success({
-                            retCode:0
+                            retCode:0,
+                            joinType:0
                         });
                     }
                 });
