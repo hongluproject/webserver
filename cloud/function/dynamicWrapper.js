@@ -16,6 +16,9 @@ var _ = AV._;
         getActivity:bool 是否获取活动信息
     返回：{
         activity:activity class object
+        extra:{
+            hasSignup:bool 是否已经报名
+        }
         dynamic:[
             {
                  dynamic:DynamicNews class object
@@ -39,16 +42,30 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
         return;
     }
 
+    var pickActivityKeys = ['objectId','__type', 'title', "className"];
+    var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
     var ret = {};
     var promise = AV.Promise.as();
     promise.then(function(){
         if (getActivity) {
             var query = new AV.Query('Activity');
+            query.select('-hasSignupUsers');
+            query.include('user_id');
             return query.get(activityId);
         }
     }).then(function(activity){
         if (activity) {
+            var user = activity.get('user_id');
             ret.activity = activity._toFullJSON();
+            if (user) {
+                ret.activity.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+            }
+            var joinUsers = activity.get('joinUsers');
+            if (_.indexOf(joinUsers, req.user&&req.user.id) >= 0) {
+                ret.extra = {
+                    hasSignup:true
+                };
+            }
         }
         //查询活动相关动态
         var query = new AV.Query('DynamicNews');
@@ -67,8 +84,6 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
     }).then(function(likeResult){
         var retDynamic = [];
         var i = 0;
-        var pickActivityKeys = ['objectId','__type', 'title', "className"];
-        var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
         _.each(dynamics, function(dynamic){
 
             var userId = dynamic.get('user_id');
