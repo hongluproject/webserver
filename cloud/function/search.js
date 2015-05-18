@@ -612,5 +612,11 @@ AV.Cloud.define('getSearch2', function(req, res){
             }
         });
     }else {
-        res.success([]);
+        res.success({
+            resDynamic:[],
+            resNews:[],
+            resUser:[],
+            resClan:[],
+            resActivity:[]
+        });
     }});
