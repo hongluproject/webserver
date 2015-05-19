@@ -1184,6 +1184,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             if(req.user && req.user.get('actual_position')){
                 var userGeoPoint = req.user.get('actual_position');
             }
+            /*  考虑早期活动较少，暂时不按用户标签返回活动
             var queryOr = [];
             if (tags) {
                 var tagOr = null;
@@ -1202,6 +1203,8 @@ AV.Cloud.define('getActivityList', function(req, res){
             }else{
                 var query= new AV.Query(activityClass);
             }
+            */
+            var query = new AV.Query('Activity');
             if (userGeoPoint)
                 query.near("position", userGeoPoint);
             var searchDate=new Date();
