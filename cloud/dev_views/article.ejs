@@ -95,6 +95,15 @@
             </div>
         </div>
     </body>
+
+
+<script language="javascript">
+     $("img").each(function(){
+     var proxySrc = $(this).attr("src").replace(/http:\/\/mmbiz.qpic.cn\/mmbiz/,"http://admin.hoopeng.cn/api/fetch/proxy?url=http://mmbiz.qpic.cn/mmbiz");
+     $(this).attr("src",proxySrc);
+     })
+</script>
+
 </html>
 
 
