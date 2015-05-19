@@ -3,6 +3,7 @@
  */
 var common = require('cloud/common');
 var _ = AV._;
+var Promise = AV.Promise;
 
 /*
     获取活动详情，并且返回活动信息
@@ -138,6 +139,7 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
                     isLike: true or false
                     tagNames: array  动态tagIds对应的名称
                     messageId:Integer 该动态对应的事件流ID，在动态首页中用到
+                    hasSingup:bool 若归属于活动，判断当前用户是否已经加入该活动
                 }
             }
         ]
@@ -159,6 +161,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
         var pickActivityKeys = ['objectId','__type', 'title', "className"];
         var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
         var msgIds;
+        var activities = [];
         query.find().then(function(results){
             if (dynamicType == 'followeDynamic') {
                 dynamics = [];
@@ -168,6 +171,11 @@ AV.Cloud.define('getDynamic2', function(req,res){
                     if (item.data.dynamicNews) {
                         dynamics.push(item.data.dynamicNews);
                         msgIds[i++] = item.messageId;
+
+                        var activity = item.data.dynamicNews.get('activityId');
+                        if (activity) {
+                            activities.push(activity._toPointer());
+                        }
                     }
                 });
             } else {
@@ -175,9 +183,41 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 dynamics = _.reject(dynamics, function(val){
                     return (val == undefined);
                 });
+
+                _.each(dynamics, function(item){
+                    var activity = item.get('activityId');
+                    if (activity) {
+                        activities.push(activity._toPointer());
+                    }
+                });
             }
-            return common.findLikeDynamicUsers(req.user&&req.user.id, dynamics);
-        }).then(function(likeResult){
+
+            var promises = [];
+            //find likes objects
+            promises.push(common.findLikeDynamicUsers(req.user&&req.user.id, dynamics));
+
+            if (!_.isEmpty(activities)) {
+                //find activities for current user signup
+                var query = new AV.Query('ActivityUser');
+                query.select('activity_id');
+                query.equalTo('user_id', req.user);
+                query.containedIn('activity_id', activities);
+                promises.push(query.find());
+            } else {
+                promises.push(Promise.as());
+            }
+
+            return Promise.when(promises[0], promises[1]);
+        }).then(function(likeResult, activityResult){
+            var activityObj = {};
+            _.each(activityResult, function(activityUser){
+                var activity = activityUser.get('activity_id');
+                if (activity) {
+                    activityObj[activity.id] = true;
+                }
+            });
+
+
             var retDynamic = [];
             var i = 0;
             _.each(dynamics, function(dynamic){
@@ -197,7 +237,8 @@ AV.Cloud.define('getDynamic2', function(req,res){
                     extra:{
                         isLike:likeResult[dynamic.objectId]?true:false,
                         tagNames:common.tagNameFromId(dynamic.tags),
-                        messageId:msgIds?msgIds[i++]:undefined
+                        messageId:msgIds?msgIds[i++]:undefined,
+                        hasSignup:activity&&activityObj[activity.id]?true:false
                     }
                 });
             });
