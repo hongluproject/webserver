@@ -474,6 +474,152 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     });
 });
 
+/**
+    获取活动详情
+    函数名：getActivityDetail2
+    @params {
+      activityId: objectId 活动ID
+    }
+    @return {
+        activity: Activity Object
+        extra: {
+            signupUsers: array 已报名用户列表
+            hasSignup: bool 当前用户是否已经报名
+            accountStatus:Integer 当前订单状态
+            bookNuber:string 订单编号
+            bMountaineerClub:bool 登协定制活动
+            levelUrl:登协通关URL
+            tagNames:array 活动tagID对应名称
+        }
+    }
+ */
+AV.Cloud.define('getActivityDetail2', function(req, res){
+    var userId = req.params.userId || (req.user&&req.user.id);
+    if (!userId) {
+        res.error('请登录账号！');
+        return;
+    }
+    var activityId = req.params.activityId;
+    if (!activityId) {
+        return res.error('请传入活动ID！');
+    }
+    var currActivity;
+    var founderUserId;
+    var payType = 1;
+    var bMountaineerClub = (activityId==common.getMountaineerClubActivityId());
+    var extraData = {
+        bMountaineerClub: bMountaineerClub,
+        levelUrl:bMountaineerClub?'http://sport.hoopeng.cn/api/sport/pathinfo':''
+    };
+
+    var queryActivity = new AV.Query('Activity');
+    queryActivity.select('-joinUsers', '-hasSignupUsers');
+    queryActivity.include('user_id');
+    queryActivity.equalTo('objectId', activityId);
+    queryActivity.first().then(function(activity){
+        if (!activity) {
+            res.error('没有找到对应的活动！');
+            return;
+        }
+        currActivity = activity;
+
+        payType = activity.get('pay_type');
+        var userObj = activity.get('user_id');
+        activity.set('user_info', {
+            nickname:userObj.get('nickname'),
+            icon:userObj.get('icon')||''
+        });
+        //简化user_id的返回内容
+        var _ = AV._;
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "actual_position"];
+        activity.set('user_id', _.pick(userObj._toFullJSON(), pickUserKeys));
+
+        var activityFounder = activity.get('user_id');
+        founderUserId = activityFounder.id;
+        if (userId == activityFounder.id) { //如果是活动发起者，就不用做后续查询了
+            query = new AV.Query('ActivityUser');
+            query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
+            query.notEqualTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.descending('createdAt');
+            query.limit(10);
+            query.include('user_id');
+            return query.find();
+        } else {
+            //查询ActivityUser，主要目的：
+            // 1、查自己是否已经报名
+            // 2、查该活动最近的报名人
+            var queryOr = [];
+            var query = new AV.Query('ActivityUser');
+            query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
+            queryOr.push(query);
+
+            query = new AV.Query('ActivityUser');
+            query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
+            query.notEqualTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.descending('createdAt');
+            query.limit(10);
+            queryOr.push(query);
+
+            query = AV.Query.or.apply(null, queryOr);
+            query.include('user_id', 'order_id');
+            return query.find();
+        }
+    }).then(function(result){
+        var bHasSignup = false;
+        if (result) {   //设置已经报名状态
+            var signupUsers = [];
+            result.forEach(function(item){
+                var user = item.get('user_id');
+                if (user) {
+                    if (user.id == userId) {
+                        bHasSignup = true;
+                        var orderObj = item.get('order_id');
+                        if (orderObj) {
+                            extraData.accountStatus = orderObj.get('accountStatus')||1;
+                            extraData.bookNumber = orderObj.get('bookNumber')||'';
+                        }
+                    }
+                    signupUsers.push({
+                        nickname:user.get('nickname')||'',
+                        icon:user.get('icon')||''
+                    });
+                }
+            });
+
+            extraData.signupUsers = signupUsers;
+        }
+        extraData.hasSignup = bHasSignup;
+
+        if (!bHasSignup) {
+            //若用户还未加入活动，则查询订单状态
+            var query = new AV.Query('StatementAccount');
+            query.select('accountStatus', 'bookNumber');
+            query.equalTo('userId', AV.User.createWithoutData('_User', userId));
+            query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
+            query.descending('createdAt');
+            return query.first();
+        } else {
+            return AV.Promise.as();
+        }
+    }).then(function(result){
+        if (result) {   //返回订单状态
+            extraData.accountStatus = result.get('accountStatus');
+            extraData.bookNumber = result.get('bookNumber');
+        }
+
+        extraData.tagNames = common.tagNameFromId(currActivity.get('tags'));
+        res.success({
+            activity:currActivity._toFullJSON(),
+            extra:extraData
+        });
+    }, function(err){
+        console.error('获取活动失败:', err);
+        res.error('获取活动失败，错误码:'+err.code);
+    });
+});
+
 /*
     取消报名：函数名 cancelSignupActivity
     @param {
@@ -1158,7 +1304,8 @@ AV.Cloud.define('getOrderList', function(req, res){
  *              activity: Activity Class Object
  *              extra:{
  *                  friendJoin:Integer 好友加入个数,
- *                  hasSignup:bool 当前用户是否加入
+ *                  hasSignup:bool 当前用户是否加入,
+  *                  tagNames:array tagID对应名称
  *              }
  *          }
  *      ]
@@ -1227,7 +1374,8 @@ AV.Cloud.define('getActivityList', function(req, res){
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
                         friendJoin:/*Math.floor(Math.random()*100)*/0,
-                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
+                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false,
+                        tagNames:common.tagNameFromId(activity.get('tags'))
                     };
                     delete retItem.activity.joinUsers;
 
@@ -1273,7 +1421,8 @@ AV.Cloud.define('getActivityList', function(req, res){
                     var joinUsers = retItem.activity.joinUsers || [];
                     retItem.extra = {
                         friendJoin:0/*Math.floor(Math.random()*100)*/,
-                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
+                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false,
+                        tagNames:common.tagNameFromId(activity.get('tags'))
                     };
                     delete retItem.activity.joinUsers;
 
@@ -1337,7 +1486,8 @@ AV.Cloud.define('getActivityList', function(req, res){
                         var joinUsers = retItem.activity.joinUsers || [];
                         retItem.extra = {
                             friendJoin:0/*Math.floor(Math.random()*100)*/,
-                            hasSignup: _.indexOf(joinUsers, userId)>=0?true:false
+                            hasSignup: _.indexOf(joinUsers, userId)>=0?true:false,
+                            tagNames:common.tagNameFromId(activity.get('tags'))
                         };
                         delete retItem.activity.joinUsers;
 
