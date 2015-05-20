@@ -124,7 +124,7 @@ exports.newsResultWapper2 = function(userId, results) {
             var name = (HPGlobalParam.hpTags[tagItem] && HPGlobalParam.hpTags[tagItem].get('tag_name')) || '';
             arrayTagName.push(name);
         });
-        extraData.tagName = arrayTagName;
+        extraData.tagNames = arrayTagName;
 
         retItem.news = newsItem._toFullJSON();
         retItem.extra = extraData;

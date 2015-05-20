@@ -303,6 +303,7 @@ AV.Cloud.define("getSearch",function(req,res){
         {
             dynamic: DynamicNews class object
             extra:{
+                tagNames:array 动态对应的标签名称
                 isLike: true or false
             }
         },
@@ -313,9 +314,9 @@ AV.Cloud.define("getSearch",function(req,res){
         {
             news: News class object
             extra:{
+                tagNames:array   资讯对应的标签名称
                 catesName: array 装备名称
                 areasName: array 地域名称
-                tagsName:  array 标签名称
                 isLike: true or false
                 likeObjectId:objectId like表数据对应的objectId
             }
@@ -327,6 +328,7 @@ AV.Cloud.define("getSearch",function(req,res){
         {
             clan:clan class object
             extra:{
+                tagNames:array 部落对应的标签名称
                 clanType:Integer
                     0：未加入
                     1：部落创建者
@@ -341,6 +343,7 @@ AV.Cloud.define("getSearch",function(req,res){
         {
             user:User class object
             extra:{
+                tagNames:array 用户对应的标签名称
                 isFriend: true or false
             }
         },
@@ -352,6 +355,7 @@ AV.Cloud.define("getSearch",function(req,res){
             activity:Activity class object
             extra:{
                 friendJoin:Integer 好友加入个数
+                tagNames:array 活动对应的tag名称
             }
         }
     ]
@@ -432,6 +436,7 @@ AV.Cloud.define('getSearch2', function(req, res){
                 retDynamic.push({
                     dynamic:dynamic,
                     extra:{
+                        tagNames:common.tagNameFromId(dynamic.tags),
                         isLike:likeResult[dynamic.objectId]?true:false
                     }
                 })
@@ -482,6 +487,7 @@ AV.Cloud.define('getSearch2', function(req, res){
                     retResult.push({
                         clan:clanItem,
                         extra:{
+                            tagNames:common.tagNameFromId(clanItem.tags),
                             clanType:clanType
                         }
                     });
@@ -518,7 +524,8 @@ AV.Cloud.define('getSearch2', function(req, res){
                 resItem.user = userItem._toFullJSON();
                 if (result[userItem.id]) {
                     resItem.extra = {
-                        isFriend:true
+                        isFriend:true,
+                        tagNames:common.tagNameFromId(userItem.get('tags'))
                     };
                 }
 
@@ -549,7 +556,8 @@ AV.Cloud.define('getSearch2', function(req, res){
                 retItem.activity = activity._toFullJSON();
                 retItem.activity.price = retItem.activity.price || '0.00';
                 retItem.extra = {
-                    friendJoin:0
+                    friendJoin:0,
+                    tagNames:common.tagNameFromId(activity.get('tags'))
                 };
 
                 retVal.push(retItem);

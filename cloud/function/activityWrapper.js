@@ -1311,10 +1311,7 @@ AV.Cloud.define('getOrderList', function(req, res){
  *      ]
  */
 AV.Cloud.define('getActivityList', function(req, res){
-    var userId = req.params.userId;
-    if (!userId && req.user) {
-        userId = req.user.id;
-    }
+    var userId = req.params.userId || (req.user && req.user.id);
     var tags = req.params.tags;
     if (!tags && req.user) {
         tags = req.user.get('tags');
@@ -1324,6 +1321,57 @@ AV.Cloud.define('getActivityList', function(req, res){
     var activityType = req.params.activityType || 'mainpage';
     var clanId = req.params.clanId;
     var retVal = [];
+
+    var formatResultAndReturn = function(results, res) {
+        var retVal = [];
+
+        if (_.isEmpty(results)) {
+            res.success();
+        } else {
+            var activities = [];
+            _.each(results, function(activity){
+                var retItem = {};
+                activities.push(activity._toPointer());
+                retItem.activity = activity._toFullJSON();
+                retItem.activity.price = retItem.activity.price || '0.00';
+                var joinUsers = retItem.activity.joinUsers || [];
+                retItem.extra = {
+                    friendJoin:/*Math.floor(Math.random()*100)*/0,
+                    tagNames:common.tagNameFromId(activity.get('tags'))
+                };
+
+                retVal.push(retItem);
+            });
+
+            if (_.isEmpty(activities)) {
+                res.success(retVal);
+            } else {
+                var query = new AV.Query('ActivityUser');
+                query.equalTo('user_id', AV.User.createWithoutData('User', userId));
+                query.containedIn('activity_id', activities);
+                query.find().then(function(results){
+                    var activityObj = {};
+                    _.each(results, function(item) {
+                        var activity = item && item.get('activity_id');
+                        if (activity) {
+                            activityObj[activity.id] = true;
+                        }
+                    });
+
+                    _.each(retVal, function(item){
+                        var activityId = item && item.activity && item.activity.objectId;
+                        var extra = item && item.extra;
+                        if (extra) {
+                            extra.hasSignup = activityObj[activityId] ? true : false;
+                        }
+                    });
+
+                    res.success(retVal);
+                });
+            }
+        };
+
+    }
 
     switch (activityType) {
         case 'mainpage':
@@ -1360,29 +1408,9 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.skip(skip);
             query.notEqualTo('removed', true);
             query.descending('createdAt');
-            query.select('-hasSignupUsers');
+            query.select('-hasSignupUsers', '-joinUsers');
             query.find().then(function(results){
-                if (!results) {
-                    res.success();
-                    return;
-                }
-
-                results.forEach(function(activity){
-                    var retItem = {};
-                    retItem.activity = activity._toFullJSON();
-                    retItem.activity.price = retItem.activity.price || '0.00';
-                    var joinUsers = retItem.activity.joinUsers || [];
-                    retItem.extra = {
-                        friendJoin:/*Math.floor(Math.random()*100)*/0,
-                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false,
-                        tagNames:common.tagNameFromId(activity.get('tags'))
-                    };
-                    delete retItem.activity.joinUsers;
-
-                    retVal.push(retItem);
-                });
-
-                res.success(retVal);
+                formatResultAndReturn(results, res);
             }, function(err){
                 res.error('查询活动失败,错误码:'+err.code);
             });
@@ -1404,32 +1432,13 @@ AV.Cloud.define('getActivityList', function(req, res){
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);
-            query.select('-hasSignupUsers');
+            query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
-            query.descending('createdAt');
+            query.descending('activity_end_time');
+            query.addDescending('activity_time');
             query.find().then(function(results){
-                if (!results) {
-                    res.success();
-                    return;
-                }
-
-                results.forEach(function(activity){
-                    var retItem = {};
-                    retItem.activity = activity._toFullJSON();
-                    retItem.activity.price = retItem.activity.price || '0.00';
-                    var joinUsers = retItem.activity.joinUsers || [];
-                    retItem.extra = {
-                        friendJoin:0/*Math.floor(Math.random()*100)*/,
-                        hasSignup: _.indexOf(joinUsers, userId)>=0?true:false,
-                        tagNames:common.tagNameFromId(activity.get('tags'))
-                    };
-                    delete retItem.activity.joinUsers;
-
-                    retVal.push(retItem);
-                });
-
-                res.success(retVal);
+                formatResultAndReturn(results, res);
             }, function(err){
                 res.error('查询活动失败,错误码:'+err.code);
             });
@@ -1471,30 +1480,10 @@ AV.Cloud.define('getActivityList', function(req, res){
                 query = AV.Query.or.apply(null, queryOr);
                 query.skip(skip);
                 query.limit(limit);
-                query.select('-hasSignupUsers');
+                query.select('-hasSignupUsers', '-joinUsers');
                 query.descending('createdAt');
                 query.find().then(function(results){
-                    if (!results) {
-                        res.success();
-                        return;
-                    }
-
-                    results.forEach(function(activity){
-                        var retItem = {};
-                        retItem.activity = activity._toFullJSON();
-                        retItem.activity.price = retItem.activity.price || '0.00';
-                        var joinUsers = retItem.activity.joinUsers || [];
-                        retItem.extra = {
-                            friendJoin:0/*Math.floor(Math.random()*100)*/,
-                            hasSignup: _.indexOf(joinUsers, userId)>=0?true:false,
-                            tagNames:common.tagNameFromId(activity.get('tags'))
-                        };
-                        delete retItem.activity.joinUsers;
-
-                        retVal.push(retItem);
-                    });
-
-                    res.success(retVal);
+                    formatResultAndReturn(results, res);
                 }, function(err){
                     res.error('查询活动失败,错误码:'+err.code);
                 });

@@ -166,7 +166,11 @@ AV.Cloud.define('getClan2', function(req, res){
                     queryOr.push(query);
                 });
 
-                var query = AV.Query.or.apply(null, queryOr);
+                if (_.isEmpty(queryOr)) {
+                    var query = new AV.Query('Clan');
+                } else {
+                    var query = AV.Query.or.apply(null, queryOr);
+                }
                 arrClanIds = arrClanIds.concat(clanIds).concat(reviewClanIds);
                 if(arrClanIds.length){
                     query.notContainedIn("objectId", arrClanIds);

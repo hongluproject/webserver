@@ -41,36 +41,38 @@ AV.Cloud.define('getNews2', function(req, res){
     var newsResults = [];
     var queryOr = [];
     var newsClass = AV.Object.extend('News');
-    if (areas) {
-        var areaOr = null;
-        for(var i=0;i<areas.length;i++){
-            var areaOr = new AV.Query(newsClass);
-            areaOr.equalTo("areas", areas[i]);
-            queryOr.push(areaOr);
+
+    if (_.isEmpty(favoriteIds)) {
+        if (areas) {
+            var areaOr = null;
+            for(var i=0;i<areas.length;i++){
+                var areaOr = new AV.Query(newsClass);
+                areaOr.equalTo("areas", areas[i]);
+                queryOr.push(areaOr);
+            }
         }
-    }
-    if (tags) {
-        var tagOr = null;
-        for(var i=0;i<tags.length;i++){
-            var tagOr = new AV.Query(newsClass);
-            tagOr.equalTo("tags", tags[i]);
-            queryOr.push(tagOr);
+        if (tags) {
+            var tagOr = null;
+            for(var i=0;i<tags.length;i++){
+                var tagOr = new AV.Query(newsClass);
+                tagOr.equalTo("tags", tags[i]);
+                queryOr.push(tagOr);
+            }
         }
-    }
-    if (cates) {
-        var cateOr = null;
-        for(var i=0;i<cates.length;i++){
-            var cateOr = new AV.Query(newsClass);
-            cateOr.equalTo("cateids", cates[i]);
-            queryOr.push(cateOr);
+        if (cates) {
+            var cateOr = null;
+            for(var i=0;i<cates.length;i++){
+                var cateOr = new AV.Query(newsClass);
+                cateOr.equalTo("cateids", cates[i]);
+                queryOr.push(cateOr);
+            }
         }
     }
 
-    if(areas||tags||cates){
-        var queryNews= AV.Query.or.apply(null, queryOr);
-    }else{
+    if(_.isEmpty(queryOr)){
         var queryNews= new AV.Query(newsClass);
-
+    }else{
+        var queryNews= AV.Query.or.apply(null, queryOr);
     }
     queryNews.select(["-contents"]);
     queryNews.limit(limit);

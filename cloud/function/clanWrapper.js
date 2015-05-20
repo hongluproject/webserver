@@ -229,6 +229,7 @@ AV.Cloud.define('userUpdate', function(req, res){
         activity:activity class object,
         news: News class object 部落里面最近的看吧文章
         extra:{
+             tagNames:array 部落标签对应的名称
              clanType:Integer
                  0：未加入
                  1：部落创建者
@@ -278,6 +279,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
                 }
             }
             ret.extra.clanType = clanType;
+            ret.extra.tagNames = common.tagNameFromId(clan.tags);
         }
 
         //查询部落成员

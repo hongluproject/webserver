@@ -158,7 +158,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
     }
 
     var findDynamicAndReturn = function(query) {
-        var pickActivityKeys = ['objectId','__type', 'title', "className"];
+        var pickActivityKeys = ['objectId','__type', 'title', "className", 'user_id'];
         var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
         var msgIds;
         var activities = [];
