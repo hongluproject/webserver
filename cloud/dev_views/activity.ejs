@@ -11,6 +11,7 @@
     <script type="text/javascript" charset="utf-8" src="/suaxu/common.js"></script>
     <link rel="stylesheet" href="/suaxu/mobile_common.css" type="text/css">
     <link rel="stylesheet" href="/suaxu/mobile_act.css" type="text/css">
+    <script src="/suaxu/function.js"></script>
     <script src="/js/layer.m.js"></script>
 </head>
 <body>
@@ -18,25 +19,6 @@
 
 <%
 
-
-Date.prototype.format = function(fmt)
-{ //author: meizz
-    var o = {
-        "M+" : this.getMonth()+1,                 //月份
-        "d+" : this.getDate(),                    //日
-        "h+" : this.getHours(),                   //小时
-        "m+" : this.getMinutes(),                 //分
-        "s+" : this.getSeconds(),                 //秒
-        "q+" : Math.floor((this.getMonth()+3)/3), //季度
-        "S"  : this.getMilliseconds()             //毫秒
-    };
-    if(/(y+)/.test(fmt))
-        fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));
-    for(var k in o)
-        if(new RegExp("("+ k +")").test(fmt))
-            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
-    return fmt;
-}
 var title = activity.get('title');
 var tags = activity.get('tagNames');
 var index_thumb_image = '/suaxu/suaxu.png';
@@ -50,14 +32,21 @@ if (pay_type == 1) {
     price = '￥'+activity.get('price')+'/人';
 }
 var optionUser = user;
-var startTime = activity.get('activity_time').format('yyyy-MM-dd hh:mm:ss');
-var endTime = activity.get('activity_end_time').format('yyyy-MM-dd hh:mm:ss');
-var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
-
-
-
+var startTime = activity.get('activity_time');
+var endTime = activity.get('activity_end_time');
+var deadTime = activity.get('dead_time');
 %>
 
+
+
+
+<script>
+    function formatDate(date,format) {
+        var val = Date.parse(date);
+        var newDate = new Date(val);
+        return   newDate.format(format)
+    }
+</script>
 
 
 <div id="act_detail">
@@ -88,7 +77,7 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                 <div class="title_left">
                     <img src="/suaxu/04.png" width="20">
 
-                    <p><span style="color:#898989;"><%=activity.get('activity_time').format('yyyy-MM-dd')%>   至  <%=activity.get('activity_end_time').format('yyyy-MM-dd')%></span></p>
+                    <p><span style="color:#898989;" ><script>document.write(formatDate("<%=activity.get('activity_time')%>","yyyy-mm-dd"))</script>      至 <script>document.write(formatDate("<%=activity.get('activity_end_time')%>","yyyy-mm-dd"))</script></span></p>
                     <img src="/suaxu/lx.jpg" style="margin-top:3px;" width="20">
                     <p>
                         <% for (var i in tags) { %>
@@ -177,12 +166,12 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
                                 <div class="rebox-forin">
                                     <p style="clear: both; white-space: normal;">
                                         【活动开始时间】：
-                                        <%= startTime %>
+                                        <script>document.write(formatDate("<%=activity.get('activity_time')%>","yyyy-mm-dd hh:MM:ss"))</script>
                                     </p>
 
                                     <p style="clear: both; white-space: normal;">
-                                        【活动开始结束】：
-                                       <%= endTime %>
+                                        【活动结束时间】：
+                                        <script>document.write(formatDate("<%=activity.get('activity_end_time')%>","yyyy-mm-dd hh:MM:ss"))</script>
                                     </p>
                                     <p style="clear: both; white-space: normal;">
                                         【活动地点】：<%= activity.get('place') %>
@@ -275,7 +264,7 @@ var deadTime = activity.get('dead_time').format('yyyy-MM-dd hh:mm:ss');
     }
 
 
-    var clickObj = new clockInt("<%=endTime%>", "acttime");
+    var clickObj = new clockInt("<%=deadTime%>", "acttime");
     window.setInterval("clickObj.getCurentTxt()", 1000);
 
     $('.actDetailBoxNav li').bind('click', function () {
