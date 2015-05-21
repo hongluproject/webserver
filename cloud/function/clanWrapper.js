@@ -253,13 +253,53 @@ AV.Cloud.define('getClanDetail', function(req, res){
         activity:{}
     };
 
+    var promises = [];
     var retClan;
     var founder;
     var categoryIds;
+    //查询部落
     var queryClan = new AV.Query('Clan');
     queryClan.include('founder_id');
     queryClan.equalTo('objectId', clanId);
-    queryClan.first().then(function(clan){
+    promises.push(queryClan.first());
+
+    //查询部落成员
+    var queryUsers = new AV.Query('ClanUser');
+    queryUsers.select('user_id');
+    queryUsers.include('user_id');
+    queryUsers.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
+    queryUsers.descending('createdAt');
+    queryUsers.limit(10);
+    promises.push(queryUsers.find());
+
+    var queryOr = [];
+    //查询该部落最近一次的活动
+    var queryActivity = new AV.Query('Activity');
+    queryActivity.notEqualTo('removed', true);
+    queryActivity.equalTo('allow_join_type', 2);    //活动归属于部落
+    queryActivity.equalTo('allow_join_data', clanId);
+    queryOr.push(queryActivity);
+
+    queryActivity = new AV.Query('Activity');
+    queryActivity.equalTo('allow_join_type', 1);
+    queryActivity.equalTo('user_id', founder);
+    queryActivity.notEqualTo('removed', true);
+    queryOr.push(queryActivity);
+
+    queryActivity = AV.Query.or.apply(null, queryOr);
+    queryActivity.descending('createdAt');
+    promises.push(queryActivity.first());
+
+    //查询看吧里面最近的一篇文章
+    var queryNews = new AV.Query('News');
+    queryNews.greaterThan('from', 0);           //非系统抓取
+    queryNews.equalTo('clanId', AV.Object.createWithoutData('Clan', clanId));       //该文章归属到该部落
+    queryNews.equalTo('status', 1);             //处于上线状态
+    queryNews.descending('publicAt');
+    queryNews.select('-contents');
+    promises.push(queryNews.first());
+
+    Promise.when(promises).then(function(clan, users, activity, News){
         if (clan) {
             retClan = clan;
             categoryIds = clan.get('clanCateIds');
@@ -282,15 +322,6 @@ AV.Cloud.define('getClanDetail', function(req, res){
             ret.extra.tagNames = common.tagNameFromId(clan.tags);
         }
 
-        //查询部落成员
-        var queryUsers = new AV.Query('ClanUser');
-        queryUsers.select('user_id');
-        queryUsers.include('user_id');
-        queryUsers.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
-        queryUsers.descending('createdAt');
-        queryUsers.limit(10);
-        return queryUsers.find();
-    }).then(function(users){
         //保留的user keys
         var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
         _.each(users, function(userItem){
@@ -298,24 +329,6 @@ AV.Cloud.define('getClanDetail', function(req, res){
             ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
         });
 
-        var queryOr = [];
-        //查询该部落最近一次的活动
-        var queryActivity = new AV.Query('Activity');
-        queryActivity.notEqualTo('removed', true);
-        queryActivity.equalTo('allow_join_type', 2);    //活动归属于部落
-        queryActivity.equalTo('allow_join_data', clanId);
-        queryOr.push(queryActivity);
-
-        queryActivity = new AV.Query('Activity');
-        queryActivity.equalTo('allow_join_type', 1);
-        queryActivity.equalTo('user_id', founder);
-        queryActivity.notEqualTo('removed', true);
-        queryOr.push(queryActivity);
-
-        queryActivity = AV.Query.or.apply(null, queryOr);
-        queryActivity.descending('createdAt');
-        return queryActivity.first();
-    }).then(function(activity){
         ret.activity = activity && activity._toFullJSON();
 
         //查询分类对应的名称，若部落没有分类，则用默认的分类代替
@@ -329,16 +342,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
             retClan.save();
         }
 
-        //查询看吧里面最近的一篇文章
-        var queryNews = new AV.Query('News');
-        queryNews.greaterThan('from', 0);           //非系统抓取
-        queryNews.equalTo('clanId', AV.Object.createWithoutData('Clan', clanId));       //该文章归属到该部落
-        queryNews.equalTo('status', 1);             //处于上线状态
-        queryNews.descending('publicAt');
-        queryNews.select('-contents');
-        return queryNews.first();
-    }).then(function(result){
-        ret.news = result && result._toFullJSON();
+        ret.news = News && News._toFullJSON();
 
         res.success(ret);
     }, function(err){
