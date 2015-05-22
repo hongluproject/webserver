@@ -146,7 +146,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var updateInfo = {
         android:{
-            latestVersion:'1.1.2',
+            latestVersion:'1.1.3',
             needUpdate:true
         },
         iPhone:{
@@ -170,9 +170,9 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '1.新增\"部落看吧\"：这里可供趣友自主填充更专业的相关内容，共同探讨和提升兴趣，支持把网页内容一键转移到自己的看吧里 \n' +
             '2.新增“动态广场”，进入首页即可看到和您兴趣匹配的动态内容 \n' +
             '3.提升用户体验，修复已知问题',
-            clickURL:'http://www.imsahala.com/sahala_1.1.2.apk',
+            clickURL:'http://www.imsahala.com/sahala_1.1.3.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'f497004a47d3c87d06a76acfc0ed88a3',
+            packageMd5:'d7dca35eabd2a257f6281c38122bf118',
             launchOpt:launchOpt
         });
     } else {
