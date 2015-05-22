@@ -528,7 +528,7 @@ AV.Cloud.define("joinClan", function (req, res) {
         }
 
         var query = new AV.Query('Clan');
-        query.include("founder_id.level");
+        query.include("founder_id");
         query.get(clanid).then(function (clan) {
             if (!clan) {
                 console.info('部落不存在:%s', clan.id);

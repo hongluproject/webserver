@@ -253,34 +253,39 @@ AV.Cloud.define('getClanDetail', function(req, res){
         activity:{}
     };
 
+    var promises = [];
     var retClan;
     var founder;
     var categoryIds;
+    //查询部落
     var queryClan = new AV.Query('Clan');
     queryClan.include('founder_id');
     queryClan.equalTo('objectId', clanId);
     queryClan.first().then(function(clan){
-        if (clan) {
-            retClan = clan;
-            categoryIds = clan.get('clanCateIds');
-            founder = clan.get('founder_id');
-            clan = clan._toFullJSON();
-            clan.founder_id = founder._toFullJSON();
-            ret.clan = clan;
-
-            var clanType = 0;
-            if (founder.id == req.user.id) {
-                clanType = 1;
-            } else {
-                if (_.indexOf(req.user.get('clanids'), clan.objectId) >= 0) {
-                    clanType = 2;
-                } else if (_.indexOf(req.user.get('review_clanids'), clan.objectId) >= 0) {
-                    clanType = 3;
-                }
-            }
-            ret.extra.clanType = clanType;
-            ret.extra.tagNames = common.tagNameFromId(clan.tags);
+        if (!clan) {
+            res.error('部落不存在!');
+            return;
         }
+
+        retClan = clan;
+        categoryIds = clan.get('clanCateIds');
+        founder = clan.get('founder_id');
+        clan = clan._toFullJSON();
+        clan.founder_id = founder._toFullJSON();
+        ret.clan = clan;
+
+        var clanType = 0;
+        if (founder.id == req.user.id) {
+            clanType = 1;
+        } else {
+            if (_.indexOf(req.user.get('clanids'), clan.objectId) >= 0) {
+                clanType = 2;
+            } else if (_.indexOf(req.user.get('review_clanids'), clan.objectId) >= 0) {
+                clanType = 3;
+            }
+        }
+        ret.extra.clanType = clanType;
+        ret.extra.tagNames = common.tagNameFromId(clan.tags);
 
         //查询部落成员
         var queryUsers = new AV.Query('ClanUser');
@@ -289,14 +294,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
         queryUsers.equalTo('clan_id', AV.Object.createWithoutData('Clan', clanId));
         queryUsers.descending('createdAt');
         queryUsers.limit(10);
-        return queryUsers.find();
-    }).then(function(users){
-        //保留的user keys
-        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
-        _.each(users, function(userItem){
-            var user = userItem.get('user_id');
-            ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
-        });
+        promises.push(queryUsers.find());
 
         var queryOr = [];
         //查询该部落最近一次的活动
@@ -314,20 +312,7 @@ AV.Cloud.define('getClanDetail', function(req, res){
 
         queryActivity = AV.Query.or.apply(null, queryOr);
         queryActivity.descending('createdAt');
-        return queryActivity.first();
-    }).then(function(activity){
-        ret.activity = activity && activity._toFullJSON();
-
-        //查询分类对应的名称，若部落没有分类，则用默认的分类代替
-        if (_.isEmpty(categoryIds)) {
-            categoryIds = [];
-            _.each(AV.HPGlobalParam.hpClanCategory, function(category){
-                categoryIds.push(category.id);
-            });
-
-            retClan.set('clanCateIds', categoryIds);
-            retClan.save();
-        }
+        promises.push(queryActivity.first());
 
         //查询看吧里面最近的一篇文章
         var queryNews = new AV.Query('News');
@@ -336,14 +321,38 @@ AV.Cloud.define('getClanDetail', function(req, res){
         queryNews.equalTo('status', 1);             //处于上线状态
         queryNews.descending('publicAt');
         queryNews.select('-contents');
-        return queryNews.first();
-    }).then(function(result){
-        ret.news = result && result._toFullJSON();
+        promises.push(queryNews.first());
 
-        res.success(ret);
-    }, function(err){
-        console.error(err);
+        Promise.when(promises).then(function(users, activity, News){
+            //保留的user keys
+            var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+            _.each(users, function(userItem){
+                var user = userItem.get('user_id');
+                ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
+            });
+
+            ret.activity = activity && activity._toFullJSON();
+
+            //查询分类对应的名称，若部落没有分类，则用默认的分类代替
+            if (_.isEmpty(categoryIds)) {
+                categoryIds = [];
+                _.each(AV.HPGlobalParam.hpClanCategory, function(category){
+                    categoryIds.push(category.id);
+                });
+
+                retClan.set('clanCateIds', categoryIds);
+                retClan.save();
+            }
+
+            ret.news = News && News._toFullJSON();
+
+            res.success(ret);
+        }, function(err){
+            console.error(err);
+        });
     });
+
+
 });
 
 /*

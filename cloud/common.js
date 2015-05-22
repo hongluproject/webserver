@@ -262,7 +262,9 @@ exports.getFriendshipUsers = function(findFriendId, users) {
     } else {
         var friendList = [];
         _.each(users, function(user){
-            friendList.push(AV.User.createWithoutData('_User', user.id));
+            if (user) {
+                friendList.push(AV.User.createWithoutData('_User', user.id));
+            }
         });
 
         var queryFriend = new AV.Query('_Followee');
