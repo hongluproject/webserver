@@ -90,7 +90,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
  * }
  */
 AV.Cloud.define('quitActivity', function(req, res) {
-    var userId = req.params.userId;
+    var userId = req.params.userId || (req.user && req.user.id);
     var activityId = req.params.activityId;
     if (!userId || !activityId) {
         res.error('请输入参数！');

@@ -3,6 +3,7 @@
  */
 var common = require('cloud/common.js');
 var _ = AV._;
+var Promise = AV.Promise;
 
 /*
     转换分享URL：包括动态、资讯
@@ -339,6 +340,37 @@ AV.Cloud.define('queryPingXX', function(req, res){
     }
 });
 
+/*
+    清除登协活动所有报名信息
+    函数名：
+        clearMountaineerActivity
+    参数:
+        无
+    返回：
+        success or fail
+ */
+AV.Cloud.define('clearMountaineerActivity', function(req, res){
+
+    var destroyAll = function() {
+        var query = new AV.Query('ActivityUser');
+        query.equalTo('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+        query.limit(1000);
+        query.find().then(function(results){
+            if (_.isEmpty(results)) {
+                return;
+            }
+            if (results.length < 1000) {
+                AV.Object.destroyAll(results);
+            } else {
+                AV.Object.destroyAll(results).then(function(){
+                   destroyAll();
+                });
+            }
+        });
+    }
+
+    destroyAll();
+});
 /*
     将登协用户加入登协活动
     1、通过用户数据接口，拿到所有用户数据。

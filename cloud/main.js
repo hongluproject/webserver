@@ -51,19 +51,11 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var TestClass = AV.Object.extend('TestClass');
-	var testObj = new TestClass();
-	testObj.id = '55477a30e4b0fe51386b2cad';
-	testObj.fetch({
-		success:function(result) {
-			if (result) {
-				res.success(result._toFullJSON());
-			}
-		},
-		error:function(err){
-			console.dir(err);
-		}
-	});
+	var userId = req.user && req.user.id;
+	var nowDate = new Date();
+
+
+
 });
 
 /*

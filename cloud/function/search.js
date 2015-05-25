@@ -2,6 +2,7 @@
  * Created by fugang on 14/12/15.
  */
 var common = require('cloud/common.js');
+var myutils = require('cloud/utils.js');
 var _ = AV._;
 
 /*
@@ -383,7 +384,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         if (tagId) {
             query.equalTo("tags", tagId);
         } else {
-            var re=new RegExp(kw,"i");
+            var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
             query.matches("title",  re);
         }
         var newsIds = [];
@@ -408,7 +409,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            var re=new RegExp(kw,"i");
+            var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
             query.matches("content",  re);
         }
         query.skip(skip);
@@ -458,7 +459,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            var re=new RegExp(kw,"i");
+            var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
             query.matches("title",  re);
         }
         query.find({
@@ -510,7 +511,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            var re=new RegExp(kw,"i");
+            var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
             query.matches("nickname",  re);
         }
         var findUsers;
@@ -545,7 +546,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
-            var re=new RegExp(kw,"i");
+            var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
             query.matches("title",  re);
         }
         query.skip(skip);
@@ -602,7 +603,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         //先看关键字是否有匹配到标签，如果有，则做标签筛选，否则按关键字查询
         var query = new AV.Query('Tag');
         query.select("objectId","tag_name");
-        var re=new RegExp(kw,"i");
+        var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
         query.matches("tag_name",  re);
         query.lessThanOrEqualTo('status', 1);
         query.first({
