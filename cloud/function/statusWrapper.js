@@ -62,12 +62,44 @@ AV.Cloud.define('getStatus', function(req, res) {
             if (clan) {
                 clan = clan._toFullJSON();
                 results[i].set('clan', _.pick(clan, pickClanKeys));
+
+                var messageType = results[i].get('messageType');
+                switch (messageType) {
+                    case 'addToClan':
+                        results[i].set('message', ('加入了'+clan.title+'部落'));
+                        break;
+                    case 'quitClan':
+                        results[i].set('message', ('退出了'+clan.title+'部落'));
+                        break;
+                    case 'allowToJoinClan':
+                        results[i].set('message', ('允许您加入'+clan.title+'部落'));
+                        break;
+                    case 'refuseToJoinClan':
+                        results[i].set('message', ('拒绝您加入'+clan.title+'部落'));
+                        break;
+                }
             }
 
             var activity = results[i].get('activity');
             if (activity) {
                 activity = activity._toFullJSON();
                 results[i].set('activity', _.pick(activity, pcickActivityKeys));
+
+                var messageType = results[i].get('messageType');
+                switch (messageType) {
+                    case 'joinActivity':
+                        results[i].set('message', ('加入了'+activity.title+'活动'));
+                        break;
+                    case 'quitActivity':
+                        results[i].set('message', ('退出了'+activity.title+'活动'));
+                        break;
+                    case 'cancelActivity':
+                        results[i].set('message', ('取消了'+activity.title+'活动'));
+                        break;
+                    case 'updateActivity':
+                        results[i].set('message', ('更新了'+activity.title+'活动信息'));
+                        break;
+                }
             }
 
             var dynamic = results[i].get('dynamicNews');

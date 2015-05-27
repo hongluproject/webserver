@@ -54,7 +54,21 @@ AV.Cloud.define("hello", function(req, res) {
 	var userId = req.user && req.user.id;
 	var nowDate = new Date();
 
+	var destroyActivityUser = function() {
+		var query = new AV.Query('ActivityUser');
+		query.equalTo('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+		query.skip(0);
+		query.limit(500);
+		console.info('begin find');
+		query.destroyAll().then(function(){
+			console.info('delete ok');
+			destroyActivityUser();
+		}).catch(function(){
+			res.success('ok');
+		});
+	}
 
+	destroyActivityUser();
 
 });
 

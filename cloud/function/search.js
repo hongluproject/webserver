@@ -552,6 +552,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.skip(skip);
         query.descending('createdAt');
         query.find().then(function(results){
+            var activities = [];
             _.each(results, function(activity){
                 var retItem = {};
                 retItem.activity = activity._toFullJSON();
@@ -561,7 +562,33 @@ AV.Cloud.define('getSearch2', function(req, res){
                     tagNames:common.tagNameFromId(activity.get('tags'))
                 };
 
+                activities.push(AV.Object.createWithoutData('Activity', activity.id));
                 retVal.push(retItem);
+            });
+
+            if (_.isEmpty(activities)) {
+                return AV.Promise.as();
+            } else {
+                var query = new AV.Query('ActivityUser');
+                query.containedIn('activity_id', activities);
+                query.equalTo('user_id', AV.User.createWithoutData('User', userId));
+                query.limit(limit);
+                return query.find();
+            }
+
+        }).then(function(results){
+            var activityObj = {};
+            _.each(results, function(item){
+                var activity = item.get('activity_id');
+                if (activity) {
+                    activityObj[activity.id] = true;
+                }
+            });
+
+            _.each(retVal, function(item){
+               if (activityObj[item.activity && item.activity.objectId]) {
+                   item.extra.hasSignup = true;
+               }
             });
 
             res.success({
