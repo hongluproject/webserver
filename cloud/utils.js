@@ -319,3 +319,14 @@ exports.printAbnormalityActivity = function() {
         };
     });
 }
+
+exports.escapeExprSpecialWord = function(key) {
+    if (!_.isEmpty(key)) {
+        var fbsArr = [ "\\", "$", "(", ")", "*", "+", ".", "[", "]", "?", "^", "{", "}", "|" ];
+        _.each(fbsArr, function(item){
+            key = key.replace(item, '\\'+item);
+        });
+    }
+
+    return key;
+}

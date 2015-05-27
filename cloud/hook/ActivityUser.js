@@ -42,6 +42,10 @@ AV.Cloud.beforeSave('ActivityUser', function(req, res) {
 
 AV.Cloud.afterSave('ActivityUser', function(req){
     var ActivityObj = req.object.get('activity_id');
+    if ((ActivityObj&&ActivityObj.id) == common.getMountaineerClubActivityId()) {
+        return;
+    }
+
     var userObj = req.object.get('user_id');
     var queryActivity = new AV.Query('Activity');
     queryActivity.select('user_id', 'title', 'current_num');
@@ -73,6 +77,9 @@ AV.Cloud.afterSave('ActivityUser', function(req){
 
 AV.Cloud.afterDelete('ActivityUser', function(req){
     var ActivityObj = req.object.get('activity_id');
+    if ((ActivityObj&&ActivityObj.id) == common.getMountaineerClubActivityId()) {
+        return;
+    }
     var userObj = req.object.get('user_id');
     if (!ActivityObj || !userObj) {
         return;

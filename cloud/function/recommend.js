@@ -63,7 +63,7 @@ AV.Cloud.define('getRecommend2', function(req, res){
         queryUser.notContainedIn('objectId', excludeIds);
         queryUser.skip(skip);
         queryUser.limit(limit);
-        queryUser.descending('friendCount');
+        queryUser.descending('createdAt');
         return queryUser.find();
     }).then(function(users){
         _.each(users, function(user){

@@ -51,19 +51,25 @@ require('cloud/function/userWrapper.js');
  *
  */
 AV.Cloud.define("hello", function(req, res) {
-	var TestClass = AV.Object.extend('TestClass');
-	var testObj = new TestClass();
-	testObj.id = '55477a30e4b0fe51386b2cad';
-	testObj.fetch({
-		success:function(result) {
-			if (result) {
-				res.success(result._toFullJSON());
-			}
-		},
-		error:function(err){
-			console.dir(err);
-		}
-	});
+	var userId = req.user && req.user.id;
+	var nowDate = new Date();
+
+	var destroyActivityUser = function() {
+		var query = new AV.Query('ActivityUser');
+		query.equalTo('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+		query.skip(0);
+		query.limit(500);
+		console.info('begin find');
+		query.destroyAll().then(function(){
+			console.info('delete ok');
+			destroyActivityUser();
+		}).catch(function(){
+			res.success('ok');
+		});
+	}
+
+	destroyActivityUser();
+
 });
 
 /*
