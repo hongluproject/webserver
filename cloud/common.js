@@ -150,6 +150,8 @@ exports.newsResultWapper2 = function(userId, results) {
                 if (likeTarget[newsItem.id]) {
                     resItem.extra.isLike = true;
                     resItem.extra.likeObjectId = likeTarget[newsItem.id];
+                } else {
+                    resItem.extra.isLike = false;
                 }
             });
 

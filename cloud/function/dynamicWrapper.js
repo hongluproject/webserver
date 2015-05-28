@@ -978,7 +978,7 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
 
         return common.findLikeDynamicUsers(userId, dynamic);
     }).then(function(likeObj){
-        var bLiked = likeObj && likeObj[retDynamic.id];
+        var bLiked = (likeObj && likeObj[retDynamic.id])?true:false;
         var tags = retDynamic.get('tags');
         var userPost = retDynamic.get('user_id');
         var activityId = retDynamic.get('activityId');
