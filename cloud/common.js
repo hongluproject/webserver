@@ -613,6 +613,8 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         case 'removeFromClan':
         case 'refuseToJoinClan':
         case 'allowToJoinClan':
+        case 'quitClan':
+        case 'addToClan':
             status.set('clan', extendProp.clan._toPointer());
             break;
         case 'joinActivity':

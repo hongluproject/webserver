@@ -65,6 +65,9 @@ AV.Cloud.define('getStatus', function(req, res) {
 
                 var messageType = results[i].get('messageType');
                 switch (messageType) {
+                    case 'removeFromClan':
+                        results[i].set('message', ('被酋长移出了'+clan.title+'部落'));
+                        break;
                     case 'addToClan':
                         results[i].set('message', ('加入了'+clan.title+'部落'));
                         break;

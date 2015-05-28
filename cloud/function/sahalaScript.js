@@ -584,7 +584,7 @@ AV.Cloud.define('importMountaineer', function(req, res){
                         var password = userName.substr(-6);
                         console.info('user %s realname %s password %s begin register', userName, realName, password);
                         promise = promise.then(function(){
-                            AV.User.signUp(userName,password,{
+                            return AV.User.signUp(userName,password,{
                                 mobilePhoneNumber:userName
                             }).then(function(user){
                                 var username = user.get('username');
@@ -601,7 +601,7 @@ AV.Cloud.define('importMountaineer', function(req, res){
                             }, function(err){
                                 console.error('register mountaineer club user fail:', err);
                                 return Promise.as();
-                            })
+                            });
                         });
                     });
                 });
