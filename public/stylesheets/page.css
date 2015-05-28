@@ -36,6 +36,7 @@ del{font-family:'\5b8b\4f53'}.clear{*zoom:1}
 .share .info .details{flex:2; }
 .share .info .details p:nth-child(1){font-size: 16px; padding:3% 0; margin-bottom: 10px; max-height:40px; overflow: hidden;}
 .share .info .details p:nth-child(2) i{display: inline-block; vertical-align: middle; width:18px; height:18px; background: url(../images/share/icon.png) no-repeat center top; background-size: contain; margin-right: 10px; }
+.share .intro {font-size: 16px; margin-bottom: 5% }
 .share .accept{padding:10% 5%;}
 .share .accept a{display: block; background: #36cad8; color:#fff; font-size: 18px; text-decoration: none; text-align:center; margin-bottom: 20px; height: 50px; line-height: 50px; border-radius: 7px;}
 
