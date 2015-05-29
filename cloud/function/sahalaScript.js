@@ -404,6 +404,8 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
             });
             var importUsers = _.keys(userObj);
 
+            console.info('total import user count %d', importUsers&&importUsers.length);
+
             //拿到所有用户列表
             var registerUserIds = [];
             var userArray = [];
@@ -461,7 +463,7 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
                 var promise4 = Promise.as();
                 var ActivityUser = AV.Object.extend('ActivityUser');
                 var leftCount = unjoinUsers.length;
-                promise4.then(function(){
+                return promise4.then(function(){
                     _.each(unjoinUsers, function(userId){
                         promise3 = promise3.then(function(){
                             var activityUser = new ActivityUser();
@@ -574,15 +576,16 @@ AV.Cloud.define('importMountaineer', function(req, res){
                     //比较两个数组，找出尚未注册的用户
                     unregistUsers = _.difference(importUsers, registerUsers);
                     unregistUsers = _.unique(unregistUsers);
-                    console.info('total unregister user count is %d', unregistUsers.length);
+                    console.info('total unregister user count is %d', unregistUsers&&unregistUsers.length);
 
                     //开始逐个注册
                     promise = Promise.as();
+                    var leftCount = unregistUsers && unregistUsers.length;
                     _.each(unregistUsers, function(userPhone){
                         var userName = userPhone;
                         var realName = userObj[userPhone];
                         var password = userName.substr(-6);
-                        console.info('user %s realname %s password %s begin register', userName, realName, password);
+                        console.info('%d user left,user %s realname %s password %s begin register', --leftCount, userName, realName, password);
                         promise = promise.then(function(){
                             return AV.User.signUp(userName,password,{
                                 mobilePhoneNumber:userName
@@ -605,6 +608,24 @@ AV.Cloud.define('importMountaineer', function(req, res){
                         });
                     });
                 });
+            }
+        }
+    });
+});
+
+/*  为登协队伍创建部落，并把下面的成员加入到该部落中
+
+ */
+AV.Cloud.define('createClanForTeam', function(req, res){
+    AV.Cloud.httpRequest({
+        method: 'GET',
+        url: 'http://sport.hoopeng.cn/api/sport/userinfo'
+    }).then(function(response) {
+        console.info('importMountaineer http status code %d ', response.status);
+        if (response.status == 200) {
+            var userVal = JSON.parse(response.text);
+            if (userVal) {
+                var teams = _.values(userVal);
             }
         }
     });
@@ -681,3 +702,4 @@ AV.Cloud.define('followAssistants', function(req, res){
         });
     });
 });
+

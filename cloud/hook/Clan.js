@@ -13,6 +13,10 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
         res.error('请登录账号!');
         return;
     }
+    if (req.user.get('blacklistUser')) {
+        res.error('您被禁止创建部落!');
+        return;
+    }
 
     var clanObj = req.object;
     var founderUser = req.object.get('founder_id');

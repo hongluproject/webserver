@@ -5,6 +5,15 @@ var utils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 var _ = AV._;
 
+AV.Cloud.beforeSave('DynamicNews', function(req, res){
+    if (req.user.get('blacklistUser')) {
+        res.error('您被禁止发布动态!');
+        return;
+    }
+
+    res.success();
+});
+
 /** 发布动态后，通知到所有关注我的人
  *
  */

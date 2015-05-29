@@ -2,6 +2,15 @@
  * Created by fugang on 14/12/11.
  */
 
+AV.Cloud.beforeSave('NewsComment', function(req, res){
+    if (req.user && req.user.get('blacklistUser')) {
+        res.error('您被禁止发表评论!');
+        return;
+    }
+
+    res.success();
+});
+
 /** 如果有新增的资讯评论，资讯表里面的评论数加1
  *
  */

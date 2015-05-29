@@ -1531,7 +1531,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
-            query.descending('activity_time');
+            query.ascending('activity_time');
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
             }, function(err){

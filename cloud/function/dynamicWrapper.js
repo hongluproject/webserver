@@ -268,6 +268,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);
+            query.equalTo('status', 1);
             query.include('user_id', 'activityId');
             query.limit(limit).skip(skip);
             query.descending('createdAt');
@@ -328,6 +329,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
 
                 var query = AV.Query.or(queryInClanIds, queryIncludeUser);
                 query.equalTo('type', 2);
+                query.equalTo('status', 1);
                 query.include('user_id', 'activityId');
                 query.skip(skip);
                 query.limit(limit);
@@ -379,6 +381,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             query.include('user_id', 'activityId');
             query.equalTo('activityId', AV.Object.createWithoutData('Activity', activityId));
             query.equalTo('type', 2);
+            query.equalTo('status', 1);
             query.descending('createdAt');
             query.limit(limit);
             query.skip(skip);

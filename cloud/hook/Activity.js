@@ -2,6 +2,14 @@ var common = require('cloud/common.js');
 var myutils = require('cloud/utils');
 var querystring = require('querystring');
 
+AV.Cloud.beforeSave('Activity', function(req, res){
+    if (req.user && req.user.get('blacklistUser')) {
+        res.error('您被禁止创建活动!');
+    }
+
+    res.success();
+});
+
 AV.Cloud.afterSave('Activity', function(request) {
     var ActivityObj = request.object;
     var ActivityId = ActivityObj.id;
