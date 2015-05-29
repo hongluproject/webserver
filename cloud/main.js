@@ -71,10 +71,26 @@ AV.Cloud.define("hello", function(req, res) {
 //	destroyActivityUser();
 	var modifyUser = function() {
 		var query = new AV.Query('User');
-		query.get('555af348e4b0761734484e2e').then(function(user){
-			console.dir(user);
-			user.set('status', 2);
-			return user.save();
+		query.get('555b4785e4b07617344c8d1f').then(function(user){
+			if (!user) {
+				return AV.Promise.error('用户不存在!');
+			}
+
+			return AV.Cloud.httpRequest({
+				'url':'https://api.leancloud.cn/1.1/classes/_User/'.concat(user.id),
+				'method':'PUT',
+				'headers':{
+					'X-AVOSCloud-Application-Id':AV.applicationId,
+					'X-AVOSCloud-Application-Key':AV.applicationKey,
+					'Content-Type':'application/json',
+					'X-AVOSCloud-Session-Token':'pnktnjyb996sj4p156gjtp4im'
+				},
+				'body':{
+					'status':2
+				}
+			});
+		}).then(function(result){
+			console.dir(result);
 		}).catch(function(err){
 			console.error(err);
 		});

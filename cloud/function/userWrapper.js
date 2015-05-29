@@ -148,7 +148,22 @@ AV.Cloud.define('addUserToBlacklist', function(req, res){
     }
 
     var promise = AV.Promise.as();
-    promise.then(function(user){
+    promise.then(function(){
+        var query = new AV.Query('BlackList');
+        query.equalTo('type', 'user');
+        return query.first().then(function(blackObj){
+            if (blackObj) {
+                blackObj.fetchWhenSave(true);
+                blackObj.addUnique('blackIds', userId);
+            } else {
+                var BlackList = AV.Object.extend('BlackList');
+                blackObj = new BlackList();
+                blackObj.set('type', 'user');
+                blackObj.set('blackIds', [userId]);
+            }
+            return blackObj.save();
+        });
+    }).then(function(blackObj){
         //查找动态、部落、活动、资讯
         var userObj = AV.User.createWithoutData('User', userId);
         var promises = [];
@@ -210,7 +225,7 @@ AV.Cloud.define('addUserToBlacklist', function(req, res){
 
         return promise;
     }).then(function(){
-        res.success();
+        res.success('addUserToBlacklist ok!');
     }).catch(function(err){
         if (_.isString(err)) {
             res.error(err);

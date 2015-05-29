@@ -511,39 +511,48 @@ AV.Cloud.define('getSearch2', function(req, res){
 
     //用户
     var getUser = function(){
-        var query = new AV.Query('_User');
-        query.select("icon", "nickname","actual_position","tags","clanids","objectId");
-        query.limit(limit);
-        query.skip(skip);
-        query.descending('createdAt');
-        query.notEqualTo('status', 2);
-        if(tagId){
-            query.equalTo("tags", tagId);
-        }else {
-            var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
-            query.matches("nickname",  re);
-        }
-        var findUsers;
-        var retResult = [];
-        query.find().then(function(results) {
-            findUsers = results;
-            return common.addFriendShipForUsers(userId, results);
-        }).then(function(result){
-            _.each(findUsers, function(userItem){
-                var resItem = {};
-                resItem.user = userItem._toFullJSON();
-                if (result[userItem.id]) {
-                    resItem.extra = {
-                        isFriend:true,
-                        tagNames:common.tagNameFromId(userItem.get('tags'))
-                    };
-                }
+        var query = new AV.Query('BlackList');
+        query.equalTo('type', 'user');
+        query.first().then(function(blackObj){
+            //先获得黑名单列表
+            var blackIds = blackObj&&blackObj.get('blackIds');
 
-                retResult.push(resItem);
-            });
+            var query = new AV.Query('_User');
+            query.select("icon", "nickname","actual_position","tags","clanids","objectId");
+            query.limit(limit);
+            query.skip(skip);
+            query.descending('createdAt');
+            if (!_.isEmpty(blackIds)) {
+                query.notContainedIn('objectId', blackIds);
+            }
+            if(tagId){
+                query.equalTo("tags", tagId);
+            }else {
+                var re=new RegExp(myutils.escapeExprSpecialWord(kw),"i");
+                query.matches("nickname",  re);
+            }
+            var findUsers;
+            var retResult = [];
+            query.find().then(function(results) {
+                findUsers = results;
+                return common.addFriendShipForUsers(userId, results);
+            }).then(function(result){
+                _.each(findUsers, function(userItem){
+                    var resItem = {};
+                    resItem.user = userItem._toFullJSON();
+                    if (result[userItem.id]) {
+                        resItem.extra = {
+                            isFriend:true,
+                            tagNames:common.tagNameFromId(userItem.get('tags'))
+                        };
+                    }
 
-            res.success({
-                resUser:retResult
+                    retResult.push(resItem);
+                });
+
+                res.success({
+                    resUser:retResult
+                });
             });
         });
     };

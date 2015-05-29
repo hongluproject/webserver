@@ -973,3 +973,26 @@ exports.getCityTag = function() {
 
     return '54ca0f5de4b0f88531b6be8f';
 }
+
+/**
+ * 判断用户是否在黑名单列表里面
+ * @param userId    被判断的用户ID
+ * @param cb        callback
+ * @returns {AV.Promise}
+ */
+exports.isUserInBlackList = function(userId) {
+    var query = new AV.Query('BlackList');
+    query.equalTo('type', 'user');
+    return query.first().then(function(blackObj){
+        if (blackObj) {
+            var blackIds = blackObj.get('blackIds');
+            if (_.indexOf(blackIds, userId) >= 0) {
+                return AV.Promise.as(true);
+            }
+        }
+
+        return AV.Promise.error();
+    }).catch(function(err){
+        return AV.Promise.as(false);
+    });
+}

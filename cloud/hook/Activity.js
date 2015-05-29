@@ -3,11 +3,13 @@ var myutils = require('cloud/utils');
 var querystring = require('querystring');
 
 AV.Cloud.beforeSave('Activity', function(req, res){
-    if (req.user && (req.user.get('status')==2)) {
-        res.error('您被禁止创建活动!');
-    }
-
-    res.success();
+    common.isUserInBlackList(req.user.id).then(function(isInBlack){
+        if (isInBlack) {
+            res.error('您被禁止创建活动!');
+        } else {
+            res.success();
+        }
+    })
 });
 
 AV.Cloud.afterSave('Activity', function(request) {
