@@ -42,11 +42,18 @@ AV.Cloud.define('getRecommend2', function(req, res){
 
     var retVal = [];
     var excludeIds = [userId];
+    var promises = [];
+
     var query = new AV.Query('_Followee');
     query.select('followee');
     query.equalTo('user', AV.User.createWithoutData('_User', userId));
     query.limit(1000);
-    query.find().then(function(results){
+    promises.push(query.find());
+
+    var query = new AV.Query('BlackList');
+    query.equalTo('type', 'user');
+    promises.push(query.first());
+    AV.Promise.when(promises).then(function(results, blackObj){
         _.each(results, function(followee){
             excludeIds.push(followee.get('followee').id);
         });
@@ -59,9 +66,12 @@ AV.Cloud.define('getRecommend2', function(req, res){
             queryOr.push(query);
         });
 
+        var blackIds = blackObj&&blackObj.get('blackIds');
         var queryUser = AV.Query.or.apply(null, queryOr);
         queryUser.notContainedIn('objectId', excludeIds);
-        queryUser.notEqualTo('status', 2);
+        if (!_.isEmpty(blackIds)) {
+            queryUser.notContainedIn('objectId', blackIds);
+        }
         queryUser.skip(skip);
         queryUser.limit(limit);
         queryUser.descending('createdAt');

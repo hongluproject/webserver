@@ -5,12 +5,14 @@ var utils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 
 AV.Cloud.beforeSave('DynamicComment', function(req, res){
-    if (req.user && req.user.get('blacklistUser')) {
-        res.error('您被禁止发表评论!');
-        return;
-    }
-
-    res.success();
+    //判断用户是否在黑名单内
+    common.isUserInBlackList(req.user.id).then(function(isInBlack) {
+        if (isInBlack) {
+            res.error('您被禁止发表评论!');
+        } else {
+            res.success();
+        }
+    });
 });
 
 /** 如果有新增的动态评论，动态表里面的评论数加1

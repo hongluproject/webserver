@@ -13,42 +13,47 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
         res.error('请登录账号!');
         return;
     }
-    if (req.user.get('status') == 2) {
-        res.error('您被禁止创建部落!');
-        return;
-    }
 
-    var clanObj = req.object;
-    var founderUser = req.object.get('founder_id');
-    if (!founderUser || !founderUser.id) {
-        res.error('数据错误！');
-        return;
-    }
-    var queryUser = new AV.Query('_User');
-    queryUser.get(founderUser.id, {
-        success:function(userResult) {
-            if (!userResult) {
-                res.error('用户不存在！');
-                return;
-            }
-
-            //根据用户等级，修改该部落可以最多加入的人数
-            var userLevel = userResult.get('level') || 1;
-            var nMaxClanUser = clanParam.getMaxClanUsers(userLevel);
-            var fouderUserInfo = {
-                icon:founderUser.get('icon') || '',
-                nickname:founderUser.get('nickname') || ''
-            };
-
-            clanObj.set('founder_userinfo', fouderUserInfo);
-            clanObj.set('max_num', nMaxClanUser);
-
-            res.success();
-        },
-        error:function(error) {
-            res.error('查询用户失败:'+error.message);
+    //判断用户是否在黑名单内
+    common.isUserInBlackList(req.user.id).then(function(isInBlack){
+        if (isInBlack) {
+            res.error('您被禁止创建部落!');
+            return;
         }
-    })
+
+        var clanObj = req.object;
+        var founderUser = req.object.get('founder_id');
+        if (!founderUser || !founderUser.id) {
+            res.error('数据错误！');
+            return;
+        }
+        var queryUser = new AV.Query('_User');
+        queryUser.get(founderUser.id, {
+            success:function(userResult) {
+                if (!userResult) {
+                    res.error('用户不存在！');
+                    return;
+                }
+
+                //根据用户等级，修改该部落可以最多加入的人数
+                var userLevel = userResult.get('level') || 1;
+                var nMaxClanUser = clanParam.getMaxClanUsers(userLevel);
+                var fouderUserInfo = {
+                    icon:founderUser.get('icon') || '',
+                    nickname:founderUser.get('nickname') || ''
+                };
+
+                clanObj.set('founder_userinfo', fouderUserInfo);
+                clanObj.set('max_num', nMaxClanUser);
+
+                res.success();
+            },
+            error:function(error) {
+                res.error('查询用户失败:'+error.message);
+            }
+        })
+    });
+
 });
 
 /* 用户创建部落后：部落创建者默认加入到ClanUser表中
