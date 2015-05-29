@@ -1444,6 +1444,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.limit(limit);
             query.skip(skip);
             query.notEqualTo('removed', true);
+            query.descending('rank');
             query.descending('createdAt');
             query.select('-hasSignupUsers', '-joinUsers');
             query.find().then(function(results){
@@ -1472,6 +1473,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
+            query.descending('rank');
             query.descending('activity_end_time');
             query.addDescending('activity_time');
             query.find().then(function(results){
@@ -1503,6 +1505,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
+            query.descending('rank');
             query.descending('activity_time');
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
@@ -1531,6 +1534,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
+            query.descending('rank');
             query.descending('activity_time');
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
@@ -1559,6 +1563,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
+            query.descending('rank');
             query.descending('activity_end_time');
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
@@ -1584,6 +1589,8 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.select('-hasSignupUsers', '-joinUsers');
             query.limit(limit);
             query.skip(skip);
+            query.descending('rank');
+
             query.descending('activity_time');
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
@@ -1629,6 +1636,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 query.skip(skip);
                 query.limit(limit);
                 query.select('-hasSignupUsers', '-joinUsers');
+                query.descending('rank');
                 query.descending('createdAt');
                 query.find().then(function(results){
                     formatResultAndReturn(results, res);
