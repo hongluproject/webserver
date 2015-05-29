@@ -68,8 +68,19 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	destroyActivityUser();
+//	destroyActivityUser();
+	var modifyUser = function() {
+		var query = new AV.Query('User');
+		query.get('555af348e4b0761734484e2e').then(function(user){
+			console.dir(user);
+			user.set('status', 2);
+			return user.save();
+		}).catch(function(err){
+			console.error(err);
+		});
+	}
 
+	modifyUser();
 });
 
 /*

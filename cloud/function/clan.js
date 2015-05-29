@@ -172,6 +172,7 @@ AV.Cloud.define('getClan2', function(req, res){
                     var query = AV.Query.or.apply(null, queryOr);
                 }
                 arrClanIds = arrClanIds.concat(clanIds).concat(reviewClanIds);
+                query.notEqualTo('status', 1);
                 if(arrClanIds.length){
                     query.notContainedIn("objectId", arrClanIds);
                 }

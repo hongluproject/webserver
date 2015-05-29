@@ -3,7 +3,7 @@ var myutils = require('cloud/utils');
 var querystring = require('querystring');
 
 AV.Cloud.beforeSave('Activity', function(req, res){
-    if (req.user && req.user.get('blacklistUser')) {
+    if (req.user && (req.user.get('status')==2)) {
         res.error('您被禁止创建活动!');
     }
 

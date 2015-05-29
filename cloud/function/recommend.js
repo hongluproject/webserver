@@ -61,6 +61,7 @@ AV.Cloud.define('getRecommend2', function(req, res){
 
         var queryUser = AV.Query.or.apply(null, queryOr);
         queryUser.notContainedIn('objectId', excludeIds);
+        queryUser.notEqualTo('status', 2);
         queryUser.skip(skip);
         queryUser.limit(limit);
         queryUser.descending('createdAt');

@@ -6,7 +6,7 @@ var common = require('cloud/common.js');
 var _ = AV._;
 
 AV.Cloud.beforeSave('DynamicNews', function(req, res){
-    if (req.user.get('blacklistUser')) {
+    if (req.user && (req.user.get('status')==2)) {
         res.error('您被禁止发布动态!');
         return;
     }

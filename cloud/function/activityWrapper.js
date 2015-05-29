@@ -1447,6 +1447,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.descending('rank');
             query.addDescending('createdAt');
             query.select('-hasSignupUsers', '-joinUsers');
+            query.notEqualTo('status', 1);
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
             }, function(err){
@@ -1637,6 +1638,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 query.select('-hasSignupUsers', '-joinUsers');
                 query.descending('rank');
                 query.addDescending('createdAt');
+                query.notEqualTo('status', 1);
                 query.find().then(function(results){
                     formatResultAndReturn(results, res);
                 }, function(err){

@@ -58,6 +58,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.limit(limit);
         query.skip(skip);
         query.descending('publicAt');
+        query.notEqualTo('status', 2);
         if (tagId) {
             query.equalTo("tags", tagId);
         } else {
@@ -123,6 +124,7 @@ AV.Cloud.define("getSearch",function(req,res){
             "thumbs","up_count","comment_count","objectId","tags", "voice", "duration",
             "area", "position", "activityId");
         query.equalTo("type", 2);
+        query.notEqualTo('status', 2);
         query.limit(limit);
         if(tagId){
             query.equalTo("tags", tagId);
@@ -151,6 +153,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');
+        query.notEqualTo('status', 1);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -171,6 +174,7 @@ AV.Cloud.define("getSearch",function(req,res){
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');
+        query.notEqualTo('status', 2);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -190,6 +194,7 @@ AV.Cloud.define("getSearch",function(req,res){
          var retVal = [];
          var query = new AV.Query(Activity);
         query.limit(limit);
+         query.notEqualTo('status', 1);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -381,6 +386,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.limit(limit);
         query.skip(skip);
         query.descending('publicAt');
+        query.notEqualTo('status', 2);
         if (tagId) {
             query.equalTo("tags", tagId);
         } else {
@@ -406,6 +412,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         var pickActivityKeys = ['objectId','__type', 'title', "className"];
         query.equalTo("type", 2);
         query.limit(limit);
+        query.notEqualTo('status', 2);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -456,6 +463,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');
+        query.notEqualTo('status', 1);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -508,6 +516,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.limit(limit);
         query.skip(skip);
         query.descending('createdAt');
+        query.notEqualTo('status', 2);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {
@@ -543,6 +552,7 @@ AV.Cloud.define('getSearch2', function(req, res){
         var retVal = [];
         var query = new AV.Query('Activity');
         query.limit(limit);
+        query.notEqualTo('status', 1);
         if(tagId){
             query.equalTo("tags", tagId);
         }else {

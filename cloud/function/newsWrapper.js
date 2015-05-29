@@ -77,7 +77,7 @@ AV.Cloud.define('getNews2', function(req, res){
     queryNews.select(["-contents"]);
     queryNews.limit(limit);
     queryNews.skip(skip);
-    queryNews.equalTo('status', 1);     //只显示上线的内容
+    queryNews.notEqualTo('status', 2);     //只显示上线的内容
     if (_.isEmpty(favoriteIds)) {
         queryNews.notEqualTo('from', 1);      //只显示系统爬取的内容
     }

@@ -137,7 +137,85 @@ AV.Cloud.define('reportContent', function(req, res){
         函数名：addUserToBlacklist
     参数：
         userId:objectId
+    返回：
+        success or fail
  */
 AV.Cloud.define('addUserToBlacklist', function(req, res){
+    var userId = req.params.userId;
+    if (!userId) {
+        res.error('请传入用户信息!');
+        return;
+    }
 
+    var promise = AV.Promise.as();
+    promise.then(function(user){
+        //查找动态、部落、活动、资讯
+        var userObj = AV.User.createWithoutData('User', userId);
+        var promises = [];
+
+        var query = new AV.Query('DynamicNews');
+        query.equalTo('user_id', userObj);
+        query.notEqualTo('status', 2);
+        query.limit(1000);
+        promises.push(query.find());
+
+        query = new AV.Query('Clan');
+        query.equalTo('founder_id', userObj);
+        query.notEqualTo('status', 1);
+        query.limit(1000);
+        promises.push(query.find());
+
+        query = new AV.Query('Activity');
+        query.equalTo('user_id', userObj);
+        query.notEqualTo('status', 1);
+        query.limit(1000);
+        promises.push(query.find());
+
+        query = new AV.Query('News');
+        query.equalTo('userId', userObj);
+        query.notEqualTo('status', 2);
+        query.limit(1000);
+        promises.push(query.find());
+
+        return AV.Promise.when(promises);
+    }).then(function(posts, clans, activities, news){
+        var promise = AV.Promise.as();
+        _.each(posts, function(item){
+            promise = promise.then(function() {
+                item.set('status', 2);
+                return item.save();
+            });
+        });
+
+        _.each(clans, function(item){
+            promise = promise.then(function() {
+                item.set('status', 1);
+                return item.save();
+            });
+        });
+
+        _.each(activities, function(item){
+            promise = promise.then(function() {
+                item.set('status', 1);
+                return item.save();
+            });
+        });
+
+        _.each(news, function(item){
+            promise = promise.then(function() {
+                item.set('status', 2);
+                return item.save();
+            });
+        });
+
+        return promise;
+    }).then(function(){
+        res.success();
+    }).catch(function(err){
+        if (_.isString(err)) {
+            res.error(err);
+        } else {
+            res.error('设置用户黑名单失败，错误码:'+err.code);
+        }
+    });
 });
