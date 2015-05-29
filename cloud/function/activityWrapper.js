@@ -1536,7 +1536,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             query.limit(limit);
             query.skip(skip);
             query.descending('rank');
-            query.ascending('activity_time');
+            query.addAscending('activity_time');
             query.find().then(function(results){
                 formatResultAndReturn(results, res);
             }, function(err){
