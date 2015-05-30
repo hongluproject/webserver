@@ -294,6 +294,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             var query = new AV.Query('DynamicNews');
             query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
             query.equalTo('type', 2);
+            query.notEqualTo('status', 2);
             query.include('user_id', 'activityId');
             query.skip(skip);
             query.limit(limit);
@@ -350,6 +351,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             }
             var query = new AV.Query('DynamicNews');
             query.equalTo('type', 2);
+            query.notEqualTo('status', 2);
             if (favoriteIds.length > 0) {
                 limit = favoriteIds.length;
                 query.containedIn('objectId', favoriteIds);
@@ -367,6 +369,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             query.include('user_id', 'activityId');
             query.equalTo('commentUsers', userId);
             query.equalTo('type', 2);
+            query.notEqualTo('status', 2);
             query.descending('createdAt');
             break;
 

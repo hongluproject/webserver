@@ -67,10 +67,11 @@ AV.Cloud.define('getRecommend2', function(req, res){
         });
 
         var blackIds = blackObj&&blackObj.get('blackIds');
+        excludeIds = excludeIds.concat(blackIds);
+
         var queryUser = AV.Query.or.apply(null, queryOr);
-        queryUser.notContainedIn('objectId', excludeIds);
-        if (!_.isEmpty(blackIds)) {
-            queryUser.notContainedIn('objectId', blackIds);
+        if (!_.isEmpty(excludeIds)) {
+            queryUser.notContainedIn('objectId', excludeIds);
         }
         queryUser.skip(skip);
         queryUser.limit(limit);
