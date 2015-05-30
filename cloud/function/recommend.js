@@ -38,8 +38,6 @@ AV.Cloud.define('getRecommend2', function(req, res){
         return;
     }
 
-    console.info('user tags %s', tags);
-
     var retVal = [];
     var excludeIds = [userId];
     var promises = [];
@@ -55,7 +53,9 @@ AV.Cloud.define('getRecommend2', function(req, res){
     promises.push(query.first());
     AV.Promise.when(promises).then(function(results, blackObj){
         _.each(results, function(followee){
-            excludeIds.push(followee.get('followee').id);
+            if (followee) {
+                excludeIds.push(followee.get('followee').id);
+            }
         });
 
         var queryOr = [];
