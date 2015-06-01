@@ -9,11 +9,6 @@ var myutils = require('cloud/utils.js');
  *
  */
 AV.Cloud.beforeSave('Clan', function(req,res) {
-    if (!req.user || !req.user.id) {
-        res.error('请登录账号!');
-        return;
-    }
-
     //判断用户是否在黑名单内
     common.isUserInBlackList(req.user.id).then(function(isInBlack){
         if (isInBlack) {

@@ -623,7 +623,7 @@ AV.Cloud.define('importMountaineer', function(req, res){
 AV.Cloud.define('createClanForTeam', function(req, res){
     AV.Cloud.httpRequest({
         method: 'GET',
-        url: 'http://sport.hoopeng.cn/api/sport/userinfo'
+        url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
     }).then(function(response) {
         console.info('importMountaineer http status code %d ', response.status);
         if (response.status == 200) {
