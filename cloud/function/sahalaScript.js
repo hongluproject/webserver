@@ -577,6 +577,7 @@ AV.Cloud.define('importMountaineer', function(req, res){
                     unregistUsers = _.difference(importUsers, registerUsers);
                     unregistUsers = _.unique(unregistUsers);
                     console.info('total unregister user count is %d', unregistUsers&&unregistUsers.length);
+                    console.info('register users:%s', registerUsers);
 
                     //开始逐个注册
                     promise = Promise.as();
@@ -585,8 +586,8 @@ AV.Cloud.define('importMountaineer', function(req, res){
                         var userName = userPhone;
                         var realName = userObj[userPhone];
                         var password = userName.substr(-6);
-                        console.info('%d user left,user %s realname %s password %s begin register', --leftCount, userName, realName, password);
                         promise = promise.then(function(){
+                            console.info('%d user left,user %s realname %s password %s begin register', --leftCount, userName, realName, password);
                             return AV.User.signUp(userName,password,{
                                 mobilePhoneNumber:userName
                             }).then(function(user){
@@ -607,6 +608,9 @@ AV.Cloud.define('importMountaineer', function(req, res){
                             });
                         });
                     });
+                    return promise;
+                }).then(function(){
+                    res.success('登协用户注册完成!');
                 });
             }
         }
@@ -631,23 +635,99 @@ AV.Cloud.define('createClanForTeam', function(req, res){
     });
 });
 
+/*
+    通过手机号码，把用户加入登协活动。
+ */
+AV.Cloud.define('addUserToMountaineer', function(req, res){
+    var userPhones = req.params.userPhones;
+    var registerIds = [];
+
+    var query = new AV.Query('User');
+    query.containedIn('username', userPhones);
+    query.find().then(function(users){
+        _.each(users, function(user){
+            registerIds.push(AV.User.createWithoutData('User', user.id));
+        });
+
+        console.info('register count %d', registerIds.length);
+        var unjoinUsers;
+        query = new AV.Query('ActivityUser');
+        query.containedIn('user_id', registerIds);
+        query.equalTo('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+        query.find().then(function(results){
+            var joinUsers = [];
+            _.each(results, function(item){
+                joinUsers.push(item.get('user_id'));
+            });
+
+            unjoinUsers = _.difference(registerIds, joinUsers);
+            console.info('unjoin users count %d', unjoinUsers.length);
+
+            var promise = Promise.as();
+            var ActivityUser = AV.Object.extend('ActivityUser');
+            var userLeft = unjoinUsers.length;
+            promise.then(function(){
+                var promise2 = Promise.as();
+                _.each(unjoinUsers, function(item){
+                    promise2 = promise2.then(function(){
+                        console.info('%d user left, begin add user %s to mountaineer', --userLeft, item.id);
+                        var activityUser = new ActivityUser();
+                        activityUser.set('user_id', item);
+                        activityUser.set('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+                        return activityUser.save();
+                    });
+                });
+
+                return promise2;
+            }).then(function(){
+                if (_.isEmpty(unjoinUsers)) {
+                    return Promise.as();
+                } else {
+                    var Activity = AV.Object.extend('Activity');
+                    var activity = new Activity();
+                    activity.id = common.getMountaineerClubActivityId();
+                    activity.fetchWhenSave(true);
+                    activity.increment('current_num', unjoinUsers.length);
+                    return activity.save();
+                }
+            }).then(function(){
+                res.success('ok');
+            }).catch(function(err){
+                console.error(err);
+            });
+
+        });
+    });
+});
+
 /**
  * 注册账号
  * 参数：
  *      username:string 账户名
  *      password:string 密码
+ *      nickname:string 用户别名
  */
 AV.Cloud.define('signUpUser', function(req, res){
     var username = req.params.username;
     var password = req.params.password;
+    var nickname = req.params.nickname;
 
     AV.User.signUp(username,password,{
         mobilePhoneNumber:username,
-        nickname:'小撒'
+        nickname:nickname
     }).then(function(user) {
-        console.dir(user);
+        if (_.isEmpty(nickname)) {
+            return AV.User.logIn(username, password).then(function(user){
+                var inviteId = user.get('invite_id');
+                user.set('nickname', '行者'.concat(inviteId));
+                return user.save();
+            });
+        } else {
+            return Promise.as(user);
+        }
+    }).then(function(user){
         res.success(user._toFullJSON());
-    }, function(err){
+    }).catch(function(err) {
         console.error('注册失败:', err);
         res.error(err);
     });
