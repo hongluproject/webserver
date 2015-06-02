@@ -40,7 +40,7 @@ AV.Cloud.define('getNews2', function(req, res){
     var likeTarget = {};	//记录该用户点过赞的id
     var newsResults = [];
     var queryOr = [];
-    var newsClass = AV.Object.extend('News');
+    var newsClass = common.extendClass('News');
 
     if (_.isEmpty(favoriteIds)) {
         if (areas) {
@@ -157,7 +157,7 @@ AV.Cloud.define('getNews', function(req, res){
     var likeTarget = {};	//记录该用户点过赞的id
     var newsResults = [];
     var queryOr = [];
-    var newsClass = AV.Object.extend('News');
+    var newsClass = common.extendClass('News');
     if (area) {
         var areaOr = null;
         for(var i=0;i<area.length;i++){
@@ -266,7 +266,7 @@ AV.Cloud.define('getNews', function(req, res){
 
         if (userId && results && results.length) {
             //根据资讯&用户id，查询点赞信息
-            var likeClass = AV.Object.extend("Like");
+            var likeClass = common.extendClass("Like");
             var queryLike = new AV.Query(likeClass);
             queryLike.equalTo('like_type', 1);
             queryLike.equalTo('user_id', AV.User.createWithoutData('_User', userId));

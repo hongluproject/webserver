@@ -1,7 +1,7 @@
 /**
  * Created by fugang on 14/12/12.
  */
-var common = require('cloud/common');
+var common = require('cloud/common.js');
 var _ = AV._;
 var Promise = AV.Promise;
 
@@ -460,7 +460,7 @@ AV.Cloud.define('getDynamic', function(req,res){
                 });
 
                 //查询点赞表
-                var likeClass = AV.Object.extend("Like");
+                var likeClass = common.extendClass("Like");
                 var likeQuery = new AV.Query(likeClass);
                 likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
                 likeQuery.containedIn('external_id', dynamicIdArray);
@@ -893,7 +893,7 @@ AV.Cloud.define('postComment', function(req, res){
     var commentObj;
     switch (commentType) {
         case 1:
-            var CommentClass = AV.Object.extend('NewsComment');
+            var CommentClass = common.extendClass('NewsComment');
             commentObj = new CommentClass();
             commentObj.set('newsid', AV.Object.createWithoutData('News', sourceId));
             commentObj.set('append_userinfo', {
@@ -902,7 +902,7 @@ AV.Cloud.define('postComment', function(req, res){
             });
             break;
         case 2:
-            var CommentClass = AV.Object.extend('ActivityComment');
+            var CommentClass = common.extendClass('ActivityComment');
             commentObj = new CommentClass();
             commentObj.set('activity_id', AV.Object.createWithoutData('Activity', sourceId));
             commentObj.set('user_info', {
@@ -911,7 +911,7 @@ AV.Cloud.define('postComment', function(req, res){
             });
             break;
         case 3:
-            var CommentClass = AV.Object.extend('DynamicComment');
+            var CommentClass = common.extendClass('DynamicComment');
             commentObj = new CommentClass();
             commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', sourceId));
             commentObj.set('user_info', {

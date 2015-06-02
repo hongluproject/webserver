@@ -81,7 +81,7 @@ AV.Cloud.define('imGetToken', function(req, res){
     console.info("getimtoken:userid:%s", userobjid);
 
     //根据id查询用户表
-    var hpUser = AV.Object.extend("_User");
+    var hpUser = common.extendClass("_User");
     var query = new AV.Query(hpUser);
     query.get(userobjid, {
         success:function(userObj) {

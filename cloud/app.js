@@ -47,7 +47,7 @@ app.get('/qiniutoken', function(req,res) {
 
 //列表页
 app.get('/articleList', function(req, res) {
-    var interestList = AV.Object.extend("interestList");
+    var interestList = common.extendClass("interestList");
     var query = new AV.Query(interestList);
     query.skip(0);
     query.limit(100);
@@ -216,7 +216,7 @@ app.get('/clan/:objId', function(req,res) {
             }
             clanResult.set('tagNames', tagNames);
 
-            var InvitationCode = AV.Object.extend("InvitationCode");
+            var InvitationCode = common.extendClass("InvitationCode");
             var query = new AV.Query(InvitationCode);
             query.equalTo("invitationCode",invitationCode);
             var today=new Date();
@@ -287,7 +287,7 @@ app.get('/activity/:objId', function(req,res) {
                 }
             }
             activityResult.set('tagNames', tagNames);
-            var InvitationCode = AV.Object.extend("InvitationCode");
+            var InvitationCode = common.extendClass("InvitationCode");
             var query = new AV.Query(InvitationCode);
             query.equalTo("invitationCode",invitationCode);
             var today=new Date();
@@ -350,7 +350,7 @@ app.get('/jobj', function(req, res) {
     res.json(retObj);
 });
 
-var Visitor = AV.Object.extend('Visitor');
+var Visitor = common.extendClass('Visitor');
 function renderIndex(res, name){
 	var query = new AV.Query(Visitor);
 	query.skip(0);
@@ -468,7 +468,7 @@ app.post('/api/ping/notify', function(req, res){
 
             //若不存在，添加AcvitityUser数据
             var signupInfo = order.get('signupId');
-            var ActivityUser = AV.Object.extend('ActivityUser');
+            var ActivityUser = common.extendClass('ActivityUser');
             var activityUser = new ActivityUser();
             activityUser.set('sex', signupInfo.get('sex'));
             activityUser.set('real_name', signupInfo.get('realName'));

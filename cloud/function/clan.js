@@ -182,6 +182,7 @@ AV.Cloud.define('getClan2', function(req, res){
                 query.equalTo("is_full", false);
                 query.limit(limit);
                 query.skip(skip);
+                query.descending('createdAt');
                 query.find().then(function(clans){
                     if (_.isEmpty(clans) && !skip){
                         //若没有按照随机标签找到部落，则按地理位置推荐就近的部落
@@ -237,8 +238,8 @@ AV.Cloud.define("getClan",function(req, res){
     var userid = req.params.userid;
     var tags = req.params.tags||[];
     var index = Math.floor((Math.random()*tags.length));
-    var User = AV.Object.extend("_User");
-    var Clan = AV.Object.extend("Clan");
+    var User = common.extendClass("_User");
+    var Clan = common.extendClass("Clan");
     var userInfo = null;
     var ret = {
         selfClan:{},
@@ -409,7 +410,7 @@ function NotInClan(userid, clanid,callback){
 
 
 function addClanUser(userid, clanid, callback) {
-    var ClanUser = AV.Object.extend("ClanUser");
+    var ClanUser = common.extendClass("ClanUser");
     var clanUser = new ClanUser();
     clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
     clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
@@ -425,12 +426,12 @@ function addClanUser(userid, clanid, callback) {
 }
 
 function addReviewClanUser(userid, clanid, callback) {
-    var ClanReviewUser = AV.Object.extend("ClanReviewUser");
+    var ClanReviewUser = common.extendClass("ClanReviewUser");
     var clanUser = new ClanReviewUser();
     clanUser.set("user_id", AV.Object.createWithoutData("_User", userid, false));
     clanUser.set("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
     clanUser.save().then(function(success){
-        var UserInfo = AV.Object.extend("_User");
+        var UserInfo = common.extendClass("_User");
         var query = new AV.Query(UserInfo);
         query.get(userid, {
             success: function(UserInfo) {
@@ -455,7 +456,7 @@ function removeReviewClanUser(userid, clanid, callback) {
     query.equalTo("user_id", AV.Object.createWithoutData("_User", userid, false));
     query.equalTo("clan_id", AV.Object.createWithoutData("Clan", clanid, false));
     query.destroyAll().then(function(success) {
-        var UserInfo = AV.Object.extend("_User");
+        var UserInfo = common.extendClass("_User");
         var query = new AV.Query(UserInfo);
         query.get(userid, {
             success: function(UserInfo) {

@@ -655,7 +655,7 @@ AV.Cloud.define('saveCategory', function(req, res){
         var unregisterCateNames = _.difference(categoryNames, findCategoryNames);
         var promises = [];
         _.each(unregisterCateNames, function(cateName){
-            var ClanCategory = AV.Object.extend('ClanCategory');
+            var ClanCategory = common.extendClass('ClanCategory');
             var clanCategory = new ClanCategory();
             clanCategory.set('cateName', cateName);
             promises.push(clanCategory.save());
@@ -706,7 +706,7 @@ AV.Cloud.define('saveCategory', function(req, res){
         });
 
         //保存到部落里面去
-        var Clan = AV.Object.extend('Clan');
+        var Clan = common.extendClass('Clan');
         var clan = new Clan();
         clan.id = clanId;
         clan.set('clanCateIds', clanCategoryIds);

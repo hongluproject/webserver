@@ -97,7 +97,27 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	modifyUser();
+	var promise = Promise.as();
+	var ClanUser = common.extendClass('ClanUser');
+	var values = [1,2];
+	promise.then(function(){
+		_.each(values, function() {
+			promise = promise.then(function () {
+				var clanUser = new ClanUser();
+				clanUser.set('clan_id', AV.Object.createWithoutData('Clan', '556de9ede4b005426cfaa896'));
+				clanUser.set('user_id', AV.User.createWithoutData('User', '55642369e4b03286789bcbaa'));
+				clanUser.set('user_level', 1);
+				return clanUser.save().catch(function (err) {
+					console.error(err);
+					return Promise.as();
+				});
+			})
+		});
+
+		return promise;
+	}).then(function(){
+		res.success('haha');
+	});
 });
 
 /*

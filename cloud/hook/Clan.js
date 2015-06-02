@@ -10,7 +10,7 @@ var myutils = require('cloud/utils.js');
  */
 AV.Cloud.beforeSave('Clan', function(req,res) {
     //判断用户是否在黑名单内
-    common.isUserInBlackList(req.user.id).then(function(isInBlack){
+    common.isUserInBlackList(req.user&&req.user.id).then(function(isInBlack){
         if (isInBlack) {
             res.error('您被禁止创建部落!');
             return;
@@ -34,8 +34,8 @@ AV.Cloud.beforeSave('Clan', function(req,res) {
                 var userLevel = userResult.get('level') || 1;
                 var nMaxClanUser = clanParam.getMaxClanUsers(userLevel);
                 var fouderUserInfo = {
-                    icon:founderUser.get('icon') || '',
-                    nickname:founderUser.get('nickname') || ''
+                    icon:userResult.get('icon') || '',
+                    nickname:userResult.get('nickname') || ''
                 };
 
                 clanObj.set('founder_userinfo', fouderUserInfo);
@@ -83,7 +83,7 @@ AV.Cloud.afterSave('Clan', function(req) {
     clanObj.save();
 
     //创建者信息加入到ClanUser表中
-    var ClanUser = AV.Object.extend('ClanUser');
+    var ClanUser = common.extendClass('ClanUser');
     var clanUser = new ClanUser();
     clanUser.set('user_level', 2);
     clanUser.set('clan_id', clanObj._toPointer());

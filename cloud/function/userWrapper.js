@@ -1,6 +1,8 @@
 /**
  * Created by fugang on 15/4/22.
  */
+
+var common = require('cloud/common');
 var _ = AV._;
 
 /*
@@ -106,7 +108,7 @@ AV.Cloud.define('reportContent', function(req, res){
     }).then(function(reportObj){
 
         if (!reportObj) {
-            var ReportClass = AV.Object.extend('Report');
+            var ReportClass = common.extendClass('Report');
             reportObj = new ReportClass();
         }
         reportObj.set('type', type);
@@ -156,7 +158,7 @@ AV.Cloud.define('addUserToBlacklist', function(req, res){
                 blackObj.fetchWhenSave(true);
                 blackObj.addUnique('blackIds', userId);
             } else {
-                var BlackList = AV.Object.extend('BlackList');
+                var BlackList = common.extendClass('BlackList');
                 blackObj = new BlackList();
                 blackObj.set('type', 'user');
                 blackObj.set('blackIds', [userId]);

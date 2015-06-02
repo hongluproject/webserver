@@ -5,6 +5,7 @@ var myutils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 var _ = AV._;
 
+/*  暂时屏蔽更新融云用户信息功能，可能导致出现‘Maximum call stack size exceeded’
 AV.Cloud.afterUpdate('_User', function(request) {
     var userObj = request.object;
     var userIcon = userObj.get('icon');
@@ -44,3 +45,4 @@ AV.Cloud.afterUpdate('_User', function(request) {
         });
     }
 });
+*/

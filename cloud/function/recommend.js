@@ -99,10 +99,10 @@ AV.Cloud.define("getRecommend",function(req, res){
     }
     var index = Math.floor((Math.random()*tags.length));
     var userid = req.params.userid;
-    var User = AV.Object.extend("_User");
-    var Clan = AV.Object.extend("Clan");
-    var Dynamic = AV.Object.extend("DynamicNews");
-    var Followee = AV.Object.extend("_Followee");
+    var User = common.extendClass("_User");
+    var Clan = common.extendClass("Clan");
+    var Dynamic = common.extendClass("DynamicNews");
+    var Followee = common.extendClass("_Followee");
     var selfFriends = [];
     var selfFriendsObj=[];
 

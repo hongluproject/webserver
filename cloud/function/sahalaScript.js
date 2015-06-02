@@ -214,7 +214,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
     }
 
     var randNumber =  rand8Number();
-    var InvitationCode = AV.Object.extend("InvitationCode");
+    var InvitationCode = common.extendClass("InvitationCode");
     var invitationCode = new InvitationCode();
     invitationCode.set("userId", AV.Object.createWithoutData("_User", userId, false));
     invitationCode.set("invitationCode", randNumber);
@@ -250,7 +250,7 @@ AV.Cloud.define('getInvitationCode', function(req, res){
 
 AV.Cloud.define('validateInvitationCode', function(req, res){
     var invitationCode = req.params.invitationCode;
-    var InvitationCode = AV.Object.extend("InvitationCode");
+    var InvitationCode = common.extendClass("InvitationCode");
     var query = new AV.Query(InvitationCode);
     query.equalTo("invitationCode",invitationCode);
 
@@ -283,7 +283,7 @@ AV.Cloud.define('validateInvitationCode', function(req, res){
 
 AV.Cloud.define('getInvitationInfo', function(req, res){
     var invitationCode = req.params.invitationCode;
-    var InvitationCode = AV.Object.extend("InvitationCode");
+    var InvitationCode = common.extendClass("InvitationCode");
     var query = new AV.Query(InvitationCode);
     query.equalTo("invitationCode",invitationCode);
     //一周内
@@ -461,7 +461,7 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
                 console.info('total unjoin users is %d', unjoinUsers.length);
                 var promise3 = Promise.as();
                 var promise4 = Promise.as();
-                var ActivityUser = AV.Object.extend('ActivityUser');
+                var ActivityUser = common.extendClass('ActivityUser');
                 var leftCount = unjoinUsers.length;
                 return promise4.then(function(){
                     _.each(unjoinUsers, function(userId){
@@ -493,7 +493,7 @@ AV.Cloud.define('joinMountaineerActivity', function(req, res){
                 });
             }).then(function(){
                 //将用户写入 joinUsers
-                var Activity = AV.Object.extend('Activity');
+                var Activity = common.extendClass('Activity');
                 var activity = new Activity();
                 activity.id = common.getMountaineerClubActivityId();
                 activity.set('hasSignupUsers', unjoinUsers);
@@ -618,7 +618,9 @@ AV.Cloud.define('importMountaineer', function(req, res){
 });
 
 /*  为登协队伍创建部落，并把下面的成员加入到该部落中
-
+    1、根据成员手机号码，查询到对应的用户ID
+    2、筛选出尚未注册的部落，准备注册部落。
+    3、创建部落，然后再把下面的成员加入。
  */
 AV.Cloud.define('createClanForTeam', function(req, res){
     AV.Cloud.httpRequest({
@@ -630,8 +632,152 @@ AV.Cloud.define('createClanForTeam', function(req, res){
             var userVal = JSON.parse(response.text);
             if (userVal) {
                 var teams = _.values(userVal);
+                var phones = [];
+                var userObj = {};   //key:phone value:userObjectId
+                var teamObj = {};   //key:teamName value:team detail
+                _.each(teams, function(members){
+                    _.each(members, function(member){
+                        teamObj[member.teamName] = members;
+                        phones.push(member.phone);
+                    });
+
+                });
+                var teamNames = _.keys(teamObj);
+
+                phones = _.unique(phones);
+                teamNames = _.unique(teamNames);
+                var memberLeft = 0;
+
+//                console.info('phones:%s teamNames:%s', phones, teamNames);
+                var promises = [];
+                for (var i=0;1;i++) {
+                   var queryPhones = phones.slice(i*1000, (i+1)*1000);
+                    var query = new AV.Query('User');
+                    query.containedIn('username', queryPhones);
+                    query.limit(1000);
+                    promises.push(query.find());
+
+                    if (queryPhones.length < 1000) {
+                        break;
+                    }
+                }
+
+                //找到所有用户信息
+                Promise.all(promises).then(function(results){
+                    _.each(results, function(users){
+                        _.each(users, function(user){
+                           userObj[user.get('username')] = user.id;
+                        });
+                    });
+
+                    _.each(teams, function(team){
+                        _.each(team, function(member){
+                            member.id = userObj[member.phone];
+//                                console.info('phone %s id is %s', member.phone, member.id);
+                        });
+                    });
+
+                    promises = [];
+                    //找到已经报名的部落名
+                    for (var i=0;1;i++) {
+                        var queryTeamNames = teamNames.slice(i*1000,(i+1)*1000);
+                        var query = new AV.Query('Clan');
+                        query.containedIn('title', queryTeamNames);
+                        query.limit(1000);
+                        promises.push(query.find());
+
+                        if (queryTeamNames.length < 1000) {
+                            break;
+                        }
+                    }
+
+                    return Promise.all(promises).then(function(results){
+                        _.each(results, function(clans){
+                            _.each(clans, function(clan){
+                                delete teamObj[clan.get('title')];
+                                console.info('delete clan %s', clan.get('title'));
+                            });
+                        });
+
+                        return Promise.as();
+                    });
+                }).then(function(){
+                    //开始创建部落
+                    console.info('start create clan...');
+                    promises = [];
+                    var promise = Promise.as();
+                    var promise2 = Promise.as();
+                    var Clan = common.extendClass('Clan');
+                    var ClanUser = common.extendClass('ClanUser');
+
+                    var teamNames = _.keys(teamObj);
+//                    teamNames = teamNames.slice(0, 10);
+                    var teamLeft = teamNames && teamNames.length;
+                    memberLeft = teamLeft;
+                    promise2.then(function(){
+                        _.each(teamNames, function(teamName){
+                            console.info('team %s', teamName);
+                            var members = teamObj[teamName];
+
+                            //找到leader
+                            var leader = _.find(members, function(member) {
+                                return member&&member.leader;
+                            });
+                            if (leader) {
+                                --memberLeft;
+                                promise = promise.then(function(){
+                                    console.info('%d team left,finder leader of %s,leader id is %s', --teamLeft, teamName, leader.id);
+                                    var clan = new Clan();
+                                    clan.set('tags', [common.getCityTag()]);
+                                    clan.set('join_mode', 2);
+                                    clan.set('title', teamName);
+                                    clan.set('founder_id', AV.User.createWithoutData('User', leader.id));
+                                    return clan.save().then(function(clan){
+                                        var teamName2 = clan.get('title');
+                                        console.info('clan %s save ok, clan id %s', teamName2, clan.id);
+                                        var members2 = teamObj[teamName2];
+                                        _.each(members2, function(member){
+                                           member.clanId = clan.id;
+                                        });
+                                        return Promise.as();
+                                    }).catch(function(){
+                                        return Promise.as();
+                                    });
+                                });
+                            }
+                        });
+                        return promise;
+                    }).then(function(){
+                        var promise3 = Promise.as();
+                        _.each(teamNames, function(teamName) {
+                            var members = teamObj[teamName];
+
+                            _.each(members, function(member){
+                               if (!member.leader) {
+                                   promise3 = promise3.then(function(){
+                                       var clanUser = new ClanUser();
+                                       clanUser.set('clan_id', AV.Object.createWithoutData('Clan', member.clanId));
+                                       clanUser.set('user_id',  AV.User.createWithoutData('User', member.id));
+                                       clanUser.set('user_level', 1);
+                                       console.info('%d member left,add phone %s name %s to %s', --memberLeft, member.phone, member.username, member.teamName);
+                                       return clanUser.save().catch(function(err){
+                                           console.error(err);
+                                           return Promise.as();
+                                       });
+                                   });
+                               }
+                            });
+                        });
+
+                        return promise3;
+                    }).then(function(){
+                        res.success('the clans of team leaders is created ok');
+                    });
+                });
             }
         }
+    }).catch(function(err){
+        console.error('occur error:', err);
     });
 });
 
@@ -664,7 +810,7 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
             console.info('unjoin users count %d', unjoinUsers.length);
 
             var promise = Promise.as();
-            var ActivityUser = AV.Object.extend('ActivityUser');
+            var ActivityUser = common.extendClass('ActivityUser');
             var userLeft = unjoinUsers.length;
             promise.then(function(){
                 var promise2 = Promise.as();
@@ -683,12 +829,17 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
                 if (_.isEmpty(unjoinUsers)) {
                     return Promise.as();
                 } else {
-                    var Activity = AV.Object.extend('Activity');
-                    var activity = new Activity();
-                    activity.id = common.getMountaineerClubActivityId();
-                    activity.fetchWhenSave(true);
-                    activity.increment('current_num', unjoinUsers.length);
-                    return activity.save();
+                    var query = new AV.Query('Activity');
+                    return query.get(common.getMountaineerClubActivityId()).then(function(activity){
+                        activity.fetchWhenSave(true);
+                        var joinUsers = activity.get('joinUsers') || [];
+                        _.each(unjoinUsers, function(user){
+                            joinUsers = joinUsers.concat(user.id);
+                        })
+                        activity.set('joinUsers', joinUsers);
+                        activity.increment('current_num', unjoinUsers.length);
+                        return activity.save();
+                    });
                 }
             }).then(function(){
                 res.success('ok');
@@ -716,7 +867,7 @@ AV.Cloud.define('signUpUser', function(req, res){
         mobilePhoneNumber:username,
         nickname:nickname
     }).then(function(user) {
-        if (_.isEmpty(nickname)) {
+        if (!nickname) {
             return AV.User.logIn(username, password).then(function(user){
                 var inviteId = user.get('invite_id');
                 user.set('nickname', '行者'.concat(inviteId));

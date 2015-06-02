@@ -62,7 +62,7 @@ AV.Cloud.define('joinActivity', function(req, res) {
             var currActivityUser = activityUsers[i];
 
             //create return activityUser
-            var ActivityUserClass = AV.Object.extend('ActivityUser');
+            var ActivityUserClass = common.extendClass('ActivityUser');
             var returnActivityUser = new ActivityUserClass();
             returnActivityUser.set('user_id', AV.Object.createWithoutData('_User', currActivityUser.user_id.objectId));
             returnActivityUser.set('activity_id', AV.Object.createWithoutData('Activity', currActivityUser.activity_id.objectId));
@@ -231,7 +231,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
 
         //进入生成订单流程
         var userItem = userGroup[0];
-        var ActivitySignUpUser = AV.Object.extend("ActivitySignUpUser");
+        var ActivitySignUpUser = common.extendClass("ActivitySignUpUser");
         var activitySignUpUser = new ActivitySignUpUser();
         if (userItem.sex) {
             activitySignUpUser.set('sex', userItem.sex);
@@ -279,7 +279,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             return _.sample(data, 4).join('');
         }
 
-        var StatementAccount = AV.Object.extend("StatementAccount");
+        var StatementAccount = common.extendClass("StatementAccount");
         var statementAccount = new StatementAccount();
         statementAccount.set('payMode', payMode);
         statementAccount.set('bookNumber', timestamp+rand4Number());
@@ -297,7 +297,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         orderNo = result.get('bookNumber');
         if (bAddToActivityUser) {   //直接加入到ActivityUser表中
             var userItem = userGroup[0];
-            var ActivityUser = AV.Object.extend('ActivityUser');
+            var ActivityUser = common.extendClass('ActivityUser');
             var activityUser = new ActivityUser();
             if (userItem.sex) {
                 activityUser.set('sex', userItem.sex);
@@ -924,7 +924,7 @@ AV.Cloud.define('paymentComplete', function(req, res){
         }
 
         var signupInfo = order.get('signupId');
-        var ActivityUser = AV.Object.extend('ActivityUser');
+        var ActivityUser = common.extendClass('ActivityUser');
         var activityUser = new ActivityUser();
         activityUser.set('sex', signupInfo.get('sex'));
         activityUser.set('real_name', signupInfo.get('realName'));
@@ -1241,7 +1241,7 @@ AV.Cloud.define('getStatementDetail', function(req, res){
 
                 //将用户加入ActivityUser
                 var signupInfo = order.get('signupId');
-                var ActivityUser = AV.Object.extend('ActivityUser');
+                var ActivityUser = common.extendClass('ActivityUser');
                 var activityUser = new ActivityUser();
                 activityUser.set('sex', signupInfo.get('sex'));
                 activityUser.set('real_name', signupInfo.get('realName'));
@@ -1412,7 +1412,7 @@ AV.Cloud.define('getActivityList', function(req, res){
 
     switch (activityType) {
         case 'mainpage':
-            var activityClass = AV.Object.extend('Activity');
+            var activityClass = common.extendClass('Activity');
             if(req.user && req.user.get('actual_position')){
                 var userGeoPoint = req.user.get('actual_position');
             }
@@ -1604,7 +1604,7 @@ AV.Cloud.define('getActivityList', function(req, res){
                 res.error('请传入部落信息！');
                 break;
             }
-            var Clan = AV.Object.extend('Clan');
+            var Clan = common.extendClass('Clan');
             var clan = new Clan();
             clan.id = clanId;
             clan.fetch().then(function(clan){

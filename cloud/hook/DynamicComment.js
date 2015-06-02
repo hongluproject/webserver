@@ -6,7 +6,7 @@ var common = require('cloud/common.js');
 
 AV.Cloud.beforeSave('DynamicComment', function(req, res){
     //判断用户是否在黑名单内
-    common.isUserInBlackList(req.user.id).then(function(isInBlack) {
+    common.isUserInBlackList(req.user&&req.user.id).then(function(isInBlack) {
         if (isInBlack) {
             res.error('您被禁止发表评论!');
         } else {

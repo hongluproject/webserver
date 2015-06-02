@@ -132,7 +132,7 @@ exports.newsResultWapper2 = function(userId, results) {
     });
     if (userId && retResult.length) {
         //根据资讯&用户id，查询点赞信息
-        var likeClass = AV.Object.extend("Like");
+        var likeClass = this.extendClass("Like");
         var queryLike = new AV.Query(likeClass);
         queryLike.equalTo('like_type', 1);
         queryLike.equalTo('user_id', AV.User.createWithoutData('_User', userId));
@@ -230,7 +230,7 @@ exports.newsResultWapper = function(userId, results) {
 
     if (userId && results && results.length) {
         //根据资讯&用户id，查询点赞信息
-        var likeClass = AV.Object.extend("Like");
+        var likeClass = this.extendClass("Like");
         var queryLike = new AV.Query(likeClass);
         queryLike.equalTo('like_type', 1);
         queryLike.equalTo('user_id', AV.User.createWithoutData('_User', userId));
@@ -273,6 +273,7 @@ exports.getFriendshipUsers = function(findFriendId, users) {
         queryFriend.select('followee');
         queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
         queryFriend.containedIn('followee', friendList);
+        queryFriend.limit(1000);
         return queryFriend.find().then(function(results) {
             var friendObj = {};
             _.each(results, function(result){
@@ -304,6 +305,7 @@ exports.addFriendShipForUsers = function(findFriendId, users) {
         queryFriend.select('followee');
         queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
         queryFriend.containedIn('followee', friendList);
+        queryFriend.limit(1000);
         return queryFriend.find().then(function(results) {
             for (var i in results) {
                 var myFollowee = results[i].get('followee');
@@ -350,6 +352,7 @@ exports.findFriendShipForUsers = function(findFriendId, users) {
         queryFriend.select('followee');
         queryFriend.equalTo('user', AV.User.createWithoutData('_User', findFriendId));
         queryFriend.containedIn('followee', friendList);
+        queryFriend.limit(1000);
         return queryFriend.find().then(function(results) {
             _.each(results, function(resItem){
                 var myFollowee = resItem.get('followee');
@@ -383,11 +386,12 @@ exports.findLikeDynamicUsers = function(findLikeUserId, dynamics) {
     });
 
     //根据动态&用户id，查询点赞信息
-    var likeClass = AV.Object.extend("Like");
+    var likeClass = this.extendClass("Like");
     var queryLike = new AV.Query(likeClass);
     queryLike.equalTo('like_type', 2);
     queryLike.equalTo('user_id', AV.User.createWithoutData('_User', findLikeUserId));
     queryLike.containedIn('external_id', dynamicIds);
+    queryLike.limit(1000);
     return queryLike.find().then(function(likes) {
         var retLike = {};
         _.each(likes, function(likeItem){
@@ -831,7 +835,7 @@ exports.addLikesAndReturn = function(userId, dynamics, response) {
     });
 
     //查询点赞表
-    var likeClass = AV.Object.extend("Like");
+    var likeClass = this.extendClass("Like");
     var likeQuery = new AV.Query(likeClass);
     likeQuery.equalTo('user_id', AV.User.createWithoutData('_User', userId));
     likeQuery.containedIn('external_id', dynamicIdArray);
@@ -981,6 +985,10 @@ exports.getCityTag = function() {
  * @returns {AV.Promise}
  */
 exports.isUserInBlackList = function(userId) {
+    if (!userId) {
+        return AV.Promise.as(false);
+    }
+
     var query = new AV.Query('BlackList');
     query.equalTo('type', 'user');
     return query.first().then(function(blackObj){
@@ -995,4 +1003,20 @@ exports.isUserInBlackList = function(userId) {
     }).catch(function(err){
         return AV.Promise.as(false);
     });
+}
+
+/*
+    根据表名，获取对应的数据模型，该数据模型需要作为全局对象保存，否则会出现堆栈溢出，具体见：
+    https://forum.leancloud.cn/t/maximum-call-stack-size-exceeded-ru-he-jie-jue/142
+ */
+exports.extendClass = function(className) {
+    var ClassModel = AV.HPClassModel && AV.HPClassModel[className];
+    if (ClassModel) {
+        return ClassModel;
+    }
+
+    AV.HPClassModel = AV.HPClassModel || {};
+    ClassModel = AV.Object.extend(className);
+    AV.HPClassModel[className] = ClassModel;
+    return ClassModel;
 }

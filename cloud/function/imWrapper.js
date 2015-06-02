@@ -1,6 +1,7 @@
 /**
  * Created by fugang on 15/1/6.
  */
+var common = require('cloud/common');
 
 AV.Cloud.define('getImTarget', function(req, res) {
     var users = req.params.users;
@@ -12,7 +13,7 @@ AV.Cloud.define('getImTarget', function(req, res) {
         if (sessionResult) {
             return AV.Promise.as(sessionResult);
         } else {
-            var SessionClass = AV.Object.extend('ImSession');
+            var SessionClass = common.extendClass('ImSession');
             var sessionClass = new SessionClass();
             sessionClass.set('users', users);
             return sessionClass.save();

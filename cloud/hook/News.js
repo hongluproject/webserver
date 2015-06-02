@@ -29,7 +29,7 @@ AV.Cloud.afterSave('News', function(request){
                clanCategoryCountItem.fetchWhenSave(true);
                clanCategoryCountItem.save();
            } else {
-               var ClanCategoryCountItem = AV.Object.extend('ClanCategoryCount');
+               var ClanCategoryCountItem = common.extendClass('ClanCategoryCount');
                clanCategoryCountItem = new ClanCategoryCountItem();
                clanCategoryCountItem.set('clanCateId', clanCate.id);
                clanCategoryCountItem.set('clanId', clan.id);

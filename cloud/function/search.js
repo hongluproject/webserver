@@ -28,12 +28,12 @@ var _ = AV._;
  */
 AV.Cloud.define("getSearch",function(req,res){
     var currUserId = req.user?req.user.id:undefined;
-    var Dynamic = AV.Object.extend("DynamicNews");
-    var Clan = AV.Object.extend("Clan");
-    var User = AV.Object.extend("_User");
-    var News = AV.Object.extend("News");
-    var Tag = AV.Object.extend("Tag");
-    var Activity = AV.Object.extend("Activity");
+    var Dynamic = common.extendClass("DynamicNews");
+    var Clan = common.extendClass("Clan");
+    var User = common.extendClass("_User");
+    var News = common.extendClass("News");
+    var Tag = common.extendClass("Tag");
+    var Activity = common.extendClass("Activity");
 
 
     //type  3 资讯 ,1 动态,2 问答,4 部落,5 人,6 活动
