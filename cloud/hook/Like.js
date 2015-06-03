@@ -44,7 +44,7 @@ AV.Cloud.afterSave('Like', function(request){
                 common.sendStatus('newLike', likeUser, postUser, query, {dynamicNews:dynamic});
             },
             error: function(error) {
-                console.error( "Like afterSave:Got an error " + error.code + " : " + error.message);
+                console.error( "Like afterSave Got an error:", error);
             }
         });
     }

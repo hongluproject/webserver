@@ -97,26 +97,26 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	var promise = Promise.as();
-	var ClanUser = common.extendClass('ClanUser');
-	var values = [1,2];
-	promise.then(function(){
-		_.each(values, function() {
-			promise = promise.then(function () {
-				var clanUser = new ClanUser();
-				clanUser.set('clan_id', AV.Object.createWithoutData('Clan', '556de9ede4b005426cfaa896'));
-				clanUser.set('user_id', AV.User.createWithoutData('User', '55642369e4b03286789bcbaa'));
-				clanUser.set('user_level', 1);
-				return clanUser.save().catch(function (err) {
-					console.error(err);
-					return Promise.as();
-				});
-			})
-		});
+	var promises = [];
+	var queryOr = [];
+	var query = new AV.Query('Like');
+	query.equalTo('external_id', '5538e8f6e4b0cafb0a217ea0');
+	query.equalTo('user_id', AV.User.createWithoutData('User', '54b5e9fde4b06e1f62998127'));
+	queryOr.push(query);
 
-		return promise;
-	}).then(function(){
-		res.success('haha');
+	query = new AV.Query('Like');
+	query.equalTo('external_id', '5538e8f6e4b0cafb0a217ea0');
+	query.notEqualTo('user_id', AV.User.createWithoutData('User', '54b5e9fde4b06e1f62998127'));
+	query.limit(10);
+	query.descending('createdAt');
+	queryOr.push(query);
+
+	query = AV.Query.or.apply(null, queryOr);
+	query.include('user_id');
+	promises.push(query.find());
+
+	Promise.when(promises).then(function(results){
+		console.dir(results);
 	});
 });
 

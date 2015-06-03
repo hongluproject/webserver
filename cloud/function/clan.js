@@ -176,9 +176,11 @@ AV.Cloud.define('getClan2', function(req, res){
                 if(arrClanIds.length){
                     query.notContainedIn("objectId", arrClanIds);
                 }
+                /*  优先推荐最新创建的部落，不再按地理位置远近来推荐 modified by GaryFu on 20150603
                 if (userGeoPoint) {
                     query.near("position", userGeoPoint);
                 }
+                */
                 query.equalTo("is_full", false);
                 query.limit(limit);
                 query.skip(skip);

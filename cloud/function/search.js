@@ -433,11 +433,21 @@ AV.Cloud.define('getSearch2', function(req, res){
 
             return false;
         }
+        var pickActivityKeys = ['objectId','__type', 'title', "className"];
+        var queryOr = [];
+
         var query = new AV.Query('DynamicNews');
+        query.doesNotExist('clan_ids');
+        queryOr.push(query);
+
+        var query = new AV.Query('DynamicNews');
+        query.equalTo('clan_ids', []);
+        queryOr.push(query);
+
+        query = AV.Query.or.apply(null, queryOr);
         query.select("user_id","nickname", "content", "type",
             "thumbs","up_count","comment_count","objectId","tags", "voice", "duration",
             "area", "position", "activityId");
-        var pickActivityKeys = ['objectId','__type', 'title', "className"];
         query.equalTo("type", 2);
         query.limit(limit);
         query.notEqualTo('status', 2);

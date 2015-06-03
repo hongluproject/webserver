@@ -141,6 +141,7 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
                     tagNames: array  动态tagIds对应的名称
                     messageId:Integer 该动态对应的事件流ID，在动态首页中用到
                     hasSingup:bool 若归属于活动，判断当前用户是否已经加入该活动
+                    likeUsers:[user class object]  该动态最近10个点赞用户，若自己点赞过，会放在第一个返回
                 }
             }
         ]
@@ -195,7 +196,8 @@ AV.Cloud.define('getDynamic2', function(req,res){
 
             var promises = [];
             //find likes objects
-            promises.push(common.findLikeDynamicUsers(req.user&&req.user.id, dynamics));
+            //promises.push(common.findLikeDynamicUsers(req.user&&req.user.id, dynamics));
+            promises.push(common.getLatestLikesOfDynamic(userId, dynamics));
 
             if (!_.isEmpty(activities)) {
                 //find activities for current user signup
@@ -223,23 +225,39 @@ AV.Cloud.define('getDynamic2', function(req,res){
             var i = 0;
             _.each(dynamics, function(dynamic){
 
-                var userId = dynamic.get('user_id');
+                var userOfDynamic = dynamic.get('user_id');
                 var activity = dynamic.get('activityId');
                 dynamic = dynamic._toFullJSON();
-                if (userId) {
-                    dynamic.user_id = _.pick(userId._toFullJSON(), pickUserKeys);
+                if (userOfDynamic) {
+                    dynamic.user_id = _.pick(userOfDynamic._toFullJSON(), pickUserKeys);
                 }
                 if (activity) {
                     dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
                 }
 
+                var likeUsers = likeResult&&likeResult[dynamic.objectId];
+                //get isLike for current user
+                var findMe = _.find(likeUsers, function(user){
+                    return user&&(user.id==userId);
+                });
+                var isLike = findMe?true:false;
+
+                //convert user to fulljson & pick selected keys
+                var convertedUsers = [];
+                //convert likeUsers
+                _.each(likeUsers, function(user){
+                    if (user) {
+                        convertedUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
+                    }
+                });
                 retDynamic.push({
                     dynamic:dynamic,
                     extra:{
-                        isLike:likeResult[dynamic.objectId]?true:false,
+                        isLike:isLike,
                         tagNames:common.tagNameFromId(dynamic.tags),
                         messageId:msgIds?msgIds[i++]:undefined,
-                        hasSignup:activity&&activityObj[activity.id]?true:false
+                        hasSignup:activity&&activityObj[activity.id]?true:false,
+                        likeUsers:convertedUsers
                     }
                 });
             });
@@ -257,6 +275,12 @@ AV.Cloud.define('getDynamic2', function(req,res){
             _.each(tags, function(tag){
                 query = new AV.Query('DynamicNews');
                 query.equalTo('tags', tag);
+                query.doesNotExist('clan_ids');
+                queryOr.push(query);
+
+                query = new AV.Query('DynamicNews');
+                query.equalTo('tags', tag);
+                query.equalTo('clan_ids', []);
                 queryOr.push(query);
             });
 

@@ -402,6 +402,71 @@ exports.findLikeDynamicUsers = function(findLikeUserId, dynamics) {
     });
 }
 
+/**
+ * 查找动态最近10个点赞人，若自己有点赞，则优先返回
+ * @param findLikeUserId
+ * @param dynamics
+ * @return {
+ *      dynamicId:users
+ * }
+ */
+exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
+    if (!_.isArray(dynamics)) {
+        //若不是数组，先转换成数组
+        dynamics = [dynamics];
+    }
+
+    var queryOr = [];
+    var query;
+    _.each(dynamics, function(dynamic){
+       if (!dynamic) {
+           return;
+       }
+
+        query = new AV.Query('Like');
+        query.equalTo('external_id', dynamic.id);
+        query.equalTo('user_id', AV.User.createWithoutData('User', findLikeUserId));
+        queryOr.push(query);
+
+        query = new AV.Query('Like');
+        query.equalTo('external_id', dynamic.id);
+        query.notEqualTo('user_id', AV.User.createWithoutData('User', findLikeUserId));
+        query.limit(10);
+        query.descending('createdAt');
+        queryOr.push(query);
+    });
+    query = AV.Query.or.apply(null, queryOr);
+    query.include('user_id');
+
+    return query.find().then(function(results){
+        var likeResult = {}, selfLike = {};
+        var likeUsers = [];
+        var dynamicId;
+        _.each(results, function(like){
+            dynamicId = like.get('external_id');
+            if (!likeResult[dynamicId]) {
+                likeResult[dynamicId] = [];
+            }
+            var user = like.get('user_id');
+            if (user.id == findLikeUserId) {
+                selfLike[dynamicId] = user;
+            } else {
+                likeResult[dynamicId].push(user);
+            }
+        });
+
+        for (var dynamicId in likeResult) {
+            var likeUsers = likeResult[dynamicId];
+            var selfUser = selfLike[dynamicId];
+            if (selfUser) {
+                likeResult[dynamicId] = [selfUser].concat(likeUsers);
+            }
+        }
+
+        return AV.Promise.as(likeResult);
+    });
+}
+
 function isRCPrivateMessage(messageType) {
     if (messageType == 'inviteUserToClan') {
         return true;
