@@ -1133,3 +1133,67 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
         res.success({});
     });
 });
+
+/*
+ 点赞用户列表
+ 函数名
+    getLikeUsers
+ 参数：
+ targetId:objectId 目标ID
+ skip、limit:翻页查询参数
+ 返回：[
+         {
+             user: user class object
+             extra:{
+                isFriend: bool 是否为好友关系
+             }
+         }
+      ]
+ */
+AV.Cloud.define('getLikeUsers', function(req, res){
+    var userId = req.user&&req.user.id;
+    var targetId = req.params.targetId;
+    var skip = req.params.skip || 0;
+    var limit = req.params.limit || 20;
+
+    if (AV._isNullOrUndefined(userId) || AV._isNullOrUndefined(targetId)) {
+        res.error('请传入相关参数!');
+        return;
+    }
+
+    var ret = [];
+    var users = [];
+    var query = new AV.Query('Like');
+    query.include('user_id');
+    query.equalTo('external_id', targetId);
+    query.descending('createdAt');
+    query.skip(skip).limit(limit);
+    query.find().then(function(results){
+        _.each(results, function(like){
+            if (like) {
+                users.push(like.get('user_id'));
+            }
+        });
+
+        return common.getFriendshipUsers(userId, users);
+    }).then(function(friendResult){
+        //保留的user keys
+        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        _.each(users, function(user){
+            if (!user) {
+                return;
+            }
+            ret.push({
+                user: _.pick(user._toFullJSON(), pickUserKeys),
+                extra:{
+                    isFriend:friendResult[user.id]?true:false
+                }
+            })
+        });
+
+        res.success(ret);
+    }).catch(function(err){
+        console.error('getLikeUsers error', err);
+        res.success([]);
+    });
+});
