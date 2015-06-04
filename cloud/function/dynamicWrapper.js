@@ -201,7 +201,6 @@ AV.Cloud.define('getDynamic2', function(req,res){
     var findDynamicAndReturn = function(query) {
         var pickActivityKeys = ['objectId','__type', 'title', "className", 'user_id'];
         var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
-        var pickUserKeys2 = ['objectId', 'nickname', 'username', 'icon', "className"];
         var msgIds;
         var activities = [];
         query.find().then(function(results){
@@ -236,8 +235,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
 
             var promises = [];
             //find likes objects
-            promises.push(common.getLatestLikesOfDynamic(userId, dynamics));
-            promises.push(common.getCommentDynamicResult(userId, dynamics));
+            promises.push(common.findLikeDynamicUsers(req.user&&req.user.id, dynamics));
 
             if (!_.isEmpty(activities)) {
                 //find activities for current user signup
@@ -250,8 +248,8 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 promises.push(Promise.as());
             }
 
-            return Promise.when(promises);
-        }).then(function(likeResult, commentResult, activityResult){
+            return Promise.when(promises[0], promises[1]);
+        }).then(function(likeResult, activityResult){
             var activityObj = {};
             _.each(activityResult, function(activityUser){
                 var activity = activityUser.get('activity_id');
@@ -275,34 +273,13 @@ AV.Cloud.define('getDynamic2', function(req,res){
                     dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
                 }
 
-                var likeUsers = likeResult&&likeResult[dynamic.objectId];
-                //get isLike for current user
-                var findMe = _.find(likeUsers, function(user){
-                    return user&&(user.id==userId);
-                });
-                var isLike = findMe?true:false;
-
-                //convert user to fulljson & pick selected keys
-                var pickLikeUserKeys = ['nickname', 'icon'];
-                var convertedUsers = [];
-                //convert likeUsers
-                _.each(likeUsers, function(user){
-                    if (user) {
-                        convertedUsers.push({
-                            nickname:user.get('nickname')||'',
-                            icon:user.get('icon')||''
-                        });
-                    }
-                });
                 retDynamic.push({
                     dynamic:dynamic,
                     extra:{
-                        isComment:(commentResult&&commentResult[dynamic.objectId])?true:false,
-                        isLike:isLike,
+                        isLike:likeResult[dynamic.objectId]?true:false,
                         tagNames:common.tagNameFromId(dynamic.tags),
                         messageId:msgIds?msgIds[i++]:undefined,
-                        hasSignup:activity&&activityObj[activity.id]?true:false,
-                        likeUsers:convertedUsers
+                        hasSignup:activity&&activityObj[activity.id]?true:false
                     }
                 });
             });
