@@ -157,7 +157,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var launchOpt = {
         show:true,
-        showSeconds:3,
+        showSeconds:5,
         picUrl:'http://hoopeng.qiniudn.com/tags/20150603203509743.jpg'
     };
     if (deviceType == 'android') {
