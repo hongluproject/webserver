@@ -986,6 +986,7 @@ AV.Cloud.define('getActivityUsers2', function(req, res){
     query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
     query.skip(skip);
     query.limit(limit);
+    query.descending('createdAt');
     query.find().then(function(results){
         if (!results) {
             res.success();

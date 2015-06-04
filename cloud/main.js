@@ -97,27 +97,25 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	var promises = [];
-	var queryOr = [];
-	var query = new AV.Query('Like');
-	query.equalTo('external_id', '5538e8f6e4b0cafb0a217ea0');
-	query.equalTo('user_id', AV.User.createWithoutData('User', '54b5e9fde4b06e1f62998127'));
-	queryOr.push(query);
-
-	query = new AV.Query('Like');
-	query.equalTo('external_id', '5538e8f6e4b0cafb0a217ea0');
-	query.notEqualTo('user_id', AV.User.createWithoutData('User', '54b5e9fde4b06e1f62998127'));
-	query.limit(10);
-	query.descending('createdAt');
-	queryOr.push(query);
-
-	query = AV.Query.or.apply(null, queryOr);
-	query.include('user_id');
-	promises.push(query.find());
-
-	Promise.when(promises).then(function(results){
-		console.dir(results);
+	var userId = req.params.userId;
+	var query = new AV.Query('User');
+	query.equalTo('objectId', userId);
+	query.first().then(function(user){
+		var icon = user.get('icon');
+		if (!_.isUndefined() && _.isEmpty(icon)) {
+			user.fetchWhenSave(true);
+			user.unset('icon');
+			return user.save();
+		} else {
+			return Promise.as();
+		}
+	}).then(function(user){
+		res.success(user);
+	}).catch(function(err){
+		console.error(err);
+		res.error(err);
 	});
+
 });
 
 /*

@@ -67,6 +67,15 @@ AV.Cloud.define('getClan2', function(req, res){
             var tagsOfClan = clanItem.get('tags');
             clanItem.unset('founder_userinfo');
 
+            //若用户未设部落头像，则用部落创建者的头像代替显示
+            var clanIcon = clanItem.get('icon');
+            if (AV._isNullOrUndefined(clanIcon)) {
+                var founderIcon = founder&&founder.get('icon');
+                if (founderIcon) {
+                    clanItem.set('icon', founderIcon);
+                }
+            }
+
             clanItem = clanItem._toFullJSON();
             clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
 
@@ -111,6 +120,7 @@ AV.Cloud.define('getClan2', function(req, res){
                 query.containedIn('objectId', clanIds);
                 query.skip(skip);
                 query.limit(limit);
+                query.include('founder_id');
                 query.find().then(function(clans){
                     retVal = formatResult(clans, true);
                     res.success(retVal);
@@ -131,6 +141,7 @@ AV.Cloud.define('getClan2', function(req, res){
                 query.containedIn('objectId', joinedClanIds);
                 query.skip(skip);
                 query.limit(limit);
+                query.include('founder_id');
                 query.find().then(function(clans){
                     retVal = formatResult(clans, true);
                     res.success(retVal);
@@ -146,6 +157,7 @@ AV.Cloud.define('getClan2', function(req, res){
                 query.containedIn('objectId', createdClanIds);
                 query.skip(skip);
                 query.limit(limit);
+                query.include('founder_id');
                 query.find().then(function(clans){
                     retVal = formatResult(clans, true);
                     res.success(retVal);
@@ -185,6 +197,8 @@ AV.Cloud.define('getClan2', function(req, res){
                 query.limit(limit);
                 query.skip(skip);
                 query.descending('createdAt');
+                query.include();
+                query.include('founder_id');
                 query.find().then(function(clans){
                     if (_.isEmpty(clans) && !skip){
                         //若没有按照随机标签找到部落，则按地理位置推荐就近的部落

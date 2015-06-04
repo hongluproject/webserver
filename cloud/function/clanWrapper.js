@@ -405,6 +405,7 @@ AV.Cloud.define('getClanUser', function(req, res){
     query.skip(skip);
     query.limit(limit);
     query.include('user_id');
+    query.descending('createdAt');
     query.find().then(function(clanUsers){
         refClanUsers = clanUsers;
         var users = [];

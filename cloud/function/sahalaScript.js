@@ -788,6 +788,7 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
     var userPhones = req.params.userPhones;
     var registerIds = [];
 
+    console.info('user phones %s', userPhones);
     var query = new AV.Query('User');
     query.containedIn('username', userPhones);
     query.find().then(function(users){

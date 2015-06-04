@@ -4,6 +4,7 @@
 var utils = require('cloud/utils.js');
 var querystring = require('querystring');
 var _ = AV._;
+var Promise = AV.Promise;
 
 // 对Date的扩展，将 Date 转化为指定格式的String
 // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
@@ -402,6 +403,32 @@ exports.findLikeDynamicUsers = function(findLikeUserId, dynamics) {
     });
 }
 
+exports.getCommentDynamicResult = function(userId, dynamics) {
+    var dynamicIds = [];
+
+    if (!_.isArray(dynamics)) {
+        //若不是数组，先转换成数组
+        dynamics = [dynamics];
+    }
+    _.each(dynamics, function(dynamic){
+        dynamicIds.push(dynamic.id);
+    });
+
+    var query = new AV.Query('DynamicNews');
+    query.containedIn('objectId', dynamicIds);
+    query.equalTo('commentUsers', userId);
+    return query.find().then(function(dynamics){
+        var commentResult = {};
+        _.each(dynamics, function(dynamic){
+            if (dynamic) {
+                commentResult[dynamic.id] = true;
+            }
+        });
+
+        return Promise.as(commentResult);
+    });
+}
+
 /**
  * 查找动态最近10个点赞人，若自己有点赞，则优先返回
  * @param findLikeUserId
@@ -435,6 +462,10 @@ exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
         query.descending('createdAt');
         queryOr.push(query);
     });
+    if (_.isEmpty(queryOr)) {
+        return Promise.as();
+    }
+
     query = AV.Query.or.apply(null, queryOr);
     query.include('user_id');
 
@@ -999,7 +1030,7 @@ exports.getMountaineerClubActivityId = function() {
  */
 exports.getSahalaAssistants = function() {
     if (this.isSahalaDevEnv()) {
-        return ['5534b53ce4b0825685f268fc'];
+        return ['555e9c98e4b0fa5c84c2c2b2'];
     }
 
     return ['5538afc9e4b0cafb0a1e8d6e'];
