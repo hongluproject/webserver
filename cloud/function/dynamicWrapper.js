@@ -124,6 +124,7 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
             _.each(likeUsers, function(user){
                 if (user) {
                     convertedUsers.push({
+                        objectId:user.id,
                         nickname:user.get('nickname')||'',
                         icon:user.get('icon')||''
                     });
@@ -289,6 +290,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 _.each(likeUsers, function(user){
                     if (user) {
                         convertedUsers.push({
+                            objectId:user.id,
                             nickname:user.get('nickname')||'',
                             icon:user.get('icon')||''
                         });
@@ -1102,6 +1104,7 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
         _.each(likeUsers, function(user){
             if (user) {
                 convertedUsers.push({
+                    objectId:user.id,
                     nickname:user.get('nickname')||'',
                     icon:user.get('icon')||''
                 });
