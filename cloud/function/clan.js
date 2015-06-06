@@ -538,7 +538,7 @@ AV.Cloud.define("joinClan", function (req, res) {
     query.first().then(function(clanUser){
         if (clanUser) {
             res.success({
-                retCode:0,
+                retCode:2,
                 joinType:1,
                 describe:'您已经加入部落！'
             });

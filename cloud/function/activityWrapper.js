@@ -1071,6 +1071,7 @@ AV.Cloud.define('getActivityUsers', function(req, res){
     query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
     query.skip(skip);
     query.limit(limit);
+    query.descending('createdAt');
     query.find().then(function(results){
         if (!results) {
             res.success();
@@ -1468,7 +1469,7 @@ AV.Cloud.define('getActivityList', function(req, res){
 
             query = new AV.Query('Activity');
             query.notEqualTo('user_id', AV.Object.createWithoutData('_User', userId));
-            query.equalTo('hasSignupUsers', userId);
+            query.equalTo('joinUsers', userId);
             queryOr.push(query);
 
             query = AV.Query.or.apply(null, queryOr);

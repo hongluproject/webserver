@@ -90,13 +90,8 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
         dynamics = _.reject(results, function(val){
             return (val == undefined);
         });
-
-        var promises = [];
-        promises.push(common.getLatestLikesOfDynamic(userId, dynamics));
-        promises.push(common.getCommentDynamicResult(userId, dynamics));
-
-        return Promise.when(promises);
-    }).then(function(likeResult, commentResult){
+        return common.findLikeDynamicUsers(req.user&&req.user.id, dynamics);
+    }).then(function(likeResult){
         var retDynamic = [];
         var i = 0;
         _.each(dynamics, function(dynamic){
@@ -111,31 +106,10 @@ AV.Cloud.define('getDynamicWithActivity', function(req, res){
                 dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
             }
 
-            var likeUsers = likeResult&&likeResult[dynamic.objectId];
-            //get isLike for current user
-            var findMe = _.find(likeUsers, function(user){
-                return user&&(user.id==userId);
-            });
-            var isLike = findMe?true:false;
-            //convert user to fulljson & pick selected keys
-            var pickLikeUserKeys = ['nickname', 'icon'];
-            var convertedUsers = [];
-            //convert likeUsers
-            _.each(likeUsers, function(user){
-                if (user) {
-                    convertedUsers.push({
-                        nickname:user.get('nickname')||'',
-                        icon:user.get('icon')||''
-                    });
-                }
-            });
-
             retDynamic.push({
                 dynamic:dynamic,
                 extra:{
-                    likeUsers:convertedUsers,
-                    isComment:(commentResult&&commentResult[dynamic.objectId])?true:false,
-                    isLike:isLike,
+                    isLike:likeResult[dynamic.objectId]?true:false,
                     tagNames:common.tagNameFromId(dynamic.tags)
                 }
             });
@@ -1025,9 +999,6 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
     var getComment = req.params.getComment;
     var limit = req.params.limit || 20;
     var skip = req.params.skip || 0;
-    var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
-    var pickLikeUserKeys = ['nickname', 'icon'];
-    var pickActivityKeys = ['objectId','__type', 'title', "className"];
 
     var retVal = {};
     var retDynamic;
@@ -1041,9 +1012,27 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
         }
         retDynamic = dynamic;
 
-        var promises = [];
-        promises.push(common.getLatestLikesOfDynamic(userId, dynamic));
-        promises.push(common.getCommentDynamicResult(userId, dynamic));
+        return common.findLikeDynamicUsers(userId, dynamic);
+    }).then(function(likeObj){
+        var bLiked = (likeObj && likeObj[retDynamic.id])?true:false;
+        var tags = retDynamic.get('tags');
+        var userPost = retDynamic.get('user_id');
+        var activityId = retDynamic.get('activityId');
+
+        var pickActivityKeys = ['objectId','__type', 'title', "className"];
+        retDynamic = retDynamic._toFullJSON();
+        retDynamic.user_id = userPost._toFullJSON();
+        if (activityId) {
+            retDynamic.activityId = _.pick(activityId._toFullJSON(), pickActivityKeys);
+        }
+
+        retVal = {
+            dynamic: retDynamic,
+            extra:{
+                isLike:bLiked,
+                tagNames:common.tagNameFromId(tags)
+            }
+        };
         if (getComment) {
             var query = new AV.Query('DynamicComment');
             query.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews', dynamicId));
@@ -1052,49 +1041,13 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
             query.limit(limit);
             query.skip(skip);
             query.descending('createdAt');
-            promises.push(query.find());
+            return query.find();
+        } else {
+            return AV.Promise.as();
         }
-
-        return Promise.when(promises);
-    }).then(function(likeResult, commentResult, comments){
-        var tags = retDynamic.get('tags');
-        var userPost = retDynamic.get('user_id');
-        var activityId = retDynamic.get('activityId');
-
-        retDynamic = retDynamic._toFullJSON();
-        retDynamic.user_id = userPost._toFullJSON();
-        if (activityId) {
-            retDynamic.activityId = _.pick(activityId._toFullJSON(), pickActivityKeys);
-        }
-
-        var likeUsers = likeResult&&likeResult[retDynamic.objectId];
-        //get isLike for current user
-        var findMe = _.find(likeUsers, function(user){
-            return user&&(user.id==userId);
-        });
-        var isLike = findMe?true:false;
-        //convert user to fulljson & pick selected keys
-        var convertedUsers = [];
-        //convert likeUsers
-        _.each(likeUsers, function(user){
-            if (user) {
-                convertedUsers.push({
-                    nickname:user.get('nickname')||'',
-                    icon:user.get('icon')||''
-                });
-            }
-        });
-
-        retVal = {
-            dynamic: retDynamic,
-            extra:{
-                likeUsers:convertedUsers,
-                isComment:(commentResult&&commentResult[retDynamic.objectId])?true:false,
-                isLike:isLike,
-                tagNames:common.tagNameFromId(tags)
-            }
-        };
+    }).then(function(comments){
         if (comments) {
+            var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
             var retComment = [];
             _.each(comments, function(comment){
                 var commentUser = comment.get('user_id');
@@ -1114,7 +1067,8 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
         }
 
         res.success(retVal);
-    }).catch(function(err){
+
+    }, function(err){
         console.error('查询动态 %s 详情错误:', dynamicId, err);
         res.success({});
     });

@@ -863,10 +863,14 @@ AV.Cloud.define('signUpUser', function(req, res){
     var username = req.params.username;
     var password = req.params.password;
     var nickname = req.params.nickname;
+    if (!password) {
+        password = username.substr(-6);
+    }
 
     AV.User.signUp(username,password,{
         mobilePhoneNumber:username,
-        nickname:nickname
+        nickname:nickname,
+        tags:[common.getCityTag()]
     }).then(function(user) {
         if (!nickname) {
             return AV.User.logIn(username, password).then(function(user){

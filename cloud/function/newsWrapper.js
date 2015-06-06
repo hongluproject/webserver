@@ -81,7 +81,8 @@ AV.Cloud.define('getNews2', function(req, res){
     if (_.isEmpty(favoriteIds)) {
         queryNews.notEqualTo('from', 1);      //只显示系统爬取的内容
     }
-    queryNews.descending('publicAt');
+    queryNews.descending('rank');
+    queryNews.addDescending('publicAt');
     queryNews.include('clanCateId', 'clanId');
     if (favoriteIds.length > 0) {
         queryNews.containedIn('objectId', favoriteIds);
@@ -195,7 +196,8 @@ AV.Cloud.define('getNews', function(req, res){
     queryNews.skip(skip);
     queryNews.equalTo('status', 1);     //只显示上线的内容
     queryNews.notEqualTo('from', 1);      //只显示系统爬取的内容
-    queryNews.descending('publicAt');
+    queryNews.descending('rank');
+    queryNews.addDescending('publicAt');
     if (favoriteIds.length > 0) {
         queryNews.containedIn('objectId', favoriteIds);
     }

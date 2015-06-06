@@ -401,7 +401,8 @@ AV.Cloud.define('getSearch2', function(req, res){
             "allow_comment", "areas", "contents_url", "allow_forward", "tags", "rank"]);
         query.limit(limit);
         query.skip(skip);
-        query.descending('publicAt');
+        query.descending('rank');
+        query.addDescending('publicAt');
         query.notEqualTo('status', 2);
         if (tagId) {
             query.equalTo("tags", tagId);

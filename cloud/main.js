@@ -97,6 +97,45 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
+	var changePassword = function(userName, oldPassword, newPassword) {
+		AV.User.logIn(userName, oldPassword).then(function(user){
+			user.setPassword(newPassword);
+			return user.save();
+		}).then(function(user){
+			console.info('修改密码成功!');
+			res.success('修改密码成功!');
+		}).catch(function(err){
+			console.error('修改密码失败:', err);
+			res.error('修改密码失败!');
+		});
+	}
+
+	var getClanIds = function(clanNames) {
+		if (!_.isArray(clanNames)) {
+			clanNames = [clanNames];
+		}
+
+		var findClanNames = [];
+		console.info('clanNames Count is %d', clanNames.length);
+		var query = new AV.Query('Clan');
+		query.containedIn('title', clanNames);
+		query.limit(1000);
+		query.find().then(function(clans){
+			var clanIds = [];
+			_.each(clans, function(clan){
+				clanIds.push(clan.id);
+				findClanNames.push(clan.get('title'));
+			});
+
+			var unfindClanNames = _.difference(clanNames, findClanNames);
+			console.info('find count id count is %d, unfindClanNames %s', clanIds.length, unfindClanNames);
+			res.success(clanIds);
+		});
+	}
+
+	getClanIds(req.params.clanNames);
+/*	changePassword('18888888888', 'honglu20!$', 'honglu2014'); */
+	/*
 	var userId = req.params.userId;
 	var query = new AV.Query('User');
 	query.equalTo('objectId', userId);
@@ -115,7 +154,7 @@ AV.Cloud.define("hello", function(req, res) {
 		console.error(err);
 		res.error(err);
 	});
-
+	*/
 });
 
 /*
