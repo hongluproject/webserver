@@ -939,3 +939,112 @@ AV.Cloud.define('followAssistants', function(req, res){
     });
 });
 
+/*
+    获取 颜型当道 活动的报名用户部落列表
+    函数名:
+        getCityClanNames
+    参数：
+        clanIds:array 已经存在的部落ID列表
+    返回：
+    [
+        {
+            objectId:部落ID
+            icon:部落头像
+            clanName:部落名称
+        },
+        ...
+    ]
+ */
+AV.Cloud.define('getCityClanNames', function(req, res){
+    var clanIds = req.params.clanIds || [];
+    var phoneNumbers = [];
+    var teamNames = [];
+    var query = new AV.Query('ActivityUser');
+    query.equalTo('activity_id', AV.Object.createWithoutData('Activity', '5571a788e4b0735043eb21cb'));
+    query.include('user_id');
+    query.limit(1000);
+    query.find().then(function(results){
+        //得到报名用户的手机号码列表
+        _.each(results, function(activityUser){
+            var user = activityUser.get('user_id');
+            phoneNumbers.push(user.get('mobilePhoneNumber'));
+            phoneNumbers.push(activityUser.get('phone'));
+            teamNames.push(activityUser.get('real_name'));
+        });
+
+        phoneNumbers = _.unique(phoneNumbers);
+        console.info('phone numbers %s', phoneNumbers);
+        if (AV.HPGlobalParam.hpCityUsers) {
+            return Promise.as(AV.HPGlobalParam.hpCityUsers);
+        } else {
+            return AV.Cloud.httpRequest({
+                method: 'GET',
+                url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
+            }).then(function(res){
+                console.info('getCityClanNames http status code %d ', res.status);
+                if (res.status == 200) {
+                    var userVal = JSON.parse(res.text);
+                    if (userVal) {
+                        var users = _.values(userVal);
+                        AV.HPGlobalParam.hpCityUsers = users;
+                        return Promise.as(users);
+                    }
+                }
+            });
+        }
+    }).then(function(users){
+        var userObj = {};   //key:phone value:user info
+        var nameObj = {};   //key:clanName value:true
+        _.each(users, function (team) {
+            _.each(team, function (user) {
+                userObj[user.phone] = user;
+                nameObj[user.teamName] = true;
+            });
+        });
+
+        teamNames = _.filter(teamNames, function(teamName){
+            return nameObj[teamName]?true:false;
+        });
+        console.info('user input valid teams count %d', teamNames&&teamNames.length);
+
+        _.each(phoneNumbers, function(phone){
+            var userInfo = userObj[phone];
+            if (userInfo) {
+                teamNames.push(userInfo.teamName);
+            }
+        });
+        teamNames = _.unique(teamNames);
+
+        console.info('total team count:%d', teamNames&&teamNames.length);
+
+        var queryOr = [];
+        var query = new AV.Query('Clan');
+        query.containedIn('objectId', clanIds);
+        queryOr.push(query);
+
+        var query = new AV.Query('Clan');
+        query.containedIn('title', teamNames);
+        queryOr.push(query);
+
+        query = AV.Query.or.apply(null, queryOr);
+        query.limit(1000);
+        return query.find();
+    }).then(function(clans){
+        var ret = [];
+        //556def46e4b005426cfac642 :华东路一霸队
+        var excludeClanIds = ['556def46e4b005426cfac642'];
+        _.each(clans, function(clan){
+            if (_.contains(excludeClanIds, clan.id)) {
+                return;
+            }
+
+           ret.push({
+               objectId:clan.id,
+               clanName:clan.get('title'),
+               icon:clan.get('icon')
+           });
+        });
+
+        res.success(ret);
+    });
+});

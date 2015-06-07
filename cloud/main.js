@@ -127,34 +127,39 @@ AV.Cloud.define("hello", function(req, res) {
 				findClanNames.push(clan.get('title'));
 			});
 
+			findClanNames = _.unique(findClanNames);
+			clanIds = _.unique(clanIds);
 			var unfindClanNames = _.difference(clanNames, findClanNames);
 			console.info('find count id count is %d, unfindClanNames %s', clanIds.length, unfindClanNames);
 			res.success(clanIds);
 		});
 	}
 
-	getClanIds(req.params.clanNames);
-/*	changePassword('18888888888', 'honglu20!$', 'honglu2014'); */
-	/*
-	var userId = req.params.userId;
-	var query = new AV.Query('User');
-	query.equalTo('objectId', userId);
-	query.first().then(function(user){
-		var icon = user.get('icon');
-		if (!_.isUndefined() && _.isEmpty(icon)) {
-			user.fetchWhenSave(true);
-			user.unset('icon');
-			return user.save();
-		} else {
-			return Promise.as();
+	var getVerifySmsCode = function(phones) {
+		var userPhones = phones;
+		if (!_.isArray(phones)) {
+			userPhones = [phones];
 		}
-	}).then(function(user){
-		res.success(user);
-	}).catch(function(err){
-		console.error(err);
-		res.error(err);
-	});
-	*/
+
+		var promise = Promise.as();
+		promise.then(function(){
+			var promise2 = Promise.as();
+			_.each(userPhones, function(phoneNumber){
+				promise2 = promise2.then(function(){
+					return AV.Cloud.requestSmsCode(phoneNumber);
+				});
+			});
+
+			return promise2;
+		}).then(function(){
+			console.info('request sms code ok!');
+			res.success('request sms code ok!');
+		});
+	}
+
+//	getClanIds(req.params.clanNames);
+
+	getVerifySmsCode(req.params.phoneNumbers);
 });
 
 /*

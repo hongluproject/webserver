@@ -508,5 +508,19 @@ app.get('/getTags', function(req, res){
     });
 });
 
+/*
+app.get('/proxy', function(req, res){
+    var sourceURL = req.param('url');
+
+    AV.Cloud.httpRequest({
+        method: 'GET',
+        url: sourceURL,
+        headers: {
+            Referer:
+        }
+    });
+});
+*/
+
 // This line is required to make Express respond to http requests.
 app.listen({"static":{maxAge:2592000000}});

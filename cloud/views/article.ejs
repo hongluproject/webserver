@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, minimal-ui" />
     <title>我分享了一个撒哈拉精选--<%= title%></title>
-    <link rel="stylesheet" href="/stylesheets/style.css?2015022801" type="text/css">
+    <link rel="stylesheet" href="/stylesheets/style.css?2015060602" type="text/css">
     <script src="/js/jquery-1.11.2.min.js"></script>
     <script src="/js/common.js?2015040101"></script>
     <!-- load lazy load javascript -->
@@ -13,7 +13,7 @@
 
             $("img").each(function(){
                 var proxySrc = $(this).attr("src").replace(/http:\/\/mmbiz.qpic.cn\/mmbiz/,"http://admin.hoopeng.cn/api/fetch/proxy?url=http://mmbiz.qpic.cn/mmbiz");
-                $(this).attr("src",proxySrc);
+                $(this).attr("proxySrc",proxySrc);
             })
 
             if (!isInHoopeng()) {
@@ -29,7 +29,7 @@
                 });
 
                 //set lazy load attributes
-                var oldSrc = $(this).attr("src");
+                var oldSrc = $(this).attr("proxySrc");
                 $(this).attr("src", "/images/blank.gif");
                 $(this).attr("alt", "");
                 $(this).attr("data-echo", oldSrc);

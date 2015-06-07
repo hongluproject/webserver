@@ -72,6 +72,20 @@ exports.initializeAvosData = function() {
             _.each(results, function(category){
                 globalObj.hpClanCategory.push(category);
             });
+
+            return AV.Cloud.httpRequest({
+                method: 'GET',
+                url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
+            });
+        }).then(function(res){
+            if (res.status == 200) {
+                var userVal = JSON.parse(res.text);
+                if (userVal) {
+                    globalObj.hpCityUsers = _.values(userVal);
+                    console.info('get city users count:%d', globalObj.hpCityUsers&&globalObj.hpCityUsers.length);
+                }
+            }
+
         });
 
 }
