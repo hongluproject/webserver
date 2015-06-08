@@ -157,9 +157,38 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
+	var updateDefaultNickname = function() {
+		var queryOr = []
+		var query = new AV.Query('User');
+		query.doesNotExist('nickname');
+		queryOr.push(query);
+
+		query = new AV.Query('User');
+		query.equalTo('nickname', '');
+		queryOr.push(query);
+
+		query = AV.Query.or.apply(null, queryOr);
+		query.limit(1000);
+		query.find().then(function(users){
+			var promise = Promise.as();
+			_.each(users, function(user){
+				promise = promise.then(function(){
+					var inviteId = user.get('invite_id');
+					user.set('nickname', '行者'.concat(inviteId));
+					return user.save();
+				});
+			});
+
+			return promise;
+		}).then(function(){
+			res.success('nickname set ok!');
+		});
+	}
+
+	updateDefaultNickname();
 //	getClanIds(req.params.clanNames);
 
-	getVerifySmsCode(req.params.phoneNumbers);
+//	getVerifySmsCode(req.params.phoneNumbers);
 });
 
 /*

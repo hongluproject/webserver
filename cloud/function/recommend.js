@@ -288,10 +288,12 @@ AV.Cloud.define('getRecommendActivity', function(req, res){
         results.forEach(function(item){
 
             var activity = item.get('activityId');
-            item = item._toFullJSON();
-            item.activityId = activity._toFullJSON();
+            if (activity) {
+                item = item._toFullJSON();
+                item.activityId = activity._toFullJSON();
 
-            retVal.push(item);
+                retVal.push(item);
+            }
         });
 
         res.success(retVal);
