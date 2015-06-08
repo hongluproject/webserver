@@ -77,7 +77,9 @@ AV.Cloud.define('getClan2', function(req, res){
             }
 
             clanItem = clanItem._toFullJSON();
-            clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
+            if (founder) {
+                clanItem.founder_id = _.pick(founder._toFullJSON(), pickUserKeys);
+            }
 
             var retItem = {
                 clan:clanItem,
@@ -88,7 +90,7 @@ AV.Cloud.define('getClan2', function(req, res){
             if (bGetClanType) {
                 //区分我创建的部落、和我加入的部落
                 var clanType = 0;
-                if (founder.id == req.user.id) {
+                if (founder && (founder.id==req.user.id)) {
                     clanType = 1;
                 } else {
                     if (_.indexOf(myClanIds, clanItem.objectId) >= 0) {
@@ -538,7 +540,7 @@ AV.Cloud.define("joinClan", function (req, res) {
     query.first().then(function(clanUser){
         if (clanUser) {
             res.success({
-                retCode:0,
+                retCode:2,
                 joinType:1,
                 describe:'您已经加入部落！'
             });

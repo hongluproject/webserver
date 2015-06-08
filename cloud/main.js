@@ -97,25 +97,98 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	var userId = req.params.userId;
-	var query = new AV.Query('User');
-	query.equalTo('objectId', userId);
-	query.first().then(function(user){
-		var icon = user.get('icon');
-		if (!_.isUndefined() && _.isEmpty(icon)) {
-			user.fetchWhenSave(true);
-			user.unset('icon');
+	var changePassword = function(userName, oldPassword, newPassword) {
+		AV.User.logIn(userName, oldPassword).then(function(user){
+			user.setPassword(newPassword);
 			return user.save();
-		} else {
-			return Promise.as();
-		}
-	}).then(function(user){
-		res.success(user);
-	}).catch(function(err){
-		console.error(err);
-		res.error(err);
-	});
+		}).then(function(user){
+			console.info('修改密码成功!');
+			res.success('修改密码成功!');
+		}).catch(function(err){
+			console.error('修改密码失败:', err);
+			res.error('修改密码失败!');
+		});
+	}
 
+	var getClanIds = function(clanNames) {
+		if (!_.isArray(clanNames)) {
+			clanNames = [clanNames];
+		}
+
+		var findClanNames = [];
+		console.info('clanNames Count is %d', clanNames.length);
+		var query = new AV.Query('Clan');
+		query.containedIn('title', clanNames);
+		query.limit(1000);
+		query.find().then(function(clans){
+			var clanIds = [];
+			_.each(clans, function(clan){
+				clanIds.push(clan.id);
+				findClanNames.push(clan.get('title'));
+			});
+
+			findClanNames = _.unique(findClanNames);
+			clanIds = _.unique(clanIds);
+			var unfindClanNames = _.difference(clanNames, findClanNames);
+			console.info('find count id count is %d, unfindClanNames %s', clanIds.length, unfindClanNames);
+			res.success(clanIds);
+		});
+	}
+
+	var getVerifySmsCode = function(phones) {
+		var userPhones = phones;
+		if (!_.isArray(phones)) {
+			userPhones = [phones];
+		}
+
+		var promise = Promise.as();
+		promise.then(function(){
+			var promise2 = Promise.as();
+			_.each(userPhones, function(phoneNumber){
+				promise2 = promise2.then(function(){
+					return AV.Cloud.requestSmsCode(phoneNumber);
+				});
+			});
+
+			return promise2;
+		}).then(function(){
+			console.info('request sms code ok!');
+			res.success('request sms code ok!');
+		});
+	}
+
+	var updateDefaultNickname = function() {
+		var queryOr = []
+		var query = new AV.Query('User');
+		query.doesNotExist('nickname');
+		queryOr.push(query);
+
+		query = new AV.Query('User');
+		query.equalTo('nickname', '');
+		queryOr.push(query);
+
+		query = AV.Query.or.apply(null, queryOr);
+		query.limit(1000);
+		query.find().then(function(users){
+			var promise = Promise.as();
+			_.each(users, function(user){
+				promise = promise.then(function(){
+					var inviteId = user.get('invite_id');
+					user.set('nickname', '行者'.concat(inviteId));
+					return user.save();
+				});
+			});
+
+			return promise;
+		}).then(function(){
+			res.success('nickname set ok!');
+		});
+	}
+
+	updateDefaultNickname();
+//	getClanIds(req.params.clanNames);
+
+//	getVerifySmsCode(req.params.phoneNumbers);
 });
 
 /*
