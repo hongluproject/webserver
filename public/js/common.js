@@ -11,6 +11,7 @@ function isInHoopeng() {
         }
 
     } catch (e) {
+        alert(2);
         console.info('bbbbb'+e);
        // return false;
     }
