@@ -3,23 +3,28 @@
  */
 function isInHoopeng() {
     try {
-
-        var user = external.userObjectId();
-        var user1 = external.userName();
-
-        alert(user);
-        alert(user1);
         if (external.appName() == "hoopeng") {
             return true;
         }
-
     } catch (e) {
-        alert(2);
-        console.info('bbbbb'+e);
-       // return false;
+        return false;
     }
 
     return false;
+}
+
+
+function getUserInfo(type){
+    try{
+        if(type == 1){
+            var userInfo = external.userObjectId();
+        }else if(type ==2){
+            var userInfo = external.userName();
+        }
+        return userInfo;
+    } catch (e){
+        return false;
+    }
 }
 
 function doFilter(methodName,type, objectId, objectName) {
