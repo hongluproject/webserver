@@ -4,8 +4,11 @@
 function isInHoopeng() {
     try {
 
-        var user = external.currentUser();
-        window.alert(user.username);
+        var user = external.userObjectId();
+        var user1 = external.userName();
+
+        alert(user);
+        alert(user1);
         if (external.appName() == "hoopeng") {
             return true;
         }
