@@ -2,6 +2,9 @@
  * Created by fugang on 15/2/15.
  */
 function isInHoopeng() {
+
+    alert(typeof (external.userObjectId()));
+    alert(external.userObjectId());
     try {
         if (external.appName() == "hoopeng") {
             return true;
