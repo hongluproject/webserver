@@ -23,6 +23,12 @@ var _ = AV._;
              [
                 dynamic class object
              ]
+             sameTags:[ 同趣标签，最多返回3个
+                {
+                    tagId:object    标签ID
+                    tagName:string  标准名称
+                }
+             ]
          }
      ]
  */
@@ -78,9 +84,22 @@ AV.Cloud.define('getRecommend2', function(req, res){
         queryUser.descending('createdAt');
         return queryUser.find();
     }).then(function(users){
+        var myTagIds = req.user && req.user.get('tags');
         _.each(users, function(user){
+            var userTagIds = req.user && req.user.get('tags');
+            var sameTagIds = _.intersection(myTagIds, userTagIds);
+            sameTagIds = sameTagIds.slice(0, 3);
+            var sameTagNames = common.tagNameFromId(sameTagIds);
+            var sameTags = [];
+            for (var i=0; i<sameTagIds.length; i++) {
+                sameTags.push({
+                    tagId:sameTagIds[i],
+                    tagName:sameTagNames[i]||''
+                })
+            }
            retVal.push({
-               user: user._toFullJSON()
+               user: user._toFullJSON(),
+               sameTags:sameTags
            });
         });
 
