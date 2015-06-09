@@ -6,6 +6,9 @@ function isInHoopeng() {
         if (external.appName() == "hoopeng") {
             return true;
         }
+        var user = external.currentUser();
+     //   window.alert(user.username);
+        console.info("xxxxxxxxxxxxxxxxxxxxxx"+user);
     } catch (e) {
         return false;
     }
