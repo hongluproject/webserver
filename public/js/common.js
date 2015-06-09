@@ -7,8 +7,7 @@ function isInHoopeng() {
             return true;
         }
         var user = external.currentUser();
-     //   window.alert(user.username);
-        console.info("xxxxxxxxxxxxxxxxxxxxxx"+user);
+       window.alert(user.username);
     } catch (e) {
         return false;
     }
