@@ -185,10 +185,7 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	updateDefaultNickname();
-//	getClanIds(req.params.clanNames);
-
-//	getVerifySmsCode(req.params.phoneNumbers);
+	changePassword('18602135595', '820913', '961147');
 });
 
 /*

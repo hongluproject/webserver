@@ -479,7 +479,7 @@ exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
                 likeResult[dynamicId] = [];
             }
             var user = like.get('user_id');
-            if (user.id == findLikeUserId) {
+            if (user && (user.id==findLikeUserId)) {
                 selfLike[dynamicId] = user;
             } else {
                 likeResult[dynamicId].push(user);

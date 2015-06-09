@@ -786,6 +786,7 @@ AV.Cloud.define('createClanForTeam', function(req, res){
  */
 AV.Cloud.define('addUserToMountaineer', function(req, res){
     var userPhones = req.params.userPhones;
+    var activityId = req.params.activityId || common.getMountaineerClubActivityId();
     var registerIds = [];
 
     console.info('user phones %s', userPhones);
@@ -800,7 +801,7 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
         var unjoinUsers;
         query = new AV.Query('ActivityUser');
         query.containedIn('user_id', registerIds);
-        query.equalTo('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+        query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
         query.find().then(function(results){
             var joinUsers = [];
             _.each(results, function(item){
@@ -820,7 +821,7 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
                         console.info('%d user left, begin add user %s to mountaineer', --userLeft, item.id);
                         var activityUser = new ActivityUser();
                         activityUser.set('user_id', item);
-                        activityUser.set('activity_id', AV.Object.createWithoutData('Activity', common.getMountaineerClubActivityId()));
+                        activityUser.set('activity_id', AV.Object.createWithoutData('Activity', activityId));
                         return activityUser.save();
                     });
                 });
@@ -830,17 +831,19 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
                 if (_.isEmpty(unjoinUsers)) {
                     return Promise.as();
                 } else {
-                    var query = new AV.Query('Activity');
-                    return query.get(common.getMountaineerClubActivityId()).then(function(activity){
-                        activity.fetchWhenSave(true);
-                        var joinUsers = activity.get('joinUsers') || [];
-                        _.each(unjoinUsers, function(user){
-                            joinUsers = joinUsers.concat(user.id);
-                        })
-                        activity.set('joinUsers', joinUsers);
-                        activity.increment('current_num', unjoinUsers.length);
-                        return activity.save();
-                    });
+                    if (activityId == common.getMountaineerClubActivityId()) {
+                        var query = new AV.Query('Activity');
+                        return query.get(activityId).then(function(activity){
+                            activity.fetchWhenSave(true);
+                            var joinUsers = activity.get('joinUsers') || [];
+                            _.each(unjoinUsers, function(user){
+                                joinUsers = joinUsers.concat(user.id);
+                            })
+                            activity.set('joinUsers', joinUsers);
+                            activity.increment('current_num', unjoinUsers.length);
+                            return activity.save();
+                        });
+                    }
                 }
             }).then(function(){
                 res.success('ok');

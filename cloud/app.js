@@ -15,6 +15,7 @@ else
 app.set('view engine', 'ejs');    // 设置template引擎
 
 app.use(express.bodyParser());    // 读取请求body的中间件
+app.use(express.cookieParser());   //cookie中间件
 
 //app.use(avosExpressHttpsRedirect()); //启用HTTPS
 
@@ -371,6 +372,12 @@ function renderIndex(res, name){
 app.get('/', function(req, res){
 //    res.redirect('http://honglu.qiniudn.com/index.html');
 //    res.sendfile('http://honglu.qiniudn.com/index.html');
+    var cookies = req.cookies;
+    console.info(cookies);
+    var ticketUser = cookies && cookies['ticketUser'];
+    if (!ticketUser) {
+        res.setHeader('Set-Cookie', ['ticketUser=abcdef;Max-Age=600']);
+    }
     res.sendfile('./public/index.html');
 });
 
