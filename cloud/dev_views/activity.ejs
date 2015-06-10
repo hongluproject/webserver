@@ -1,5 +1,26 @@
 <!DOCTYPE html>
 <html>
+    <%
+        var title = activity.get('title');
+        var tags = activity.get('tagNames');
+        var index_thumb_image = '/suaxu/suaxu.png';
+        var thumb_images = activity.get('thumb_images');
+
+        var pay_type = activity.get('pay_type');
+        var price = '';
+        if (pay_type == 1) {
+            price = '免费';
+        } else if (pay_type == 2 || pay_type == 3) {
+            price = '￥' + activity.get('price') + '/人';
+        }
+        var optionUser = user;
+        var startTime = activity.get('activity_time');
+        var endTime = activity.get('activity_end_time');
+        var deadTime = activity.get('dead_time');
+        var wxIcon = thumb_images&&thumb_images[0] || '/images/share/logo.png';
+        wxIcon = wxIcon.concat('?imageView2/1/w/320/h/320');
+    %>
+
 <head>
     <title>撒哈拉活动</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" charset="UTF-8">
@@ -16,29 +37,9 @@
 </head>
 <body>
 <link type="text/css" href="/suaxu/act_detail.css" rel="stylesheet">
-
-<%
-
-var title = activity.get('title');
-var tags = activity.get('tagNames');
-var index_thumb_image = '/suaxu/suaxu.png';
-var thumb_images = activity.get('thumb_images') ;
-
-var pay_type = activity.get('pay_type');
-var price = '';
-if (pay_type == 1) {
-    price = '免费';
-} else if (pay_type == 2 || pay_type == 3) {
-    price = '￥'+activity.get('price')+'/人';
-}
-var optionUser = user;
-var startTime = activity.get('activity_time');
-var endTime = activity.get('activity_end_time');
-var deadTime = activity.get('dead_time');
-%>
-
-
-
+<div id='wx_pic' style='margin:0 auto;display:none;'>
+    <img src='<%=wxIcon %>' />
+</div>
 
 <script>
     function formatDate(date,format) {
@@ -275,8 +276,8 @@ var deadTime = activity.get('dead_time');
         $('#actDetailBoxNav_bulid li').eq(i).addClass('active');
         $('.rebox-intro').children().hide();
         $('.' + value).show();
-       /* var scrollTop = $('#actDetailBoxNav_bulid').length ? $('#actDetailBoxNav_bulid').offset().top : 0;
-        $("html,body").scrollTop(scrollTop);*/
+        /* var scrollTop = $('#actDetailBoxNav_bulid').length ? $('#actDetailBoxNav_bulid').offset().top : 0;
+         $("html,body").scrollTop(scrollTop);*/
         setTimeout(function () {
             $(window).trigger('scroll');
         }, 100);

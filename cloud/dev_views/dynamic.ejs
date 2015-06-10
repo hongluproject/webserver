@@ -1,4 +1,37 @@
 <html>
+    <%
+        var userIcon = '/images/user.jpg';
+        var userId = dynamic.get('user_id');
+        if (userId && userId.get('icon')) {
+            userIcon = userId.get('icon');
+        }
+        var userName = userId.get('nickname');
+        var tagNames = dynamic.get('tagNames');
+        var dynamicContent = dynamic.get('content')||"";
+        var thumbs = dynamic.get('thumbs');
+        var voice = dynamic.get('voice') || '';
+        var voiceDuration = dynamic.get('duration') || 0;
+        var location = dynamic.get('area') || '';
+        var commentCount = dynamic.get('comment_count') || '';
+        if (commentCount <= 0) {
+            commentCount = '';
+        }
+        var upCount = dynamic.get('up_count') || '';
+        var timeDisp = '';
+        var timeSpace = Math.floor(((new Date()).getTime() - dynamic.createdAt.getTime())/1000/60);
+        if (timeSpace >= 60) {
+            if (timeSpace >= 60*24) {
+                timeDisp = Math.floor(timeSpace/60/24) + '天前';
+            } else {
+                timeDisp = Math.floor(timeSpace/60) + '小时前';
+            }
+        } else {
+            timeDisp = timeSpace + '分钟前';
+        }
+        var comments = dynamic.get('comments') || [];
+        var wxIcon = thumbs&&thumbs[0] || userIcon;
+        wxIcon = wxIcon.concat('?imageView2/1/w/320/h/320');
+    %>
 <head>
     <meta charset="utf-8">
     <title>我分享了一个撒哈拉动态</title>
@@ -17,41 +50,13 @@
 </head>
 
 <body>
+<div id='wx_pic' style='margin:0 auto;display:none;'>
+    <img src='<%=wxIcon %>' />
+</div>
 <!--页面主体开始-->
 <div class="ly_page cf">
     <!--发帖人开始-->
     <div class="ftUser cf">
-        <%
-            var userIcon = '/images/user.jpg';
-            var userId = dynamic.get('user_id');
-            if (userId && userId.get('icon')) {
-                userIcon = userId.get('icon');
-            }
-            var userName = userId.get('nickname');
-            var tagNames = dynamic.get('tagNames');
-            var dynamicContent = dynamic.get('content')||"";
-            var thumbs = dynamic.get('thumbs');
-            var voice = dynamic.get('voice') || '';
-            var voiceDuration = dynamic.get('duration') || 0;
-            var location = dynamic.get('area') || '';
-            var commentCount = dynamic.get('comment_count') || '';
-            if (commentCount <= 0) {
-                commentCount = '';
-            }
-            var upCount = dynamic.get('up_count') || '';
-            var timeDisp = '';
-            var timeSpace = Math.floor(((new Date()).getTime() - dynamic.createdAt.getTime())/1000/60);
-            if (timeSpace >= 60) {
-                if (timeSpace >= 60*24) {
-                    timeDisp = Math.floor(timeSpace/60/24) + '天前';
-                } else {
-                    timeDisp = Math.floor(timeSpace/60) + '小时前';
-                }
-            } else {
-                timeDisp = timeSpace + '分钟前';
-            }
-            var comments = dynamic.get('comments') || [];
-        %>
         <img src="<%= userIcon %>" width="60" height="62" class="img" />
         <dl class="cf">
             <dt><%= userName %></dt>

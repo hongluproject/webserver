@@ -2,11 +2,13 @@
 <html>
 <head>
     <%
-    var title = clan.get('title');
-    var intro = clan.get('intro');
-    var tags = clan.get('tagNames');
-    var icon = clan.get('icon');
-    icon =  (icon && icon.concat('?imageView2/2/w/148')) || '/images/share/logo.png';
+        var title = clan.get('title');
+        var intro = clan.get('intro');
+        var tags = clan.get('tagNames');
+        var icon = clan.get('icon');
+        icon =  (icon && icon.concat('?imageView2/2/w/148')) || '/images/share/logo.png';
+        var wxIcon = clan.get('icon') || '/images/share/logo.png';
+        wxIcon = wxIcon.concat('?imageView2/1/w/320/h/320');
     %>
     <title>我分享了一个撒哈拉部落--<%=title%></title>
     <meta charset="utf-8" />
@@ -21,6 +23,9 @@
 
 <body>
 
+<div id='wx_pic' style='margin:0 auto;display:none;'>
+    <img src='<%=wxIcon %>' />
+</div>
 <div class="share">
     <div class="top">
         <h1>SaHaLa</h1>

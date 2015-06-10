@@ -33,13 +33,11 @@ AV.Cloud.define('userActivate', function(req, res){
         }
     }
 
-    if (user.has('nickname')) {
-        var nickname = user.get('nickname');
-        if (_.isEmpty(nickname)) {
-            var inviteId = user.get('invite_id');
-            user.set('nickname', '行者'.concat(inviteId));
-            hasModified = true;
-        }
+    var nickname = user.get('nickname');
+    if (_.isEmpty(nickname)) {
+        var inviteId = user.get('invite_id');
+        user.set('nickname', '行者'.concat(inviteId));
+        hasModified = true;
     }
 
     if (hasModified) {
