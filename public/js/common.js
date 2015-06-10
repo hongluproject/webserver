@@ -9,6 +9,7 @@ function isInHoopeng() {
             return true;
         }
     } catch (e) {
+        alert(2);
         return false;
     }
 
