@@ -417,6 +417,7 @@ exports.getCommentDynamicResult = function(userId, dynamics) {
     var query = new AV.Query('DynamicNews');
     query.containedIn('objectId', dynamicIds);
     query.equalTo('commentUsers', userId);
+    query.limit(1000);
     return query.find().then(function(dynamics){
         var commentResult = {};
         _.each(dynamics, function(dynamic){
@@ -467,6 +468,7 @@ exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
     }
 
     query = AV.Query.or.apply(null, queryOr);
+    query.limit(1000);
     query.include('user_id');
 
     return query.find().then(function(results){
