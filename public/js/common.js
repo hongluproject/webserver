@@ -3,7 +3,6 @@
  */
 function isInHoopeng() {
     try {
-      var   userInfo = external.userObjectId();
         if (external.appName() == "hoopeng") {
             return true;
         }
