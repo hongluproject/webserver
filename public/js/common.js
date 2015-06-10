@@ -3,6 +3,7 @@
  */
 function isInHoopeng() {
     try {
+      var   userInfo = external.userObjectId();
         if (external.appName() == "hoopeng") {
             return true;
         }
@@ -11,6 +12,20 @@ function isInHoopeng() {
     }
 
     return false;
+}
+
+
+function getUserInfo(type){
+    try{
+        if(type == 1){
+            var userInfo = external.userObjectId();
+        }else if(type ==2){
+            var userInfo = external.userName();
+        }
+        return userInfo;
+    } catch (e){
+        return false;
+    }
 }
 
 function doFilter(methodName,type, objectId, objectName) {

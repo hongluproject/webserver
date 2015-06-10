@@ -4,6 +4,21 @@
 var utils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 
+AV.Cloud.beforeSave('Like', function(req, res){
+    var targetId = req.object.get('external_id');
+    var likeUser = req.object.get('user_id');
+    var query = new AV.Query('Like');
+    query.equalTo('external_id', targetId);
+    query.equalTo('user_id', likeUser);
+    query.count().then(function(count){
+        if (count && count>0) {
+            res.error('您已经点赞!');
+        } else {
+            res.success();
+        }
+    });
+});
+
 /** 添加点赞时，对应的文章源点赞数动态调整
  *
  */

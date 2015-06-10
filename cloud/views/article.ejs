@@ -4,6 +4,13 @@
     <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, minimal-ui" />
     <title>我分享了一个撒哈拉精选--<%= title%></title>
     <link rel="stylesheet" href="/stylesheets/style.css?2015060602" type="text/css">
+    <div id='wx_pic' style='margin:0 auto;display:none;'>
+        <%
+            var wxIcon = icon || '/images/share/logo.png'
+            wxIcon = wxIcon.concat('?imageView2/1/w/300/h/300');
+        %>
+        <img src='<%=wxIcon %>' />
+    </div>
     <script src="/js/jquery-1.11.2.min.js"></script>
     <script src="/js/common.js?2015040101"></script>
     <!-- load lazy load javascript -->

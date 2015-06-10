@@ -328,7 +328,9 @@ AV.Cloud.define('getClanDetail', function(req, res){
             var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
             _.each(users, function(userItem){
                 var user = userItem.get('user_id');
-                ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
+                if (user) {
+                    ret.clanUsers.push(_.pick(user._toFullJSON(), pickUserKeys));
+                }
             });
 
             ret.activity = activity && activity._toFullJSON();
