@@ -99,9 +99,10 @@ app.get('/news/:objId', function(req, res) {
                     common.pad((publicAt.getMonth()+1),2) + '-' +
                     common.pad((publicAt.getDate()),2);
             renderObj.newsContent = obj.get('contents');
-            renderObj.fromWhere = obj.get('source'),
-            renderObj.userInfo = obj.get('userId'),
-            renderObj.clanInfo = obj.get('clanId'),
+            renderObj.fromWhere = obj.get('source');
+            renderObj.userInfo = obj.get('userId');
+            renderObj.clanInfo = obj.get('clanId');
+            renderObj.icon = obj.get('list_pic');
             tagIds = obj.get('tags');
 
             break;
