@@ -5,33 +5,6 @@ var myutils = require('cloud/utils.js');
 var common = require('cloud/common.js');
 var _ = AV._;
 
-AV.Cloud.afterUpdate('_User', function(req){
-    var user = req.object;
-    if (user) {
-        var hasModified = false;
-        if (user.has('icon')) {
-            var icon = user.get('icon');
-            if (_.isEmpty(icon)) {
-                user.set('icon', 'http://hoopeng.qiniudn.com/tags/201506041422337736.jpg');
-                hasModified = true;
-            }
-        }
-
-        if (user.has('nickname')) {
-            var nickname = user.get('nickname');
-            if (_.isEmpty(nickname)) {
-                var inviteId = user.get('invite_id');
-                user.set('nickname', '行者'.concat(inviteId));
-                hasModified = true;
-            }
-        }
-
-        if (hasModified) {
-            user.save();
-        }
-    }
-});
-
 /*  暂时屏蔽更新融云用户信息功能，可能导致出现‘Maximum call stack size exceeded’
 AV.Cloud.afterUpdate('_User', function(request) {
     var userObj = request.object;

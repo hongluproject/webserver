@@ -24,6 +24,28 @@ AV.Cloud.define('userActivate', function(req, res){
         return;
     }
 
+    var hasModified = false;
+    if (user.has('icon')) {
+        var icon = user.get('icon');
+        if (_.isEmpty(icon)) {
+            user.set('icon', 'http://hoopeng.qiniudn.com/tags/201506041422337736.jpg');
+            hasModified = true;
+        }
+    }
+
+    if (user.has('nickname')) {
+        var nickname = user.get('nickname');
+        if (_.isEmpty(nickname)) {
+            var inviteId = user.get('invite_id');
+            user.set('nickname', '行者'.concat(inviteId));
+            hasModified = true;
+        }
+    }
+
+    if (hasModified) {
+        console.info('Icon or nickname of user has been modified because they are empty!');
+    }
+
     var retVal = {};
     var lastLoginAt = user.get('lastLoginAt');
     var nowDate = new Date();

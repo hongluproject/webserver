@@ -18,7 +18,7 @@
         var endTime = activity.get('activity_end_time');
         var deadTime = activity.get('dead_time');
         var wxIcon = thumb_images&&thumb_images[0] || '/images/share/logo.png';
-        wxIcon = wxIcon.concat('?imageView2/1/w/300/h/300');
+        wxIcon = wxIcon.concat('?imageView2/1/w/320/h/320');
     %>
 
 <head>
@@ -37,6 +37,9 @@
 </head>
 <body>
 <link type="text/css" href="/suaxu/act_detail.css" rel="stylesheet">
+<div id='wx_pic' style='margin:0 auto;display:none;'>
+    <img src='<%=wxIcon %>' />
+</div>
 
 <script>
     function formatDate(date,format) {

@@ -30,7 +30,7 @@
         }
         var comments = dynamic.get('comments') || [];
         var wxIcon = thumbs&&thumbs[0] || userIcon;
-        wxIcon = wxIcon.concat('?imageView2/1/w/300/h/300');
+        wxIcon = wxIcon.concat('?imageView2/1/w/320/h/320');
     %>
 <head>
     <meta charset="utf-8">
@@ -47,12 +47,12 @@
             $('#thumbs a').touchTouch();
         });
     </script>
-    <div id='wx_pic' style='margin:0 auto;display:none;'>
-        <img src='<%=wxIcon %>' />
-    </div>
 </head>
 
 <body>
+<div id='wx_pic' style='margin:0 auto;display:none;'>
+    <img src='<%=wxIcon %>' />
+</div>
 <!--页面主体开始-->
 <div class="ly_page cf">
     <!--发帖人开始-->
