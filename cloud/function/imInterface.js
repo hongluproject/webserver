@@ -43,7 +43,7 @@ AV.Cloud.define('transmitMessage', function(req, res){
                     postUrl = 'https://api.cn.rong.io/message/private/publish.json';
                     var body = {
                         fromUserId: userId,
-                        toUserId: user.userIds,
+                        toUserId: user.userIds&&user.userIds.concat(userId),
                         objectName: "RC:ImgTextMsg",
                         content:messageContent
                     }
@@ -67,7 +67,6 @@ AV.Cloud.define('transmitMessage', function(req, res){
                     }
                 }
 
-                console.dir(body);
                 return AV.Cloud.httpRequest({
                     method: 'POST',
                     url: postUrl,

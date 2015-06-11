@@ -234,14 +234,6 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 queryOr.push(query);
             });
 
-            query = new AV.Query('DynamicNews');
-            var sahalaAssistants = [];
-            _.each(common.getSahalaAssistants(), function(assistantId){
-                sahalaAssistants.push(AV.User.createWithoutData('User', assistantId));
-            });
-            query.containedIn('user_id', sahalaAssistants);
-            queryOr.push(query);
-
             query = AV.Query.or.apply(null, queryOr);
             query.notEqualTo('status', 2);
             query.include('user_id', 'activityId');
@@ -1098,8 +1090,6 @@ AV.Cloud.define('getLikeUsers', function(req, res){
 
         return common.getFriendshipUsers(userId, users);
     }).then(function(friendResult){
-        //保留的user keys
-        var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
         var userTagIds = req.user && req.user.get('tags');
         _.each(users, function(user){
             if (!user) {
@@ -1120,7 +1110,7 @@ AV.Cloud.define('getLikeUsers', function(req, res){
 
 
             ret.push({
-                user: _.pick(user._toFullJSON(), pickUserKeys),
+                user: user._toFullJSON(),
                 extra:{
                     isFriend:friendResult[user.id]?true:false,
                     sameTags:sameTags
