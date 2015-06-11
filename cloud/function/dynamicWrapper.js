@@ -205,7 +205,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             var now = new Date();
             var cacheTime = AV.HPGlobalParam && AV.HPGlobalParam.hpGlobal && AV.HPGlobalParam.hpGlobal.cacheTime;
             if (lastGetDynamic && cacheTime) {
-                var diffSeconds = now.getSeconds()-lastGetDynamic.getSeconds();
+                var diffSeconds = Math.floor((now.getTime()-lastGetDynamic.getTime())/1000);
                 if (diffSeconds>0 && diffSeconds<=cacheTime) {
                     //有缓存时间，并且时间未到，则返回错误，提示刷新太快
                     res.error('请稍后再刷新动态!');

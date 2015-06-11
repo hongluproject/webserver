@@ -185,17 +185,6 @@ AV.Cloud.define("hello", function(req, res) {
 		});
 	}
 
-	var query = new AV.Query('ActivityUser');
-	query.equalTo('activity_id', AV.Object.createWithoutData('Activity', '556fe762e4b008cbbbd83285'));
-	query.select('phone');
-	query.find().then(function(results){
-		var phones = [];
-		_.each(results, function(item){
-			phones.push(item.get('phone'));
-		});
-
-		console.info("%s", phones);
-	});
 });
 
 /*
