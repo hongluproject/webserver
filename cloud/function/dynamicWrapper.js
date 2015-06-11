@@ -199,123 +199,26 @@ AV.Cloud.define('getDynamic2', function(req,res){
         return;
     }
 
-    var findDynamicAndReturn = function(query) {
-        var pickActivityKeys = ['objectId','__type', 'title', "className", 'user_id'];
-        var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
-        var pickUserKeys2 = ['objectId', 'nickname', 'username', 'icon', "className"];
-        var msgIds;
-        var activities = [];
-        query.find().then(function(results){
-            if (dynamicType == 'followeDynamic') {
-                dynamics = [];
-                msgIds = [];
-                var i = 0;
-                _.each(results, function(item){
-                    if (item.data.dynamicNews) {
-                        dynamics.push(item.data.dynamicNews);
-                        msgIds[i++] = item.messageId;
-
-                        var activity = item.data.dynamicNews.get('activityId');
-                        if (activity) {
-                            activities.push(activity._toPointer());
-                        }
-                    }
-                });
-            } else {
-                dynamics = results;
-                dynamics = _.reject(dynamics, function(val){
-                    return (val == undefined);
-                });
-
-                _.each(dynamics, function(item){
-                    var activity = item.get('activityId');
-                    if (activity) {
-                        activities.push(activity._toPointer());
-                    }
-                });
-            }
-
-            var promises = [];
-            //find likes objects
-            promises.push(common.getLatestLikesOfDynamic(userId, dynamics));
-            promises.push(common.getCommentDynamicResult(userId, dynamics));
-
-            if (!_.isEmpty(activities)) {
-                //find activities for current user signup
-                var query = new AV.Query('ActivityUser');
-                query.select('activity_id');
-                query.equalTo('user_id', req.user);
-                query.containedIn('activity_id', activities);
-                promises.push(query.find());
-            } else {
-                promises.push(Promise.as());
-            }
-
-            return Promise.when(promises);
-        }).then(function(likeResult, commentResult, activityResult){
-            var activityObj = {};
-            _.each(activityResult, function(activityUser){
-                var activity = activityUser.get('activity_id');
-                if (activity) {
-                    activityObj[activity.id] = true;
-                }
-            });
-
-
-            var retDynamic = [];
-            var i = 0;
-            _.each(dynamics, function(dynamic){
-
-                var userOfDynamic = dynamic.get('user_id');
-                var activity = dynamic.get('activityId');
-                dynamic = dynamic._toFullJSON();
-                if (userOfDynamic) {
-                    dynamic.user_id = _.pick(userOfDynamic._toFullJSON(), pickUserKeys);
-                }
-                if (activity) {
-                    dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
-                }
-
-                var likeUsers = likeResult&&likeResult[dynamic.objectId];
-                //get isLike for current user
-                var findMe = _.find(likeUsers, function(user){
-                    return user&&(user.id==userId);
-                });
-                var isLike = findMe?true:false;
-
-                //convert user to fulljson & pick selected keys
-                var pickLikeUserKeys = ['nickname', 'icon'];
-                var convertedUsers = [];
-                //convert likeUsers
-                _.each(likeUsers, function(user){
-                    if (user) {
-                        convertedUsers.push({
-                            objectId:user.id,
-                            nickname:user.get('nickname')||'',
-                            icon:user.get('icon')||''
-                        });
-                    }
-                });
-                retDynamic.push({
-                    dynamic:dynamic,
-                    extra:{
-                        isComment:(commentResult&&commentResult[dynamic.objectId])?true:false,
-                        isLike:isLike,
-                        tagNames:common.tagNameFromId(dynamic.tags),
-                        messageId:msgIds?msgIds[i++]:undefined,
-                        hasSignup:activity&&activityObj[activity.id]?true:false,
-                        likeUsers:convertedUsers
-                    }
-                });
-            });
-
-            res.success(retDynamic);
-
-        });
-    }
-
     switch (dynamicType) {
         case 'squareDynamic':   //查询用户兴趣相关的广场动态
+            var lastGetDynamic = req.user.get('lastGetDynamic');
+            var now = new Date();
+            var cacheTime = AV.HPGlobalParam && AV.HPGlobalParam.hpGlobal && AV.HPGlobalParam.hpGlobal.cacheTime;
+            if (lastGetDynamic && cacheTime) {
+                var diffSeconds = now.getSeconds()-lastGetDynamic.getSeconds();
+                if (diffSeconds>0 && diffSeconds<=cacheTime) {
+                    //有缓存时间，并且时间未到，则返回错误，提示刷新太快
+                    res.error('请稍后再刷新动态!');
+                    return;
+                }
+            }
+
+            if (cacheTime && (skip==0)) {    //保存最近更新时间
+                var user = AV.User.createWithoutData('User', req.user.id);
+                user.set('lastGetDynamic', now);
+                user.save();
+            }
+
             var tags = req.user.get('tags');
             var queryOr = [];
             var query;
@@ -409,7 +312,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
                 query.limit(limit);
                 query.descending('createdAt');
 
-                findDynamicAndReturn(query);
+                common.findDynamicAndReturn(userId, req.user, dynamicType, query, res);
             });
 
             return;
@@ -469,7 +372,7 @@ AV.Cloud.define('getDynamic2', function(req,res){
             return;
     }
 
-    findDynamicAndReturn(query);
+    common.findDynamicAndReturn(userId, req.user, dynamicType, query, res);
 });
 
 /**
@@ -1158,6 +1061,12 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
              user: user class object
              extra:{
                 isFriend: bool 是否为好友关系
+                 sameTags:[ 同趣标签，最多返回3个
+                     {
+                         tagId:object    标签ID
+                         tagName:string  标准名称
+                     }
+                 ]
              }
          }
       ]
@@ -1191,14 +1100,30 @@ AV.Cloud.define('getLikeUsers', function(req, res){
     }).then(function(friendResult){
         //保留的user keys
         var pickUserKeys = ["objectId", "username", "nickname", "className", "icon", "__type"];
+        var userTagIds = req.user && req.user.get('tags');
         _.each(users, function(user){
             if (!user) {
                 return;
             }
+
+            var myTagIds = user.get('tags');
+            var sameTagIds = _.intersection(myTagIds, userTagIds);
+            sameTagIds = sameTagIds.slice(0, 3);
+            var sameTagNames = common.tagNameFromId(sameTagIds);
+            var sameTags = [];
+            for (var i=0; i<sameTagIds.length; i++) {
+                sameTags.push({
+                    tagId:sameTagIds[i],
+                    tagName:sameTagNames[i]||''
+                });
+            }
+
+
             ret.push({
                 user: _.pick(user._toFullJSON(), pickUserKeys),
                 extra:{
-                    isFriend:friendResult[user.id]?true:false
+                    isFriend:friendResult[user.id]?true:false,
+                    sameTags:sameTags
                 }
             })
         });

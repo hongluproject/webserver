@@ -373,6 +373,12 @@ AV.Cloud.define('getClanDetail', function(req, res){
                 extra:{
                     userTagNames:array  用户标签对应的名称
                     isFriend:bool 是否为好友
+                    sameTags:[ 同趣标签，最多返回3个
+                            {
+                            tagId:object    标签ID
+                            tagName:string  标准名称
+                        }
+                    ]
                 }
             },
             ...
@@ -417,6 +423,7 @@ AV.Cloud.define('getClanUser', function(req, res){
 
         return common.getFriendshipUsers(findFriendId, users);
     }).then(function(friendObj){
+        var userTagIds = req.user && req.user.get('tags');
         _.each(refClanUsers, function(userItem) {
             var user = userItem.get('user_id');
             var tags = user.get('tags');
@@ -424,11 +431,24 @@ AV.Cloud.define('getClanUser', function(req, res){
 
             userItem = userItem._toFullJSON();
             userItem.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+
+            var myTagIds = user.get('tags');
+            var sameTagIds = _.intersection(myTagIds, userTagIds);
+            sameTagIds = sameTagIds.slice(0, 3);
+            var sameTagNames = common.tagNameFromId(sameTagIds);
+            var sameTags = [];
+            for (var i=0; i<sameTagIds.length; i++) {
+                sameTags.push({
+                    tagId:sameTagIds[i],
+                    tagName:sameTagNames[i]||''
+                });
+            }
             ret.push({
                 user:userItem,
                 extra:{
                     userTagNames:common.tagNameFromId(tags),
-                    isFriend:friendObj[user.id]?true:false
+                    isFriend:friendObj[user.id]?true:false,
+                    sameTags:sameTags
                 }
             });
         });
