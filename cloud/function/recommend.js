@@ -23,12 +23,14 @@ var _ = AV._;
              [
                 dynamic class object
              ]
-             sameTags:[ 同趣标签，最多返回3个
-                {
-                    tagId:object    标签ID
-                    tagName:string  标准名称
-                }
-             ]
+             extra:{
+                 sameTags:[ 同趣标签，最多返回3个
+                     {
+                     tagId:object    标签ID
+                     tagName:string  标准名称
+                    }
+                 ]
+             }
          }
      ]
  */
@@ -99,7 +101,9 @@ AV.Cloud.define('getRecommend2', function(req, res){
             }
            retVal.push({
                user: user._toFullJSON(),
-               sameTags:sameTags
+               extra:{
+                   sameTags:sameTags
+               }
            });
         });
 

@@ -4,90 +4,100 @@
 var _ = AV._;
 
 exports.initializeAvosData = function() {
-        AV.HPGlobalParam = AV.HPGlobalParam || {};
-        var globalObj = AV.HPGlobalParam;
-        globalObj.hpTags = globalObj.hpTags || {};
-        globalObj.hpAreas = globalObj.hpAreas || {};
-        globalObj.hpCates = globalObj.hpCates || {};
-        globalObj.hpLevels = globalObj.hpLevels || {};
+    AV.HPGlobalParam = AV.HPGlobalParam || {};
+    var globalObj = AV.HPGlobalParam;
+    globalObj.hpTags = globalObj.hpTags || {};
+    globalObj.hpAreas = globalObj.hpAreas || {};
+    globalObj.hpCates = globalObj.hpCates || {};
+    globalObj.hpLevels = globalObj.hpLevels || {};
+    globalObj.hpGlobal = globalObj.hpGlobal || {};
 
-        //拉取所有的标签列表
-        var queryTags = new AV.Query('Tag');
-        queryTags.limit(1000);
-        queryTags.find().then(function(tagResults) {
-            globalObj.hpTags = {};
-            for (var i in tagResults) {
-                var tagItem = tagResults[i];
-                globalObj.hpTags[tagItem.id] = tagItem;
-            }
+    var promises = [];
+    //拉取所有的标签列表
+    var queryTags = new AV.Query('Tag');
+    queryTags.limit(1000);
+    promises.push(queryTags.find());
 
-            console.info('get tags ok,tags count:%d', tagResults?tagResults.length:0);
+    //拉取所有区域
+    var queryAreas = new AV.Query('Area');
+    queryAreas.limit(1000);
+    promises.push(queryAreas.find());
 
-            //拉取所有区域
-            var queryAreas = new AV.Query('Area');
-            queryAreas.limit(1000);
-            return queryAreas.find();
-        }).then(function(areaResults) {
-            globalObj.hpAreas = {};
-            for (var i in areaResults) {
-                var areaItem = areaResults[i];
-                globalObj.hpAreas[areaItem.id] = areaItem;
-            }
+    //拉取所有Cate
+    var queryCate = new AV.Query('Cate');
+    queryCate.limit(1000);
+    promises.push(queryCate.find());
 
-            console.info('get area ok,area count:%d', areaResults?areaResults.length:0);
+    //拉取所有等级信息
+    var queryLevel = new AV.Query('UserGrown');
+    queryLevel.limit(1000);
+    promises.push(queryLevel.find());
 
-            //拉取所有Cate
-            var queryCate = new AV.Query('Cate');
-            queryCate.limit(1000);
-            return queryCate.find();
-        }).then(function(cateResults) {
-            globalObj.hpCates = {};
-            for (var i in cateResults) {
-                var cateItem = cateResults[i];
-                globalObj.hpCates[cateItem.id] = cateItem;
-            }
-            console.info('get cate ok,cate count:%d', cateResults?cateResults.length:0);
+    //拉取默认部落分类
+    var queryCategory = new AV.Query('ClanCategory');
+    queryCategory.equalTo('status', 1);
+    queryCategory.descending('rank');
+    promises.push(queryCategory.find());
 
-            //拉取所有等级信息
-            var queryLevel = new AV.Query('UserGrown');
-            queryLevel.limit(1000);
-            return queryLevel.find();
-        }).then(function(levelResults){
-            globalObj.hpLevels = {};
-            for (var i in levelResults) {
-                var levelItem = levelResults[i];
-                var level = levelItem.get('level');
-                globalObj.hpLevels[level] = levelItem;
-            }
+    //获取全局参数
+    var queryGlobal = new AV.Query('GlobalParam');
+    queryGlobal.equalTo('status', 0);
+    promises.push(queryGlobal.first());
 
-            console.info('get level ok,level count:%d', levelResults?levelResults.length:0);
-            //拉取默认部落分类
-            var queryCategory = new AV.Query('ClanCategory');
-            queryCategory.equalTo('status', 1);
-            queryCategory.descending('rank');
-            return queryCategory.find();
-        }).then(function(results){
-            console.info('get clanCategory ok, count:%d', results&&results.length);
-            globalObj.hpClanCategory = [];
-            _.each(results, function(category){
-                globalObj.hpClanCategory.push(category);
-            });
+    //获取登协报名用户
+    promises.push(AV.Cloud.httpRequest({
+        method: 'GET',
+        url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
+    }));
 
-            return AV.Cloud.httpRequest({
-                method: 'GET',
-                url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
-            });
-        }).then(function(res){
-            if (res.status == 200) {
-                var userVal = JSON.parse(res.text);
-                if (userVal) {
-                    globalObj.hpCityUsers = _.values(userVal);
-                    console.info('get city users count:%d', globalObj.hpCityUsers&&globalObj.hpCityUsers.length);
-                }
-            }
+    AV.Promise.when(promises).then(function(tagResults, areaResults, cateResults, levelResults,
+                                            results, globalResult, res){
+        globalObj.hpTags = {};
+        for (var i in tagResults) {
+            var tagItem = tagResults[i];
+            globalObj.hpTags[tagItem.id] = tagItem;
+        }
+        console.info('get tags ok,tags count:%d', tagResults?tagResults.length:0);
 
+        globalObj.hpAreas = {};
+        for (var i in areaResults) {
+            var areaItem = areaResults[i];
+            globalObj.hpAreas[areaItem.id] = areaItem;
+        }
+        console.info('get area ok,area count:%d', areaResults?areaResults.length:0);
+
+        globalObj.hpCates = {};
+        for (var i in cateResults) {
+            var cateItem = cateResults[i];
+            globalObj.hpCates[cateItem.id] = cateItem;
+        }
+        console.info('get cate ok,cate count:%d', cateResults?cateResults.length:0);
+
+        globalObj.hpLevels = {};
+        for (var i in levelResults) {
+            var levelItem = levelResults[i];
+            var level = levelItem.get('level');
+            globalObj.hpLevels[level] = levelItem;
+        }
+        console.info('get level ok,level count:%d', levelResults?levelResults.length:0);
+
+        globalObj.hpClanCategory = [];
+        _.each(results, function(category){
+            globalObj.hpClanCategory.push(category);
         });
+        console.info('get clanCategory ok, count:%d', results&&results.length);
 
+        globalObj.hpGlobal = globalResult&&globalResult.get('param');
+        console.info('get global param ', globalObj.hpGlobal);
+
+        if (res.status == 200) {
+            var userVal = JSON.parse(res.text);
+            if (userVal) {
+                globalObj.hpCityUsers = _.values(userVal);
+                console.info('get city users count:%d', globalObj.hpCityUsers&&globalObj.hpCityUsers.length);
+            }
+        }
+    });
 }
 
 /** 定时更新呼朋数据，在avos平台设置调用，每隔1小时更新一次

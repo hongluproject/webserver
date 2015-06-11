@@ -323,10 +323,17 @@ AV.Cloud.define("getSearch",function(req,res){
     1、查询动态返回
     resDynamic: [
         {
-            dynamic: DynamicNews class object
+            dynamic:DynamicNews class object
             extra:{
-                tagNames:array 动态对应的标签名称
-                isLike: true or false
+                isComment: true or false 是否评论过
+                isLike: true or false 是否点赞过
+                tagNames: array  动态tagIds对应的名称
+                hasSingup:bool 若归属于活动，判断当前用户是否已经加入该活动
+                likeUsers:[{
+                    nickname:string 用户昵称
+                    icon:string     用户头像
+                },
+                ]  该动态最近10个点赞用户，若自己点赞过，会放在第一个返回
             }
         },
         ...
@@ -461,39 +468,8 @@ AV.Cloud.define('getSearch2', function(req, res){
         query.skip(skip);
         query.include('user_id', 'activityId');
         query.descending('createdAt');
-        var findDynamics;
-        query.find().then(function(dynamics){
-            findDynamics = dynamics;
 
-            return common.findLikeDynamicUsers(userId, dynamics);
-        }).then(function(likeResult){
-            var retDynamic = [];
-            var pickUserKeys = ["objectId", "nickname", "className", "icon", "__type"];
-            var pickActivityKeys = ['objectId','__type', 'title', "className"];
-            var appStoreTestUser = isAppStoreTestUser();
-            _.each(findDynamics, function(dynamic){
-                var user = dynamic.get('user_id');
-                var activity = dynamic.get('activityId');
-
-                dynamic = dynamic._toFullJSON();
-                dynamic.user_id = _.pick(user._toFullJSON(), pickUserKeys);
-                if (activity) {
-                    dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
-                }
-
-                retDynamic.push({
-                    dynamic:appStoreTestUser?'123':dynamic,
-                    extra:{
-                        tagNames:common.tagNameFromId(dynamic.tags),
-                        isLike:likeResult[dynamic.objectId]?true:false
-                    }
-                })
-            });
-
-            res.success({
-                resDynamic:retDynamic
-            });
-        });
+        common.findDynamicAndReturn(userId, req.user, 'search', query, res);
     };
 
     //部落

@@ -14,14 +14,11 @@ function isInHoopeng() {
 }
 
 
-function getUserInfo(type){
+function getUserInfo(){
     try{
-        if(type == 1){
-            var userInfo = external.userObjectId();
-        }else if(type ==2){
-            var userInfo = external.userName();
+        if (external.extraInfo()) {
+            return external.extraInfo();
         }
-        return userInfo;
     } catch (e){
         return false;
     }

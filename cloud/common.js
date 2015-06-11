@@ -1118,3 +1118,130 @@ exports.extendClass = function(className) {
     AV.HPClassModel[className] = ClassModel;
     return ClassModel;
 }
+
+exports.findDynamicAndReturn = function(userId, currUser, dynamicType, query, res) {
+    var pickActivityKeys = ['objectId','__type', 'title', "className", 'user_id'];
+    var pickUserKeys = ['objectId','__type', 'nickname', 'username', 'icon', "className"];
+    var pickUserKeys2 = ['objectId', 'nickname', 'username', 'icon', "className"];
+    var msgIds;
+    var dynamics = [];
+    var activities = [];
+
+    var getLatestLikesOfDynamic = this.getLatestLikesOfDynamic;
+    var getCommentDynamicResult = this.getCommentDynamicResult;
+    var tagNameFromId = this.tagNameFromId;
+
+    query.find().then(function(results){
+        if (dynamicType == 'followeDynamic') {
+            dynamics = [];
+            msgIds = [];
+            var i = 0;
+            _.each(results, function(item){
+                if (item.data.dynamicNews) {
+                    dynamics.push(item.data.dynamicNews);
+                    msgIds[i++] = item.messageId;
+
+                    var activity = item.data.dynamicNews.get('activityId');
+                    if (activity) {
+                        activities.push(activity._toPointer());
+                    }
+                }
+            });
+        } else {
+            dynamics = results;
+            dynamics = _.reject(dynamics, function(val){
+                return (val == undefined);
+            });
+
+            _.each(dynamics, function(item){
+                var activity = item.get('activityId');
+                if (activity) {
+                    activities.push(activity._toPointer());
+                }
+            });
+        }
+
+        var promises = [];
+        //find likes objects
+        promises.push(getLatestLikesOfDynamic(currUser&&currUser.id, dynamics));
+        promises.push(getCommentDynamicResult(currUser&&currUser.id, dynamics));
+
+        if (!_.isEmpty(activities)) {
+            //find activities for current user signup
+            var query = new AV.Query('ActivityUser');
+            query.select('activity_id');
+            query.equalTo('user_id', currUser);
+            query.containedIn('activity_id', activities);
+            promises.push(query.find());
+        } else {
+            promises.push(Promise.as());
+        }
+
+        return Promise.when(promises);
+    }).then(function(likeResult, commentResult, activityResult){
+        var activityObj = {};
+        _.each(activityResult, function(activityUser){
+            var activity = activityUser.get('activity_id');
+            if (activity) {
+                activityObj[activity.id] = true;
+            }
+        });
+
+
+        var retDynamic = [];
+        var i = 0;
+        _.each(dynamics, function(dynamic){
+
+            var userOfDynamic = dynamic.get('user_id');
+            var activity = dynamic.get('activityId');
+            dynamic = dynamic._toFullJSON();
+            if (userOfDynamic) {
+                dynamic.user_id = _.pick(userOfDynamic._toFullJSON(), pickUserKeys);
+            }
+            if (activity) {
+                dynamic.activityId = _.pick(activity._toFullJSON(), pickActivityKeys);
+            }
+
+            var likeUsers = likeResult&&likeResult[dynamic.objectId];
+            //get isLike for current user
+            var findMe = _.find(likeUsers, function(user){
+                return user&&(user.id==currUser.id);
+            });
+            var isLike = findMe?true:false;
+
+            //convert user to fulljson & pick selected keys
+            var pickLikeUserKeys = ['nickname', 'icon'];
+            var convertedUsers = [];
+            //convert likeUsers
+            _.each(likeUsers, function(user){
+                if (user) {
+                    convertedUsers.push({
+                        objectId:user.id,
+                        nickname:user.get('nickname')||'',
+                        icon:user.get('icon')||''
+                    });
+                }
+            });
+            retDynamic.push({
+                dynamic:dynamic,
+                extra:{
+                    isComment:(commentResult&&commentResult[dynamic.objectId])?true:false,
+                    isLike:isLike,
+                    tagNames:tagNameFromId(dynamic.tags),
+                    messageId:msgIds?msgIds[i++]:undefined,
+                    hasSignup:activity&&activityObj[activity.id]?true:false,
+                    likeUsers:convertedUsers
+                }
+            });
+        });
+
+        if (dynamicType == 'search') {
+            res.success({
+                resDynamic:retDynamic
+            });
+        } else {
+            res.success(retDynamic);
+        }
+
+    });
+}

@@ -5,6 +5,90 @@
 var myutils = require('cloud/utils.js');
 var querystring = require('querystring');
 var common = require('cloud/common');
+var _ = AV._;
+var Promise = AV.Promise;
+var utils = require('cloud/utils');
+
+/*
+    消息转发：
+    函数名：transmitMessage
+    参数：
+        toUser: [   转发目标用户
+                {
+                    targetType:string
+                         'clan'      部落
+                         'activity'  活动
+                         'user'      个人
+                    userIds:array
+                },
+                ...
+        ]
+        messageContent:string 消息体，为字符串，server端只负责转发此消息
+    返回：
+        success or error
+ */
+AV.Cloud.define('transmitMessage', function(req, res){
+    var userId = req.user && req.user.id;
+    var toUser = req.params.toUser;
+    var messageContent = req.params.messageContent;
+
+    var promise = Promise.as();
+    var promise2 = Promise.as();
+    var rcParam = utils.getRongCloudParam();
+    promise2.then(function(){
+        _.each(toUser, function(user){
+            var postUrl;
+            promise = promise.then(function(){
+                if (user.targetType == 'user'){
+                    postUrl = 'https://api.cn.rong.io/message/private/publish.json';
+                    var body = {
+                        fromUserId: userId,
+                        toUserId: user.userIds&&user.userIds.concat(userId),
+                        objectName: "RC:ImgTextMsg",
+                        content:messageContent
+                    }
+                } else if (user.targetType == 'clan') {
+                    postUrl = 'https://api.cn.rong.io/message/group/publish.json';
+                    var body = {
+                        fromUserId: userId,
+                        toGroupId: user.userIds,
+                        objectName: "RC:ImgTextMsg",
+                        content:messageContent
+                    }
+                } else if (user.targetType == 'activity') {
+                    postUrl = 'https://api.cn.rong.io/message/group/publish.json';
+                    var body = {
+                        fromUserId: userId,
+                        toGroupId: _.map(user.userIds,function(userId){
+                            return 'activity-'.concat(userId);
+                        }),
+                        objectName: "RC:ImgTextMsg",
+                        content:messageContent
+                    }
+                }
+
+                return AV.Cloud.httpRequest({
+                    method: 'POST',
+                    url: postUrl,
+                    headers: {
+                        'App-Key': rcParam.appKey,
+                        'Nonce': rcParam.nonce,
+                        'Timestamp': rcParam.timestamp,
+                        'Signature': rcParam.signature
+                    },
+                    body:querystring.stringify(body)}).then(function(res){
+                    return Promise.as();
+                }).catch(function(err){
+                    console.error('transmit message error:', err);
+                    return Promise.as();
+                });
+            });
+        });
+        return promise;
+    }).then(function(){
+        res.success();
+    });
+});
 
 /** 通过群组ID获取群组名称
  *  函数名：imGetGroupnameFromId
