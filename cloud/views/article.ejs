@@ -19,6 +19,10 @@
             if (!isInHoopeng()) {
                 $('#downloadDiv').css('display', 'block');
             }
+
+            if (getUserInfo()) {
+                alert(getUserInfo());
+            }
             var imgSrc = [];
             $('.doc-content img').removeAttr('width');
             $('.doc-content img').removeAttr('height');
