@@ -2,8 +2,15 @@
  * Created by fugang on 15/2/15.
  */
 function isInHoopeng() {
+
+
+    var  userInfo = external.extraInfo();
+    alert(userInfo);
     try {
-      var   userInfo = external.userObjectId();
+
+
+
+        var   userInfo = external.userObjectId();
         if (external.appName() == "hoopeng") {
             return true;
         }
@@ -15,12 +22,19 @@ function isInHoopeng() {
 }
 
 
+
+
 function getUserInfo(type){
     try{
+        var userInfo = '';
         if(type == 1){
-            var userInfo = external.userObjectId();
+            userInfo = external.userObjectId();
         }else if(type ==2){
-            var userInfo = external.userName();
+            userInfo = external.userName();
+        } else if (type == 3){
+            userInfo = external.appVersion();
+        } else if (type == 4){
+            userInfo = external.osVersion();
         }
         return userInfo;
     } catch (e){
