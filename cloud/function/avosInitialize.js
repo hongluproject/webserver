@@ -117,6 +117,7 @@ AV.Cloud.define('updateHPParamTimer', function(req, res) {
         clientVersion:client Version
         deviceType: ios or android
         deviceVersion: 8.1.2
+        manualCheck: bool 手动检测升级 (for android)
     @return:
     {
         needUpdate:true or false,
@@ -138,6 +139,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
     var deviceType = req.params.deviceType;
     var deviceVersion = req.params.deviceVersion;
     var customer = req.params.customer;
+    var manualCheck = req.params.manualCheck || false;
 
     //compare version1 and version,
     //  if version2>version1 return 1
