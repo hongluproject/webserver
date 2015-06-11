@@ -44,14 +44,8 @@ exports.initializeAvosData = function() {
     queryGlobal.equalTo('status', 0);
     promises.push(queryGlobal.first());
 
-    //获取登协报名用户
-    promises.push(AV.Cloud.httpRequest({
-        method: 'GET',
-        url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
-    }));
-
     AV.Promise.when(promises).then(function(tagResults, areaResults, cateResults, levelResults,
-                                            results, globalResult, res){
+                                            results, globalResult){
         globalObj.hpTags = {};
         for (var i in tagResults) {
             var tagItem = tagResults[i];
@@ -90,13 +84,20 @@ exports.initializeAvosData = function() {
         globalObj.hpGlobal = globalResult&&globalResult.get('param');
         console.info('get global param ', globalObj.hpGlobal);
 
-        if (res.status == 200) {
-            var userVal = JSON.parse(res.text);
-            if (userVal) {
-                globalObj.hpCityUsers = _.values(userVal);
-                console.info('get city users count:%d', globalObj.hpCityUsers&&globalObj.hpCityUsers.length);
+        //获取登协报名用户
+        AV.Cloud.httpRequest({
+            method: 'GET',
+            url: 'http://sport.hoopeng.cn/api/sport/userinfo?format=2'
+        }).then(function(res){
+            if (res.status == 200) {
+                var userVal = JSON.parse(res.text);
+                if (userVal) {
+                    globalObj.hpCityUsers = _.values(userVal);
+                    console.info('get city users count:%d', globalObj.hpCityUsers&&globalObj.hpCityUsers.length);
+                }
             }
-        }
+        });
+
     });
 }
 

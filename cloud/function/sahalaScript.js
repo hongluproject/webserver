@@ -976,7 +976,6 @@ AV.Cloud.define('getCityClanNames', function(req, res){
         });
 
         phoneNumbers = _.unique(phoneNumbers);
-        console.info('phone numbers %s', phoneNumbers);
         if (AV.HPGlobalParam.hpCityUsers) {
             return Promise.as(AV.HPGlobalParam.hpCityUsers);
         } else {
@@ -1008,7 +1007,6 @@ AV.Cloud.define('getCityClanNames', function(req, res){
         teamNames = _.filter(teamNames, function(teamName){
             return nameObj[teamName]?true:false;
         });
-        console.info('user input valid teams count %d', teamNames&&teamNames.length);
 
         _.each(phoneNumbers, function(phone){
             var userInfo = userObj[phone];
@@ -1017,8 +1015,6 @@ AV.Cloud.define('getCityClanNames', function(req, res){
             }
         });
         teamNames = _.unique(teamNames);
-
-        console.info('total team count:%d', teamNames&&teamNames.length);
 
         var queryOr = [];
         var query = new AV.Query('Clan');
