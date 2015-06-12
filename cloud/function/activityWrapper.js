@@ -386,6 +386,10 @@ AV.Cloud.define('getActivityDetail', function(req, res){
             return;
         }
         currActivity = activity;
+        if (activity.get('mountain')) {
+            extraData.bMountaineerClub = true;
+            extraData.levelUrl = 'http://sport.hoopeng.cn/api/sport/pathinfo';
+        }
 
         payType = activity.get('pay_type');
         var userObj = activity.get('user_id');
@@ -542,6 +546,10 @@ AV.Cloud.define('getActivityDetail2', function(req, res){
             return;
         }
         currActivity = activity;
+        if (activity.get('mountain')) {
+            extraData.bMountaineerClub = true;
+            extraData.levelUrl = 'http://sport.hoopeng.cn/api/sport/pathinfo';
+        }
 
         payType = activity.get('pay_type');
         var userObj = activity.get('user_id');
