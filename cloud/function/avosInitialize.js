@@ -199,6 +199,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             clickURL:'http://www.imsahala.com/sahala_1.1.4.apk',
             lastVersion:updateInfo.android.latestVersion,
             packageMd5:'5b1130fa46f530f0f046e3cc87d56f99',
+            fileSize:13060907,
             launchOpt:launchOpt
         });
     } else {
