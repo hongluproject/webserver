@@ -88,7 +88,10 @@ AV.Cloud.define('getRecommend2', function(req, res){
     }).then(function(users){
         var myTagIds = req.user && req.user.get('tags');
         _.each(users, function(user){
-            var userTagIds = req.user && req.user.get('tags');
+            if (!user) {
+                return;
+            }
+            var userTagIds = user.get('tags');
             var sameTagIds = _.intersection(myTagIds, userTagIds);
             sameTagIds = sameTagIds.slice(0, 3);
             var sameTagNames = common.tagNameFromId(sameTagIds);

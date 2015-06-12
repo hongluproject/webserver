@@ -1090,13 +1090,13 @@ AV.Cloud.define('getLikeUsers', function(req, res){
 
         return common.getFriendshipUsers(userId, users);
     }).then(function(friendResult){
-        var userTagIds = req.user && req.user.get('tags');
+        var myTagIds = req.user && req.user.get('tags');
         _.each(users, function(user){
             if (!user) {
                 return;
             }
 
-            var myTagIds = user.get('tags');
+            var userTagIds = user.get('tags');
             var sameTagIds = _.intersection(myTagIds, userTagIds);
             sameTagIds = sameTagIds.slice(0, 3);
             var sameTagNames = common.tagNameFromId(sameTagIds);
