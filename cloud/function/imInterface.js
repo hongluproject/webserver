@@ -32,6 +32,14 @@ AV.Cloud.define('transmitMessage', function(req, res){
     var toUser = req.params.toUser;
     var messageContent = req.params.messageContent;
 
+    messageContent = JSON.parse(messageContent);
+    if (_.isUndefined(messageContent.imageUri)) {
+        if (messageContent.imageUrl) {
+            messageContent.imageUri = messageContent.imageUrl;
+        }
+    }
+    messageContent = JSON.stringify(messageContent);
+
     var promise = Promise.as();
     var promise2 = Promise.as();
     var rcParam = utils.getRongCloudParam();
@@ -43,7 +51,7 @@ AV.Cloud.define('transmitMessage', function(req, res){
                     postUrl = 'https://api.cn.rong.io/message/private/publish.json';
                     var body = {
                         fromUserId: userId,
-                        toUserId: user.userIds&&user.userIds.concat(userId),
+                        toUserId: user.userIds,
                         objectName: "RC:ImgTextMsg",
                         content:messageContent
                     }

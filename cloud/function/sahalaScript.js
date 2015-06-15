@@ -831,6 +831,7 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
                 if (_.isEmpty(unjoinUsers)) {
                     return Promise.as();
                 } else {
+                    /*
                     if (activityId == common.getMountaineerClubActivityId()) {
                         var query = new AV.Query('Activity');
                         return query.get(activityId).then(function(activity){
@@ -844,6 +845,7 @@ AV.Cloud.define('addUserToMountaineer', function(req, res){
                             return activity.save();
                         });
                     }
+                    */
                 }
             }).then(function(){
                 res.success('ok');
