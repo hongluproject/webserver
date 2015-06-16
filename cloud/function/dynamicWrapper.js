@@ -769,7 +769,6 @@ AV.Cloud.define('getComments2', function(req, res){
  *  获取动态、资讯、活动等相关评论
  */
 AV.Cloud.define('getComments', function(req,res) {
-    console.info('user friend count %d', req.user.get('friendCount'));
 
     var sourceId = req.params.sourceId;
     var commentId = req.params.commentId;
@@ -844,6 +843,95 @@ AV.Cloud.define('getComments', function(req,res) {
 });
 
 /*** 提交动态、资讯、活动评论
+ 函数名：
+    postComment2 提交评论，用于替换 postComment
+ 参数：
+     userId:objectId 用户ID，若不传，则为当前登录用户
+     sourceId:string 回复源ID
+     commentType:    string
+         news:资讯评论
+         activity:活动评论
+         dynamic:动态评论
+     content:string  回复内容
+     replyUserId:string 被评论回复用户ID（评论的评论)
+ 返回：
+     activity news or dynamic comment class object
+ **/
+AV.Cloud.define('postComment2', function(req, res){
+    var userId = req.params.userId;
+    var sourceId = req.params.sourceId;
+    var commentType = req.params.commentType;
+    var content = req.params.content;
+    var replyUserId = req.params.replyUserId;
+    commentType = parseInt(commentType);
+
+    var commentObj;
+    switch (commentType) {
+        case 'news':
+            var CommentClass = common.extendClass('NewsComment');
+            commentObj = new CommentClass();
+            commentObj.set('newsid', AV.Object.createWithoutData('News', sourceId));
+            break;
+        case 'activity':
+            var CommentClass = common.extendClass('ActivityComment');
+            commentObj = new CommentClass();
+            commentObj.set('activity_id', AV.Object.createWithoutData('Activity', sourceId));
+            break;
+        case 'dynamic':
+            var CommentClass = common.extendClass('DynamicComment');
+            commentObj = new CommentClass();
+            commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', sourceId));
+            break;
+        default:
+            res.error('不支持的评论类型!');
+            return;
+    }
+    commentObj.set('content', content);
+    commentObj.set('user_id', AV.User.createWithoutData('_User', userId));
+    if (replyUserId) {
+        commentObj.set('reply_userid', AV.User.createWithoutData('_User', replyUserId));
+    }
+    commentObj.save().then(function(comment){
+        var query = new AV.Query(commentClass);
+        query.include('user_id', 'reply_userid');
+        query.get(comment.id).then(function(comment){
+            var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
+            var user = comment.get('user_id');
+            var replyUser = comment.get('reply_userid');
+            comment = comment._toFullJSON();
+            if (user) {
+                comment.user_id = _.pick(user._toFullJSON(), pickUserKeys);
+            }
+            if (replyUser) {
+                comment.reply_userid = _.pick(replyUser._toFullJSON(), pickUserKeys);
+            }
+
+            res.success(comment);
+        });
+    }, function(error){
+        console.error('postComment error:', error);
+        res.error('提交评论失败，错误码:'+error.code);
+    })
+});
+
+/*** 提交动态、资讯、活动评论
+    函数名：
+        postCommect 提交评论
+    参数：
+        userId:objectId 用户ID，若不传，则为当前登录用户
+         userNickname:string 用户昵称
+         userIcon:string 用户头像
+         sourceId:string 回复源ID
+        commentType:    Integer
+             1:资讯评论
+             2:活动评论
+             3:动态评论
+        content:string  回复内容
+        replyUserId:string 被评论回复用户ID（评论的评论)
+         replyUserNickname:string 被评论回复用户的昵称
+         replyUserIcon:string     被评论回复用户的头像
+     返回：
+        success or fail
  **/
 AV.Cloud.define('postComment', function(req, res){
     var userId = req.params.userId;

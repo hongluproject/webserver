@@ -460,7 +460,6 @@ exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
         query.equalTo('external_id', dynamic.id);
         query.notEqualTo('user_id', AV.User.createWithoutData('User', findLikeUserId));
         query.limit(10);
-        query.descending('createdAt');
         queryOr.push(query);
     });
     if (_.isEmpty(queryOr)) {
@@ -469,6 +468,7 @@ exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
 
     query = AV.Query.or.apply(null, queryOr);
     query.limit(1000);
+    query.descending('createdAt');
     query.include('user_id');
 
     return query.find().then(function(results){
