@@ -858,27 +858,27 @@ AV.Cloud.define('getComments', function(req,res) {
      activity news or dynamic comment class object
  **/
 AV.Cloud.define('postComment2', function(req, res){
-    var userId = req.params.userId;
+    var userId = req.params.userId || (req.user&&req.user.id);
     var sourceId = req.params.sourceId;
     var commentType = req.params.commentType;
     var content = req.params.content;
     var replyUserId = req.params.replyUserId;
-    commentType = parseInt(commentType);
 
     var commentObj;
+    var CommentClass;
     switch (commentType) {
         case 'news':
-            var CommentClass = common.extendClass('NewsComment');
+            CommentClass = common.extendClass('NewsComment');
             commentObj = new CommentClass();
             commentObj.set('newsid', AV.Object.createWithoutData('News', sourceId));
             break;
         case 'activity':
-            var CommentClass = common.extendClass('ActivityComment');
+            CommentClass = common.extendClass('ActivityComment');
             commentObj = new CommentClass();
             commentObj.set('activity_id', AV.Object.createWithoutData('Activity', sourceId));
             break;
         case 'dynamic':
-            var CommentClass = common.extendClass('DynamicComment');
+            CommentClass = common.extendClass('DynamicComment');
             commentObj = new CommentClass();
             commentObj.set('dynamic_id', AV.Object.createWithoutData('DynamicNews', sourceId));
             break;
@@ -892,7 +892,7 @@ AV.Cloud.define('postComment2', function(req, res){
         commentObj.set('reply_userid', AV.User.createWithoutData('_User', replyUserId));
     }
     commentObj.save().then(function(comment){
-        var query = new AV.Query(commentClass);
+        var query = new AV.Query(CommentClass);
         query.include('user_id', 'reply_userid');
         query.get(comment.id).then(function(comment){
             var pickUserKeys = ['objectId','__type', 'nickname', 'icon', "className"];
