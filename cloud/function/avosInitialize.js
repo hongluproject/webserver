@@ -173,8 +173,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var updateInfo = {
         android:{
-            latestVersion:'1.1.4',
-            needUpdate:true
+            latestVersion:'1.1.5',
+            needUpdate:false
         },
         iPhone:{
             latestVersion:'1.0.6',
@@ -193,13 +193,14 @@ AV.Cloud.define('checkUpdate', function(req, res) {
                         (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
-            message:'撒哈拉和上海市登山运动协会达成战略合作关系，撒哈拉将作为2015上海坐标-城市定向挑战赛官方合作平台。 \n' +
-            '- 新增“部落看吧”：这里可供趣友自主填充更专业的相关内容，共同探讨和提升兴趣，支持把网页内容一键转移到自己的看吧里 \n' +
-            '- 提升用户体验，修复已知问题',
-            clickURL:'http://www.imsahala.com/sahala_1.1.4.apk',
+            message:'- 动态页面调整，可以看到点赞的用户啦\n' +
+            '- 精选增加按标签筛选功能\n' +
+            '- 新增活动报名信息保存功能\n' +
+            '- 修复一些体验上的问题\n',
+            clickURL:'http://www.imsahala.com/sahala_1.1.5.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'5b1130fa46f530f0f046e3cc87d56f99',
-            fileSize:13060907,
+            packageMd5:'6641ea6a8f1f8a1f22cd07029dc71507',
+            fileSize:10451954,
             launchOpt:launchOpt
         });
     } else {
