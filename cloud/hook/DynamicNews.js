@@ -11,7 +11,15 @@ AV.Cloud.beforeSave('DynamicNews', function(req, res){
         if (isInBlack) {
             res.error('您被禁止发布动态!');
         } else {
-            res.success();
+            var dynamic = req.object;
+            var content = dynamic.get('content');
+            var images = dynamic.get('thumbs');
+            if (_.isEmpty(content) && _.isEmpty(images)) {
+                res.error('无效的动态!');
+            } else {
+                res.success();
+            }
+
         }
     });
 });
