@@ -1168,6 +1168,7 @@ AV.Cloud.define('getLikeUsers', function(req, res){
     query.include('user_id');
     query.equalTo('external_id', targetId);
     query.descending('createdAt');
+    query.notEqualTo('like', false);
     query.skip(skip).limit(limit);
     query.find().then(function(results){
         _.each(results, function(like){
@@ -1210,5 +1211,58 @@ AV.Cloud.define('getLikeUsers', function(req, res){
     }).catch(function(err){
         console.error('getLikeUsers error', err);
         res.success([]);
+    });
+});
+
+/*
+    点赞/取消点赞
+    函数名：
+        doLike
+    参数:
+        sourceId:objectId   点赞目标ID
+        userId:objectId 点赞用户ID，若不传，则为当前登录用户
+        likeType:Integer    1,资讯  2,动态
+        like:bool  true:点赞  false:取消点赞
+    返回：
+        success or error
+ */
+AV.Cloud.define('doLike', function(req, res){
+    var sourceId = req.params.sourceId;
+    var userId = req.params.userId || (req.user&&req.user.id);
+    var like = req.params.like;
+    var likeType = req.params.likeType || 1;
+
+    if (_.isUndefined(like) || _.isUndefined(sourceId)) {
+        res.error('请传入相关参数!');
+        return;
+    }
+
+    //find the like to check weather it is exist
+    var query = new AV.Query('Like');
+    query.equalTo('external_id', sourceId);
+    query.equalTo('user_id', AV.User.createWithoutData('User', userId));
+    query.first().then(function(likeResult){
+        if (likeResult) {
+            likeResult.set('like', like);
+            return likeResult.save();
+        } else if (like) {
+            var LikeClass = common.extendClass('Like');
+            var likeObj = new LikeClass();
+            likeObj.set('external_id', sourceId);
+            likeObj.set('user_id', AV.User.createWithoutData('User', userId));
+            likeObj.set('like_type', likeType);
+            likeObj.set('like', like);
+            return likeObj.save();
+        } else {
+            return AV.Promise.error('您未曾点赞过,不能取消点赞!');
+        }
+    }).then(function(){
+        res.success();
+    }).catch(function(err){
+        if (_.isString(err)) {
+            res.error(err);
+        } else {
+            res.error('点赞失败,错误码:', err&&err.code);
+        }
     });
 });

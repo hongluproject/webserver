@@ -104,6 +104,7 @@ AV.Cloud.define('getNews2', function(req, res){
             query.equalTo('like_type', 1);
             query.containedIn('external_id', newsIds);
             query.equalTo('user_id', AV.User.createWithoutData('_User', userId));
+            query.notEqualTo('like', false);
             return query.find();
         }
     }).then(function(likes){

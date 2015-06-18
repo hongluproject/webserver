@@ -128,11 +128,13 @@ AV.Cloud.define('getStatus', function(req, res) {
         userId:objectId 待查询目标用户ID
         limit、skip：分页查询参数
         findFriendId: 待查询好友关系的用户ID
+        activityId:objectId 查询好友是否加入对应的活动
     返回：[
         {
             user: user class object
             extra:{
                 isFriend:true or false
+                hasJoinActivity: true or false
             }
         }
     ]
@@ -142,6 +144,7 @@ AV.Cloud.define('getFriendList2', function(req, res){
     var limit = req.params.limit || 100;
     var skip = req.params.skip || 0;
     var findFriendId = req.params.findFriendId || (req.user&&req.user.id);
+    var activityId = req.params.activityId;
     if (!userId) {
         res.error('缺少用户信息!');
         return;
@@ -165,13 +168,22 @@ AV.Cloud.define('getFriendList2', function(req, res){
             followees.push(result.get('followee'));
         });
 
+        var promises = [];
+
         if (findFriendId && findFriendId!=userId) { //查询好友关系
-            return common.getFriendshipUsers(findFriendId, followees);
-        } else {
-            return AV.Promise.as();
+            promises.push(common.getFriendshipUsers(findFriendId, followees));
+        }
+        if (activityId) {
+            var query = new AV.Query('Activity');
+            query.select('joinUsers');
+            promises.push(query.get(activityId));
         }
 
-    }).then(function(friendObj){
+    }).then(function(friendObj, activity){
+        var joinUsers;
+        if (activity) {
+            joinUsers = activity.get('joinUsers');
+        }
         var ret = [];
         //保留的user keys
         var pickUserKeys = ["objectId", "clanids", "nickname", 'noRemoveFromFriend', "className", "icon", "__type"];
@@ -188,7 +200,8 @@ AV.Cloud.define('getFriendList2', function(req, res){
                 var retObj = {
                     user:user,
                     extra:{
-                        isFriend:bFriend
+                        isFriend:bFriend,
+                        hasJoinActivity: _.contains(joinUsers, user.id)
                     }
                 };
 
