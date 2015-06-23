@@ -48,13 +48,22 @@ AV.Cloud.afterSave('ActivityUser', function(req){
 
     var userObj = req.object.get('user_id');
     var queryActivity = new AV.Query('Activity');
-    queryActivity.select('user_id', 'title', 'current_num');
+    queryActivity.select('user_id', 'title', 'current_num', 'max_num');
     queryActivity.get(ActivityObj.id, {
         success:function(activity) {
             if (!activity) {
                 return;
             }
             activity.fetchWhenSave(true);
+            var signupType = activity.get('signupType');
+            if (signupType == 1) {  //线下报名，最大人数可能需要动态调整
+                var currNum = activity.get('current_num');
+                var maxNum = activity.get('max_num');
+                if (maxNum>0 && maxNum<=currNum) {
+                    var incrementForMaxnum = currNum-maxNum+1;
+                    activity.increment('max_num', incrementForMaxnum);
+                }
+            }
             activity.increment('current_num');
             activity.addUnique('joinUsers', userObj.id);
             activity.save();

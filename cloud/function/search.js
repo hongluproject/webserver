@@ -319,6 +319,7 @@ AV.Cloud.define("getSearch",function(req,res){
             'clan'：部落
             'user'：用户
             'activity'：活动
+        activityId:objectId 搜索用户时，查询返回的用户，是否加入了此活动
     返回：
     1、查询动态返回
     resDynamic: [
@@ -373,6 +374,7 @@ AV.Cloud.define("getSearch",function(req,res){
             user:User class object
             extra:{
                 tagNames:array 用户对应的标签名称
+                hasJoinActivity:bool 是否加入了对应的活动
                 isFriend: true or false
             }
         },
@@ -397,9 +399,10 @@ AV.Cloud.define('getSearch2', function(req, res){
     var  tagId = req.params.tagId;
     var  skip = req.params.skip || 0;
     var  limit = req.params.limit || 20;
+    var  activityId = req.params.activityId;
 
-    console.info('getSearch2 params,userId:%s type:%s kw:%s tagId:%s skip:%d limit:%d',
-        userId, type, kw, tagId, skip, limit);
+    console.info('getSearch2 params,userId:%s type:%s kw:%s tagId:%s skip:%d limit:%d activityId:%s',
+        userId, type, kw, tagId, skip, limit, activityId);
 
     //资讯
     var getNews = function() {
@@ -551,16 +554,35 @@ AV.Cloud.define('getSearch2', function(req, res){
             var retResult = [];
             query.find().then(function(results) {
                 findUsers = results;
-                return common.addFriendShipForUsers(userId, results);
-            }).then(function(result){
+                var promises = [];
+                promises.push(common.addFriendShipForUsers(userId, results));
+
+                if (activityId) {
+                    var query = new AV.Query('Activity');
+                    query.select('joinUsers');
+                    promises.push(query.get(activityId));
+                }
+
+                return AV.Promise.when(promises);
+            }).then(function(result, activity){
+                var joinUsers;
+                if (activity) {
+                    joinUsers = activity.get('joinUsers');
+                }
+
                 _.each(findUsers, function(userItem){
+                    if (!userItem) {
+                        return;
+                    }
+
                     var resItem = {};
                     resItem.user = userItem._toFullJSON();
+                    resItem.extra = {
+                        hasJoinActivity:_.contains(joinUsers, userItem.id),
+                        tagNames:common.tagNameFromId(userItem.get('tags'))
+                    };
                     if (result[userItem.id]) {
-                        resItem.extra = {
-                            isFriend:true,
-                            tagNames:common.tagNameFromId(userItem.get('tags'))
-                        };
+                        resItem.extra.isFriend = true;
                     }
 
                     retResult.push(resItem);

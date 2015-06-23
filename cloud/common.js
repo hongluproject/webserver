@@ -454,11 +454,13 @@ exports.getLatestLikesOfDynamic = function(findLikeUserId, dynamics) {
         query = new AV.Query('Like');
         query.equalTo('external_id', dynamic.id);
         query.equalTo('user_id', AV.User.createWithoutData('User', findLikeUserId));
+        query.notEqualTo('like', false);
         queryOr.push(query);
 
         query = new AV.Query('Like');
         query.equalTo('external_id', dynamic.id);
         query.notEqualTo('user_id', AV.User.createWithoutData('User', findLikeUserId));
+        query.notEqualTo('like', false);
         query.limit(10);
         queryOr.push(query);
     });
@@ -1244,4 +1246,11 @@ exports.findDynamicAndReturn = function(userId, currUser, dynamicType, query, re
         }
 
     });
+}
+
+/*
+    是否为线上报名
+ */
+exports.isOfflineSignup = function(signupType) {
+    return (signupType==1);
 }

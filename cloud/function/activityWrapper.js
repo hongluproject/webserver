@@ -144,6 +144,7 @@ AV.Cloud.define('quitActivity', function(req, res) {
  *          ]
  *  payMode:Integer 在线支付方式(支付宝。微信)  1：支付宝 2：微信
  *  accountStatus:Interger 订单状态：（1, 待支付  默认值  2, 已支付 3, 申请退款  4，退款完成  5，退出活动）
+ *  signupType:报名方式  0:在线报名  1：线下报名
  *}
  * @return  {
  *  orderNo:131231234
@@ -153,7 +154,9 @@ AV.Cloud.define('quitActivity', function(req, res) {
  *          根据accountStatus，为1或者2，则认为不用创建订单
  *  2、将用户传入的联系方式信息加入ActivitySignUpUser表
  *  3、查询活动对应的订单，将订单信息写入 statementAccount表
- *
+ *  4、线下活动报名特殊对待：
+ *      a)跳过时间和人数限制，只要未曾报名，均可加入报名列表
+ *      b)活动需要对最大人数做自动增加处理，程序动态控制线下报名的最大人数，保障当前人数不要超过最大人数
  *  */
 AV.Cloud.define('signUpActivity', function(req, res) {
     console.info('signUpActivity params:', req.params);
@@ -167,12 +170,13 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     if (typeof userGroup == 'string') {
         userGroup = JSON.parse(userGroup);
     }
-    if (!userId || !activityId || !userGroup || !userGroup.length) {
+    if (!userId || !activityId) {
         res.error('请输入参数！');
         return Promise.as();
     }
     var payMode = req.params.payMode||1;
     var accountStatus =  req.params.accountStatus||1;
+    var signupType = req.params.signupType || 0;
     var bAddToActivityUser = false;
     var orderNo;
     var activity;
@@ -186,6 +190,28 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         }
 
         activity = result;
+        if (common.isOfflineSignup(signupType)) {
+            //判断是否已经在报名列表中
+            var joinUsers = activity.get('joinUsers');
+            if (joinUsers && _.contains(joinUsers,userId)) {
+                console.error('已经报名！');
+                res.error('该用户已经加入了活动了哦!');
+                return Promise.error();
+            }
+
+            var ActivityUser = common.extendClass('ActivityUser');
+            var activityUser = new ActivityUser();
+            activityUser.set('signupType', 1);  //线下报名标识
+            activityUser.set('user_id', AV.Object.createWithoutData('_User', userId));
+            activityUser.set('activity_id', AV.Object.createWithoutData('Activity', activityId));
+            activityUser.save().then(function(result){
+                res.success();
+            }).catch(function(err){
+                res.error('报名失败,错误码:', err&&err.code);
+            });
+            console.info('线下报名，直接跳过!');
+            return Promise.error();
+        }
 
         var bRemoved = activity.get('removed') || false;
         if (bRemoved) {
@@ -200,7 +226,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             var deadDate = activity.get('dead_time');
             if (currDate.getTime() > deadDate.getTime()) {
                 console.error('报名时间已过！');
-                res.error('报名时间已过！');
+                res.error('该活动报名时间已过！');
                 return Promise.error();
             }
         }
@@ -210,7 +236,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         var maxNum = activity.get('max_num');
         if (maxNum && currNum >= maxNum) {
             console.error('报名人数已满！');
-            res.error('报名人数已满！');
+            res.error('该活动报名人数已满！');
             return Promise.error();
         }
 
@@ -218,7 +244,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         var joinUsers = activity.get('joinUsers');
         if (joinUsers && _.indexOf(joinUsers,userId)>=0) {
             console.error('已经报名！');
-            res.error('已经报名！');
+            res.error('该用户已经加入了活动了哦!');
             return Promise.error();
         }
 
@@ -703,6 +729,12 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
         activity = result.get('activity_id');
         if (!activity) {
             res.error('对应活动不存在！');
+            return;
+        }
+
+        if (common.isOfflineSignup(result.get('signupType'))) { //线上报名，直接退出
+            res.destroy();
+            res.success();
             return;
         }
 
