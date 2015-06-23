@@ -170,7 +170,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
     if (typeof userGroup == 'string') {
         userGroup = JSON.parse(userGroup);
     }
-    if (!userId || !activityId || !userGroup || !userGroup.length) {
+    if (!userId || !activityId) {
         res.error('请输入参数！');
         return Promise.as();
     }
@@ -195,7 +195,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             var joinUsers = activity.get('joinUsers');
             if (joinUsers && _.contains(joinUsers,userId)) {
                 console.error('已经报名！');
-                res.error('已经报名！');
+                res.error('该用户已经加入了活动了哦!');
                 return Promise.error();
             }
 
@@ -226,7 +226,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
             var deadDate = activity.get('dead_time');
             if (currDate.getTime() > deadDate.getTime()) {
                 console.error('报名时间已过！');
-                res.error('报名时间已过！');
+                res.error('该活动报名时间已过！');
                 return Promise.error();
             }
         }
@@ -236,7 +236,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         var maxNum = activity.get('max_num');
         if (maxNum && currNum >= maxNum) {
             console.error('报名人数已满！');
-            res.error('报名人数已满！');
+            res.error('该活动报名人数已满！');
             return Promise.error();
         }
 
@@ -244,7 +244,7 @@ AV.Cloud.define('signUpActivity', function(req, res) {
         var joinUsers = activity.get('joinUsers');
         if (joinUsers && _.indexOf(joinUsers,userId)>=0) {
             console.error('已经报名！');
-            res.error('已经报名！');
+            res.error('该用户已经加入了活动了哦!');
             return Promise.error();
         }
 
