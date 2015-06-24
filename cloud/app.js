@@ -170,12 +170,12 @@ app.get('/dynamic/:objId', function(req, res) {
         queryComment.descending('createdAt');
         promises.push(queryComment.find());
 
-        //获取该动态最近10个点赞人头像
+        //获取该动态最近9个点赞人头像
         var queryLike = new AV.Query('Like');
         queryLike.equalTo('external_id', dynamicId);
         queryLike.select('user_id');
         queryLike.include('user_id');
-        queryLike.limit(10);
+        queryLike.limit(9);
         queryLike.descending('createdAt');
         promises.push(queryLike.find());
 

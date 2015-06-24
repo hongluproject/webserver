@@ -108,7 +108,12 @@
             var likeUsers = dynamic.get('likeUsers');
             for( var i in likeUsers) {
                 var user = likeUsers[i];
-                var userIcon = user.get('icon') || '/images/user.jpg';
+                var userIcon = user.get('icon');
+                if (userIcon) {
+                    userIcon += '?imageView2/1/w/60/h/62';
+                } else {
+                    userIcon = '/images/user.jpg';
+                }
         %>
             <img src="<%=userIcon%>"  width="60" height="62" class="likeIcon">
         <% }%>
@@ -125,10 +130,10 @@
         <div class="feedBtn">
             <ul>
                 <li>
-                    <a class="likeNum"></a>
+                    <a class="likeNum"><%=upCount%></a>
                 </li>
                 <li>
-                    <a class="commentNum">10</a>
+                    <a class="commentNum"><%=commentCount%></a>
                 </li>
                 <li>
                     <% if (voice && voiceDuration) {%>
@@ -146,7 +151,12 @@
         <%
             var currComment = comments[i];
             var commentUserName = currComment.get('user_id').get('nickname');
-            var commentUserIcon = currComment.get('user_id').get('icon') || '/images/user.jpg';
+            var commentUserIcon = currComment.get('user_id').get('icon');
+            if (commentUserIcon) {
+                commentUserIcon += '?imageView2/1/w/60/h/62';
+            } else {
+                commentUserIcon = '/images/user.jpg';
+            }
             var replyUserName = '';
             if (currComment.get('reply_userid')) {
                 replyUserName = currComment.get('reply_userid').get('nickname');
