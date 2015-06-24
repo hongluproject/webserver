@@ -201,7 +201,7 @@ AV.Cloud.define('getFriendList2', function(req, res){
                     user:user,
                     extra:{
                         isFriend:bFriend,
-                        hasJoinActivity: _.contains(joinUsers, user.id)
+                        hasJoinActivity: _.contains(joinUsers, user.objectId)
                     }
                 };
 
