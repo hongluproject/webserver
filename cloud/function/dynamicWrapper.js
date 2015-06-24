@@ -1244,7 +1244,20 @@ AV.Cloud.define('doLike', function(req, res){
     query.first().then(function(likeResult){
         if (likeResult) {
             likeResult.set('like', like);
-            return likeResult.save();
+            return likeResult.save().then(function(result){
+                //对应的点赞数增加或减少
+                if (likeType == 1) {    //资讯点赞
+                    var news = AV.Object.createWithoutData('News', sourceId);
+                    news.fetchWhenSave(true);
+                    news.increment('up_count', like?1:-1);
+                    return news.save();
+                } else if (likeType == 2) { //动态点赞
+                    var dynamic = AV.Object.createWithoutData('DynamicNews', sourceId);
+                    dynamic.fetchWhenSave(true);
+                    dynamic.increment('up_count', like?1:-1);
+                    return dynamic.save();
+                }
+            });
         } else if (like) {
             var LikeClass = common.extendClass('Like');
             var likeObj = new LikeClass();

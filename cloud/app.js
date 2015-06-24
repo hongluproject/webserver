@@ -161,19 +161,41 @@ app.get('/dynamic/:objId', function(req, res) {
         dynamicResult.set('tagNames', tagNames);
 
         renderObj = dynamicResult;
+        var promises = [];
         //获取该动态最近10个评论
         var queryComment = new AV.Query('DynamicComment');
         queryComment.equalTo('dynamic_id', AV.Object.createWithoutData('DynamicNews', dynamicId));
         queryComment.include('user_id', 'reply_userid');
         queryComment.limit(10); //取最近10条
         queryComment.descending('createdAt');
-        return queryComment.find();
+        promises.push(queryComment.find());
+
+        //获取该动态最近10个点赞人头像
+        var queryLike = new AV.Query('Like');
+        queryLike.equalTo('external_id', dynamicId);
+        queryLike.select('user_id');
+        queryLike.include('user_id');
+        queryLike.limit(10);
+        queryLike.descending('createdAt');
+        promises.push(queryLike.find());
+
+        return AV.Promise.when(promises);
     }, function(error) {
         console.error('dynamic id %s find error:', dynamicId, error);
         res.writeHead(404);
         res.end();
-    }).then(function(commentResults) {
+    }).then(function(commentResults, likeResults) {
         renderObj.set('comments', commentResults);
+
+        var likeUsers = [];
+        _.each(likeResults, function(like){
+            if (!like) {
+                return;
+            }
+            var user = like.get('user_id');
+            likeUsers.push(user);
+        });
+        renderObj.set('likeUsers', likeUsers);
         return AV.Promise.as(renderObj);
     }, function(error) {
         return AV.Promise.as(renderObj);

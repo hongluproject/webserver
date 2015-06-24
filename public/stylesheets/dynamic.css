@@ -28,7 +28,15 @@ body{ background:#FAFAFA;}
 .ftUser .img{ float:left;}
 .ftUser dl{ float:left; margin-left:18px;}
 .ftUser dt{ font-size:26px; color:#000; line-height:36px;}
-.ftUser dd .key{ display:inline-block; color:#1BB6C5; font-size:22px; margin:0 2px;}
+.ftUser dd .key{
+    display: inline-block;
+    color: #1BB6C5;
+    font-size: 22px;
+    margin: 0 2px;
+    padding: 3px;
+    border: 1px solid #2AB6C4;
+    border-radius: 8px;
+}
 .ftUser ul{ float:right;}
 .ftUser li{ font-size:24px; color:#9C9C9C; line-height:36px; text-align:right;}
 .ftUser li i{ height:36px; width:20px; background:url('/images/ico.png') center no-repeat; margin-left:10px; display:inline-block; vertical-align:middle;}
@@ -55,6 +63,90 @@ body{ background:#FAFAFA;}
 
 .f_fabu{ position:fixed; left:50%; width:640px; box-sizing:border-box; bottom:0; margin-left:-320px; overflow:hidden; height:82px; background:#F0F0F0; border-top:solid 1px #C2C2C2; padding:13px 20px 0 20px;}
 .f_fabu .txt{ display:block; background:url('/images/ico4.jpg') no-repeat #fff; border:solid 1px #C2C2C2;box-sizing:border-box; height:56px; line-height:56px; border-radius:10px; width:100%; padding-left:55px; font-size:24px; color:#8D8D8D}
+.likelist {
+	border-top: 1px solid #D1D1D1;
+	margin-left: 0px;
+	padding-left: 20px;
+	margin-bottom: 10px;
+	padding-top: 5px;
+}
+
+.likelist .likeIcon {
+	float: left;
+	margin-right: 5px;
+}
+
+
+.feedbackArea {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	padding-left: 0px;
+    height: 55px;
+}
+
+.feedbackArea .tipsLine {
+	border-top: 1px solid #D1D1D1;
+	width: 100%;
+}
+
+.feedbackArea .arrow_down {
+	margin-left:92px;
+	float: left;
+	border-left: 10px solid transparent;
+	border-right: 10px solid transparent;
+	border-top: 10px solid #D1D1D1;
+	height: 0px;
+}
+
+.feedbackArea .arrow_down_mask {
+	margin-left:92px	;
+	margin-top:-1px;
+	position:absolute;
+	border-left: 10px solid transparent;
+	border-right: 10px solid transparent;
+	border-top: 10px solid #FAFAFA;
+	height: 0px;
+}
+
+.feedBtn {
+	margin-top:5px;
+    margin-bottom: 20px;
+}
+
+.feedBtn li {
+	float:left;
+	width:33%;
+	text-align:center;
+	border-right:1px solid #D1D1D1
+}
+
+.feedBtn li a{
+	display:inline;
+	text-align:center;
+}
+
+.feedBtn li img {
+	display: inline;
+	/* [disabled]margin-top: 3px; */
+}
+
+.feedBtn li .likeNum,.commentNum {
+	padding-left:35px;
+	font-size:24px;
+	color:#9C9C9C;
+	background:url('/images/dongtai_dianzan_hui@2x.png') left center no-repeat
+}
+
+.feedBtn li .commentNum {
+	background:url('/images/dongtai_pinglun_hui@2x.png') left center no-repeat
+}
+
+.feedBtn li .voiceNum {
+    padding-left:25px;
+    font-size:24px;
+    color:#9C9C9C;
+    background:url('/images/ico.png') left center no-repeat
+}
 
 .activity {
     color: #F0F0F0;

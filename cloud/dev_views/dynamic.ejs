@@ -11,7 +11,7 @@
         var thumbs = dynamic.get('thumbs');
         var voice = dynamic.get('voice') || '';
         var voiceDuration = dynamic.get('duration') || 0;
-        var location = dynamic.get('area') || '';
+        var location = dynamic.get('area') || '隐身在丛林';
         var commentCount = dynamic.get('comment_count') || '';
         if (commentCount <= 0) {
             commentCount = '';
@@ -62,18 +62,10 @@
             <dt><%= userName %></dt>
             <dd>
                 <% for (var i in tagNames) {%>
-                    <span class="key">[<%= tagNames[i] %>]</span>
+                    <span class="key"><%= tagNames[i] %></span>
                 <%}%>
             </dd>
         </dl>
-        <ul>
-            <% if (voice && voiceDuration) {%>
-                <li><%=voiceDuration%>'<i></i></li>
-            <%} else {%>
-                <li></li>
-            <%}%>
-            <li><%=timeDisp%></li>
-        </ul>
     </div>
     <!--发帖人结束-->
     <!--发帖内容开始-->
@@ -104,12 +96,48 @@
                 <i></i><%=location%>
             </div>
             <div class="btn">
-                <a href="#" class="link1"><%=commentCount%></a>
-                <a href="#" class="link2"><%=upCount%></a>
+                <%=timeDisp%>
             </div>
         </div>
     </div>
     <!--发帖内容结束-->
+    <!-- 点赞列表开始-->
+    <div class="likelist">
+        <%
+            var likeUsers = dynamic.get('likeUsers');
+            for( var i in likeUsers) {
+                var user = likeUsers[i];
+                var userIcon = user.get('icon') || '/images/user.jpg';
+        %>
+            <img src="<%=userIcon%>"  width="60" height="62" class="likeIcon">
+        <% }%>
+        <div style="clear:both"></div>
+    </div>
+    <div class="feedbackArea">
+        <% if (likeUsers && likeUsers.length>0) {%>
+            <div class="tipsLine"></div>
+            <div class="arrow_down">
+            </div>
+            <div class="arrow_down_mask"></div>
+            <div style="clear:both"></div>
+        <%}%>
+        <div class="feedBtn">
+            <ul>
+                <li>
+                    <a class="likeNum"></a>
+                </li>
+                <li>
+                    <a class="commentNum">10</a>
+                </li>
+                <li>
+                    <% if (voice && voiceDuration) {%>
+                        <a class="voiceNum"><%=voiceDuration%>'</a>
+                    <%}%>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- 点赞列表结束-->
     <!--评论开始-->
     <div class="plBox">
         <% for (var i in comments) {%>

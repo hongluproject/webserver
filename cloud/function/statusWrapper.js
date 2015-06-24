@@ -172,13 +172,17 @@ AV.Cloud.define('getFriendList2', function(req, res){
 
         if (findFriendId && findFriendId!=userId) { //查询好友关系
             promises.push(common.getFriendshipUsers(findFriendId, followees));
+        } else {
+            promises.push(AV.Promise.as());
         }
         if (activityId) {
             var query = new AV.Query('Activity');
             query.select('joinUsers');
-            promises.push(query.get(activityId));
+            query.equalTo('objectId', activityId);
+            promises.push(query.first());
         }
 
+        return AV.Promise.when(promises);
     }).then(function(friendObj, activity){
         var joinUsers;
         if (activity) {
