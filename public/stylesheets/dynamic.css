@@ -79,9 +79,8 @@ body{ background:#FAFAFA;}
 
 .feedbackArea {
 	margin-top: 5px;
-	margin-bottom: 5px;
+	margin-bottom: 20px;
 	padding-left: 0px;
-    height: 55px;
 }
 
 .feedbackArea .tipsLine {
@@ -110,7 +109,6 @@ body{ background:#FAFAFA;}
 
 .feedBtn {
 	margin-top:5px;
-    margin-bottom: 20px;
 }
 
 .feedBtn li {
