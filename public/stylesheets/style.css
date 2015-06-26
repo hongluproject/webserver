@@ -27,7 +27,7 @@ body { font-size: 62.5%; }
 .wx-blue { color: #08c; font-weight: bold; display: block; text-align: center; margin: 10px 0; }
 .top-bar-back { width: 100%; height: 1px; position: absolute; left: 0; bottom: 0; }
 .a-lk-blue:active { background: #07b; }
-.container { border-left: 1px solid #d0d0d0; border-right: 1px solid #d0d0d0; background: #f6f6f6; overflow: hidden; width: 100%; max-width: 700px; margin: 0 auto; }
+.container { border-left: 1px solid #d0d0d0; border-right: 1px solid #d0d0d0; background: #f6f6f6; overflow: hidden;  max-width: 700px; margin: 0 auto; }
 .logo { line-height: 40px; text-align: center; display: none; }
 .home { font-size: 20px; position: absolute; text-align: center; width: 42px; left: 5px; top: 2px; color: #08c; }
 .home:active { color: #666; }
