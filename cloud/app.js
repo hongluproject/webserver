@@ -3,6 +3,7 @@ var express = require('express');
 var app = express();
 var name = require('cloud/name.js');
 var common = require('cloud/common.js');
+var myutils = require('cloud/utils');
 //var avosExpressHttpsRedirect = require('avos-express-https-redirect');
 var _ = AV._;
 
@@ -205,10 +206,6 @@ app.get('/dynamic/:objId', function(req, res) {
 });
 
 
-
-
-
-
 /**
  *  部落分享
  */
@@ -219,6 +216,7 @@ app.get('/clan/:objId', function(req,res) {
         console.error('clan id has not input!');
         res.writeHead(404);
         res.end();
+        return;
     }
 
 
@@ -278,9 +276,6 @@ app.get('/clan/:objId', function(req,res) {
 });
 
 
-
-
-
 /**
  *  活动分享
  */
@@ -291,9 +286,11 @@ app.get('/activity/:objId', function(req,res) {
         console.error('activity id has not input!');
         res.writeHead(404);
         res.end();
+        return;
     }
     var query = new AV.Query('Activity');
     query.include('user_id');
+    query.select('-hasSignupUsers', '-joinUsers');
     query.get(activityId, {
         success: function(activityResult) {
             if (!activityResult) {
@@ -362,6 +359,34 @@ app.get('/activity/:objId', function(req,res) {
 
 });
 
+/*
+    活动描述
+ */
+app.get('/activityIntro/:objId', function(req, res){
+    var activityId = req.param('objId');
+    if (!activityId) {
+        console.error('activity id has not input for activityIntro!');
+        res.writeHead(404);
+        res.end();
+        return;
+    }
+
+    var query = new AV.Query('Activity');
+    query.select('-hasSignupUsers', '-joinUsers');
+    query.get(activityId).then(function(activity){
+        if (!activity) {
+            console.error('activity %s not found!', activityId);
+            res.writeHead(404);
+            res.end();
+            return;
+        }
+        res.render('intro', {activity:activity,utils:myutils});
+    }).catch(function(err){
+        console.error('error for activityIntro ', err);
+        res.writeHead(404);
+        res.end();
+    });
+});
 
 /**
  *      测试返回json

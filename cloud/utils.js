@@ -330,3 +330,31 @@ exports.escapeExprSpecialWord = function(key) {
 
     return key;
 }
+
+//编码
+exports.htmlEncode =  function(str) {
+    var s = "";
+    if (!str || str.length == 0) return "";
+    s = str.replace(/&/g, ">");
+    s = s.replace(/</g, "<");
+    s = s.replace(/>/g, ">");
+    s = s.replace(/ /g, " ");
+    s = s.replace(/\'/g, "'");
+    s = s.replace(/\"/g, '"');
+    s = s.replace(/\n/g, "<br>");
+    return s;
+}
+
+//解码
+exports.htmlDecode = function(str) {
+    var s = "";
+    if (!str || str.length == 0) return "";
+    s = str.replace(/>/g, "&");
+    s = s.replace(/</g, "<");
+    s = s.replace(/>/g, ">");
+    s = s.replace(/ /g, " ");
+    s = s.replace(/'/g, "\'");
+    s = s.replace(/"/g, "\"");
+    s = s.replace(/<br>/g, "\n");
+    return s;
+}

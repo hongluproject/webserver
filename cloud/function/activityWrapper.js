@@ -533,6 +533,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
     @return {
         activity: Activity Object
         extra: {
+            introUrl: string 活动描述URL
             signupUsers: array 已报名用户列表
             hasSignup: bool 当前用户是否已经报名
             accountStatus:Integer 当前订单状态
@@ -540,6 +541,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
             bMountaineerClub:bool 登协定制活动
             levelUrl:登协通关URL
             tagNames:array 活动tagID对应名称
+            signupType:Integer 报名类型：0，线上报名  1，线下报名
         }
     }
  */
@@ -652,6 +654,7 @@ AV.Cloud.define('getActivityDetail2', function(req, res){
                     icon:user.get('icon')||''
                 }];
             }
+            extraData.signupType = myActivityUser.get('signupType') || 0;
         }
 
         extraData.hasSignup = bHasSignup;
@@ -674,6 +677,7 @@ AV.Cloud.define('getActivityDetail2', function(req, res){
         }
 
         extraData.tagNames = common.tagNameFromId(currActivity.get('tags'));
+        extraData.introUrl = common.getActivityIntroUrl(activityId);
         res.success({
             activity:currActivity._toFullJSON(),
             extra:extraData
@@ -733,7 +737,7 @@ AV.Cloud.define('cancelSignupActivity', function(req, res){
         }
 
         if (common.isOfflineSignup(result.get('signupType'))) { //线上报名，直接退出
-            res.destroy();
+            result.destroy();
             res.success();
             return;
         }
@@ -1821,7 +1825,7 @@ AV.Cloud.define('signinActivity', function(req, res){
     query.select('signIn', 'activity_id');
     query.first().then(function(result){
        if (!result) {
-           res.error('请扫描本次活动的二维码！');
+           res.error('您未报名此活动！');
            return;
        }
 
@@ -1830,17 +1834,24 @@ AV.Cloud.define('signinActivity', function(req, res){
             var activity = result.get('activity_id');
 
             result.set('signIn', 2);
-            result.save();
+            result.save().then(function(){
+                if (activity) { //对应活动的签到人数+1
+                    activity.fetchWhenSave(true);
+                    activity.increment('signin_num');
+                    return activity.save();
+                }
+            }).then(function(){
+                res.success();
+            }).catch(function(err){
+                console.error('签到失败:',err);
+                res.error('签到失败,错误码:'+err.code);
+            });
 
-            if (activity) { //对应活动的签到人数+1
-                activity.fetchWhenSave(true);
-                activity.increment('signin_num');
-                activity.save();
-            }
 
+        } else {
+            res.success();
         }
 
-        res.success();
     }, function(err){
         console.error('签到失败:',err);
         res.error('签到失败,错误码:'+err.code);

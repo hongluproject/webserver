@@ -1254,3 +1254,14 @@ exports.findDynamicAndReturn = function(userId, currUser, dynamicType, query, re
 exports.isOfflineSignup = function(signupType) {
     return (signupType==1);
 }
+
+/*
+    获取活动描述URL
+ */
+exports.getActivityIntroUrl = function(activityId) {
+    if (this.isSahalaDevEnv()) {
+        return 'http://apidev.imsahala.com/activityIntro/'.concat(activityId);
+    }
+
+    return 'http://api.imsahala.com/activityIntro/'.concat(activityId);
+}
