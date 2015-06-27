@@ -546,7 +546,8 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,extP
                 extra: JSON.stringify({
                     type: messageType,
                     objectId: objectId,
-                    clanId:(extProp&&extProp.clanId)||''
+                    clanId:(extProp&&extProp.clanId)||'',
+                    activityId:(extProp&&extProp.activityId)||''
                 })
             })
         }
@@ -561,7 +562,8 @@ function postRCMessage (fromUserId, toUserId, content, messageType,objectId,extP
                 extra: JSON.stringify({
                     type: messageType,
                     objectId: objectId,
-                    clanId:(extProp&&extProp.clanId)||''
+                    clanId:(extProp&&extProp.clanId)||'',
+                    activityId:(extProp&&extProp.activityId)||''
                 })
             })
         }
@@ -789,7 +791,10 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
 
                     } else {
                         postRCMessage(sourceUser.id,toRcUsers,rcMessageFromType(messageType),messageType,status.id,
-                            {clanId:extendProp&&extendProp.clan&&extendProp.clan.id});
+                            {
+                                clanId:extendProp&&extendProp.clan&&extendProp.clan.id,
+                                activityId:extendProp&&extendProp.activity&&extendProp.activity.id
+                            });
                     }
                 }
                 console.info('%s 事件流发送成功', messageType);
