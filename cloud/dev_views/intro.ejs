@@ -2,9 +2,6 @@
 <%
 	var intro = activity.get('intro');
 	var richContent = activity.get('richContent');
-	if (!richContent) {	//若非富文本，需要将里面的内容进行转译
-		intro = utils.htmlEncode(intro);
-	}
  %>
   <head>
 	  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -21,11 +18,20 @@
 			  font-size: 1.6em;
 			  line-height: 1.3;
 		  }
+		  pre {
+			  font-family:"微软雅黑";
+			  white-space: pre-wrap;
+			  word-wrap: break-word;
+		  }
 	  </style>
   </head>
   <body>
 	<div class='container'>
-		<%-intro%>
+		<% if (richContent) { %>
+			<p><%-intro%></p>
+		<% } else { %>
+			<pre><%-intro%></pre>
+		<% } %>
 	</div>
   </body>
 </html>

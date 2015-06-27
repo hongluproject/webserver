@@ -655,6 +655,10 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                 var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
                 retMsg = '我加入了' + activityName||'';
                 break;
+            case 'offlineJoinActivity':
+                var activityName = extendProp && extendProp.activity && extendProp.activity.get('title');
+                retMsg = '邀请您加入了' + activityName||'';
+                break;
             case 'refuseToJoinClan':
                 var clanName = extendProp && extendProp.clan && extendProp.clan.get('title');
                 retMsg = '我拒绝了你加入' + (clanName||'') + '的请求!';
@@ -723,6 +727,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
         case 'addToClan':
             status.set('clan', extendProp.clan._toPointer());
             break;
+        case 'offlineJoinActivity':
         case 'joinActivity':
         case 'quitActivity':
         case 'updateActivity':
@@ -768,6 +773,7 @@ exports.sendStatus = function(messageType, sourceUser, targetUser, query, extend
                     messageType=='quitActivity' ||
                     messageType=='updateActivity' ||
                     messageType=='cancelActivity' ||
+                    messageType=='offlineJoinActivity' ||
                     messageType=='refundSuccess') {
                     //fromUserId, toUserId, content, messageType,objectId
                     if (messageType=='newComment') {
@@ -842,6 +848,7 @@ exports.inboxtypeFromMessageType = function(messageType) {
         case 'allowToJoinClan':
             return 'clan';
 
+        case 'offlineJoinActivity':
         case 'joinActivity':
         case 'quitActivity':
         case 'updateActivity':

@@ -74,8 +74,7 @@ app.get('/news/:objId', function(req, res) {
     var articleId = req.param("objId");
     if (!articleId) {
         console.error('article id has not input!');
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
         return;
     }
     var globalObj = AV.HPGlobalParam || {};
@@ -120,10 +119,9 @@ app.get('/news/:objId', function(req, res) {
         res.render('article', renderObj);
         console.info('render article %s', articleId);
 
-    }, function(err){
+    }).catch(function(err){
         console.error('Render article error:', err);
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
     });
 });
 
@@ -134,8 +132,7 @@ app.get('/dynamic/:objId', function(req, res) {
     var dynamicId = req.param("objId");
     if (!dynamicId) {
         console.error('dynamic id has not input!');
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
         return;
     }
     var renderObj = {};
@@ -148,8 +145,8 @@ app.get('/dynamic/:objId', function(req, res) {
     query.get(dynamicId).then(function(dynamicResult) {
         if (!dynamicResult) {
             console.error('dynamic %s not found', dynamicId);
-            res.writeHead(404);
-            res.end();
+            res.sendfile('./public/404.html');
+            return;
         }
 
         //加标签名
@@ -214,8 +211,7 @@ app.get('/clan/:objId', function(req,res) {
     var invitationCode = req.param('invitation_id');
     if (!clanId) {
         console.error('clan id has not input!');
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
         return;
     }
 
@@ -225,8 +221,7 @@ app.get('/clan/:objId', function(req,res) {
         success: function(clanResult) {
             if (!clanResult) {
                 console.error('clan %s has not found!', clanId);
-                res.writeHead(404);
-                res.end();
+                res.sendfile('./public/404.html');
                 return;
             }
 
@@ -259,16 +254,14 @@ app.get('/clan/:objId', function(req,res) {
                 },
                 error: function(error) {
                     console.error('clan %s has not found!', clanId);
-                    res.writeHead(404);
-                    res.end();
+                    res.sendfile('./public/404.html');
                     return;
                 }
         });
         },
         error: function(error) {
             console.error('clan %s has not found!', clanId);
-            res.writeHead(404);
-            res.end();
+            res.sendfile('./public/404.html');
             return;
         }
     });
@@ -284,8 +277,7 @@ app.get('/activity/:objId', function(req,res) {
     var activityId = req.param('objId');
     if (!activityId) {
         console.error('activity id has not input!');
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
         return;
     }
     var query = new AV.Query('Activity');
@@ -295,8 +287,7 @@ app.get('/activity/:objId', function(req,res) {
         success: function(activityResult) {
             if (!activityResult) {
                 console.error('activity %s has not found!', activityId);
-                res.writeHead(404);
-                res.end();
+                res.sendfile('./public/404.html');
                 return;
             }
             var tags = activityResult.get('tags');
@@ -336,14 +327,13 @@ app.get('/activity/:objId', function(req,res) {
                         },
                         error: function(error){
                             console.log(error);
-                            res.render('500',500);
+                            res.sendfile('./public/404.html');
                         }
                     });
                 },
                 error: function(error) {
                     console.error('activity %s has not found!', clanId);
-                    res.writeHead(404);
-                    res.end();
+                    res.sendfile('./public/404.html');
                     return;
                 }
             });
@@ -351,8 +341,7 @@ app.get('/activity/:objId', function(req,res) {
         },
         error: function(error) {
             console.error('activity %s has not found!', activityId);
-            res.writeHead(404);
-            res.end();
+            res.sendfile('./public/404.html');
             return;
         }
     });
@@ -376,15 +365,13 @@ app.get('/activityIntro/:objId', function(req, res){
     query.get(activityId).then(function(activity){
         if (!activity) {
             console.error('activity %s not found!', activityId);
-            res.writeHead(404);
-            res.end();
+            res.sendfile('./public/404.html');
             return;
         }
         res.render('intro', {activity:activity,utils:myutils});
     }).catch(function(err){
         console.error('error for activityIntro ', err);
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
     });
 });
 

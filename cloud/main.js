@@ -186,14 +186,14 @@ AV.Cloud.define("hello", function(req, res) {
 	}
 
 	var query = new AV.Query('ActivityUser');
-	query.equalTo('activity_id', AV.Object.createWithoutData('Activity','55782dfae4b0f8165ff084fb'));
-	query.find().then(function(results){
-		var userIds = [];
-		_.each(results, function(item){
-			var user = item.get('user_id');
-			userIds.push(user.id);
-		})
-		console.info("%s",userIds);
+	query.first().then(function(results){
+		var query = new AV.Query('User');
+		return query.first().then(function(){
+			var query = new AV.Query('haha');
+			return query.find();
+		});
+	}).catch(function(err){
+		console.error(err);
 	});
 });
 

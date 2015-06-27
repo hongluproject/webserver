@@ -90,6 +90,9 @@ AV.Cloud.define('getStatus', function(req, res) {
 
                 var messageType = results[i].get('messageType');
                 switch (messageType) {
+                    case 'offlineJoinActivity':
+                        results[i].set('message', ('邀请您加入了'+activity.title+'活动'));
+                        break;
                     case 'joinActivity':
                         results[i].set('message', ('加入了'+activity.title+'活动'));
                         break;

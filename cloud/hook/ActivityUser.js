@@ -45,6 +45,7 @@ AV.Cloud.afterSave('ActivityUser', function(req){
     if ((ActivityObj&&ActivityObj.id) == common.getMountaineerClubActivityId()) {
         return;
     }
+    var signupType = req.object.get('signupType');
 
     var userObj = req.object.get('user_id');
     var queryActivity = new AV.Query('Activity');
@@ -55,7 +56,6 @@ AV.Cloud.afterSave('ActivityUser', function(req){
                 return;
             }
             activity.fetchWhenSave(true);
-            var signupType = activity.get('signupType');
             if (signupType == 1) {  //线下报名，最大人数可能需要动态调整
                 var currNum = activity.get('current_num');
                 var maxNum = activity.get('max_num');
@@ -76,9 +76,15 @@ AV.Cloud.afterSave('ActivityUser', function(req){
             });
 
             var founderId = activity.get('user_id').id;
-            var query = new AV.Query('_User');
-            query.equalTo('objectId', founderId);
-            common.sendStatus('joinActivity', userObj, activity.get('user_id'), query,{"activity":activity});
+            if (signupType == 1) {  //线下报名
+                var query = new AV.Query('_User');
+                query.equalTo('objectId', userObj.id);
+                common.sendStatus('offlineJoinActivity', activity.get('user_id'), userObj, query,{"activity":activity});
+            } else {
+                var query = new AV.Query('_User');
+                query.equalTo('objectId', founderId);
+                common.sendStatus('joinActivity', userObj, activity.get('user_id'), query,{"activity":activity});
+            }
         }
     });
 });
