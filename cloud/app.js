@@ -178,10 +178,6 @@ app.get('/dynamic/:objId', function(req, res) {
         promises.push(queryLike.find());
 
         return AV.Promise.when(promises);
-    }, function(error) {
-        console.error('dynamic id %s find error:', dynamicId, error);
-        res.writeHead(404);
-        res.end();
     }).then(function(commentResults, likeResults) {
         renderObj.set('comments', commentResults);
 
@@ -195,10 +191,11 @@ app.get('/dynamic/:objId', function(req, res) {
         });
         renderObj.set('likeUsers', likeUsers);
         return AV.Promise.as(renderObj);
-    }, function(error) {
-        return AV.Promise.as(renderObj);
     }).then(function(renderResult){
         res.render('dynamic', {dynamic:renderResult});
+    }).catch(function(err){
+        console.error('dynamic id %s find error:', dynamicId, err);
+        res.sendfile('./public/404.html');
     });
 });
 
@@ -355,8 +352,7 @@ app.get('/activityIntro/:objId', function(req, res){
     var activityId = req.param('objId');
     if (!activityId) {
         console.error('activity id has not input for activityIntro!');
-        res.writeHead(404);
-        res.end();
+        res.sendfile('./public/404.html');
         return;
     }
 
