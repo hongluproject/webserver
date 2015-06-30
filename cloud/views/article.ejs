@@ -17,9 +17,17 @@
                 <% } else {%>
                 var proxySrc = $(this).attr("src").replace(/http:\/\/mmbiz.qpic.cn\/mmbiz/,"http://api.imsahala.com/proxy?url=http://mmbiz.qpic.cn/mmbiz");
                 <% } %>
+                if (proxySrc &&
+                        (proxySrc.indexOf('http://apidev.imsahala.com')>=0 || proxySrc.indexOf('http://api.imsahala.com')>=0)) {
+                    //webp转换为jpg，因为IOS和OSX暂不支持该格式
+                    proxySrc = proxySrc.replace(/tp=webp/gi, 'tp=jpg');
+                }
                 $(this).attr("proxySrc",proxySrc);
-            })
+            });
 
+            $('iframe').attr("width", "100%");
+            $('iframe').attr("height", "100%");
+            
             if (!isInHoopeng()) {
                 $('#downloadDiv').css('display', 'block');
             }

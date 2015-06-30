@@ -555,10 +555,11 @@ app.get('/proxy', function(req, res){
     AV.Cloud.httpRequest({
         method: 'GET',
         url: sourceURL,
-        headers:{
-            Referer:'http://mp.weixin.qq.com/s?3rd=MzA3MDU4NTYzMw==&mid=206917578&scene=6&__biz=MjM5MTA3MDgwOQ==&sn=2f3aa7404068caa85da234877d5ca955&idx=3&sid=AfmRXXW4B0pM5W9OfVX0k8p5',
+        header: {
+            Referer:'http://mp.weixin.qq.com/s?3rd=MzA3MDU4NTYzMw==&mid=206917578&scene=6&__biz=MjM5MTA3MDgwOQ==&sn=2f3aa7404068caa85da234877d5ca955&idx=3&sid=AfmRXXW4B0pM5W9OfVX0k8p5'
         }
     }).then(function(response){
+        res.writeHead(200, response.headers);
         res.write(response.buffer);
         res.end();
     }).catch(function(err){
