@@ -27,6 +27,15 @@
 
             $('iframe').attr("width", "100%");
             $('iframe').attr("height", "100%");
+
+            $('iframe').each(function(){
+                var src = $(this).attr("src");
+                if (src && src.indexOf("http://v.qq.com/iframe")>=0) {
+                    src = src.replace(/width=\d*/gi, '');
+                    src = src.replace(/height=\d*/gi, '');
+                    $(this).attr("src", src);
+                }
+            });
             
             if (!isInHoopeng()) {
                 $('#downloadDiv').css('display', 'block');
