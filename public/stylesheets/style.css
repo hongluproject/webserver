@@ -2,7 +2,7 @@ html, body { margin: 0; padding: 0; }
 html, body, button, input, select, textarea { color: #3f484f; font: 14px/24px "Oxygen", Arial, "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", "STHeiti", "WenQuanYi Micro Hei", SimSun, sans-serif; -webkit-font-smoothing: antialiased; }
 body { background: #f9f8f7; }
 img, input { vertical-align: middle; }
-img, a { border: none; padding-top:10px; padding-bottom: 10px }
+img, a { border: none }
 a, a:hover { text-decoration: none; outline: none; }
 p { margin: 0; }
 .clear { clear: both; }

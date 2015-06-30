@@ -115,6 +115,7 @@ app.get('/news/:objId', function(req, res) {
                 tagName:hpTags[tagIds[i]]?hpTags[tagIds[i]].get('tag_name'):""
             });
         }
+        renderObj.isDenv = common.isSahalaDevEnv();
         res.setHeader('cache-control','public, max-age=1800');
         res.render('article', renderObj);
         console.info('render article %s', articleId);
@@ -547,14 +548,19 @@ app.get('/getTags', function(req, res){
 });
 
 app.get('/proxy', function(req, res){
-    var sourceURL = req.param('url');
+    var sourceURL = req.url;
+    sourceURL = sourceURL.replace(/\/proxy\?url=/gi, '');
     console.info('sourceURL is %s', sourceURL);
 
     AV.Cloud.httpRequest({
         method: 'GET',
-        url: sourceURL
+        url: sourceURL,
+        headers:{
+            Referer:'http://mp.weixin.qq.com/s?3rd=MzA3MDU4NTYzMw==&mid=206917578&scene=6&__biz=MjM5MTA3MDgwOQ==&sn=2f3aa7404068caa85da234877d5ca955&idx=3&sid=AfmRXXW4B0pM5W9OfVX0k8p5',
+        }
     }).then(function(response){
         res.write(response.buffer);
+        res.end();
     }).catch(function(err){
         console.error(err);
     });
