@@ -173,7 +173,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var updateInfo = {
         android:{
-            latestVersion:'1.1.6',
+            latestVersion:'1.1.7',
             needUpdate:true
         },
         iPhone:{
@@ -193,14 +193,13 @@ AV.Cloud.define('checkUpdate', function(req, res) {
                         (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
-            message:'- 动态页面调整，可以看到点赞的用户啦\n' +
-            '- 精选增加按标签筛选功能\n' +
-            '- 新增活动报名信息保存功能\n' +
+            message:'- 新增活动“现场报名”功能，扫二维码或者搜索用户名的方式把用户拉进你的活动里，方便使用活动导航、签到等工具\n' +
+            '- 活动、部落、用户都开通二维码了，分享邀请更方便\n' +
             '- 修复一些体验上的问题\n',
-            clickURL:'http://www.imsahala.com/sahala_1.1.6.apk',
+            clickURL:'http://www.imsahala.com/sahala_1.1.7.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'d51a6ee135752558ce651dda55c40df3',
-            fileSize:10457242,
+            packageMd5:'603e0535a702cc32f63e990181749579',
+            fileSize:10540477,
             launchOpt:launchOpt
         });
     } else {
