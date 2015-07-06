@@ -198,8 +198,8 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '- 修复一些体验上的问题\n',
             clickURL:'http://www.imsahala.com/sahala_1.1.7.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'603e0535a702cc32f63e990181749579',
-            fileSize:10540477,
+            packageMd5:'2458c5bc51760094c70734abbfc1c7fd',
+            fileSize:10539973,
             launchOpt:launchOpt
         });
     } else {
