@@ -2094,3 +2094,23 @@ AV.Cloud.define('updateActivity', function(req, res){
         res.success();
     });
 });
+
+/*
+    导出活动报名表
+    函数名:exportActivityUser
+    参数：
+        activityId:objectId 活动ID
+        targetEmail:string  邮箱地址
+    返回：
+        success or fail
+ */
+AV.Cloud.define('exportActivityUser', function(req, res){
+    var activityId = req.params.activityId;
+    var targetEmail = req.params.targetEmail;
+
+    var query = new AV.Query('ActivityUser');
+    query.equalTo('activity_id', AV.Object.createWithoutData('Activity', activityId));
+    query.include('signupId');
+    query.ascending('createdAt');
+    res.success();
+});

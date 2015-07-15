@@ -173,7 +173,7 @@ AV.Cloud.define('checkUpdate', function(req, res) {
 
     var updateInfo = {
         android:{
-            latestVersion:'1.1.6',
+            latestVersion:'1.1.7',
             needUpdate:true
         },
         iPhone:{
@@ -197,10 +197,10 @@ AV.Cloud.define('checkUpdate', function(req, res) {
             '- 精选增加按标签筛选功能\n' +
             '- 新增活动报名信息保存功能\n' +
             '- 修复一些体验上的问题\n',
-            clickURL:'http://www.imsahala.com/sahala_1.1.6.apk',
+            clickURL:'http://www.imsahala.com/sahala_1.1.7.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'d51a6ee135752558ce651dda55c40df3',
-            fileSize:10457242,
+            packageMd5:'f298ff3cb87250d53280668789e41e8a',
+            fileSize:10984845,
             launchOpt:launchOpt
         });
     } else {
