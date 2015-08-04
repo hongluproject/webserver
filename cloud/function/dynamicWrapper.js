@@ -1048,6 +1048,7 @@ AV.Cloud.define('getDynamicDetail', function(req, res){
             return AV.Promise.error(new AV.Error(111, '动态不存在!'))
         }
         retDynamic = dynamic;
+        common.formatDynamic(retDynamic);
 
         var promises = [];
         promises.push(common.getLatestLikesOfDynamic(userId, dynamic));

@@ -1144,6 +1144,7 @@ exports.findDynamicAndReturn = function(userId, currUser, dynamicType, query, re
     var getLatestLikesOfDynamic = this.getLatestLikesOfDynamic;
     var getCommentDynamicResult = this.getCommentDynamicResult;
     var tagNameFromId = this.tagNameFromId;
+    var formatDynamic = this.formatDynamic;
 
     query.find().then(function(results){
         if (dynamicType == 'followeDynamic') {
@@ -1205,6 +1206,7 @@ exports.findDynamicAndReturn = function(userId, currUser, dynamicType, query, re
         var retDynamic = [];
         var i = 0;
         _.each(dynamics, function(dynamic){
+            formatDynamic(dynamic);
 
             var userOfDynamic = dynamic.get('user_id');
             var activity = dynamic.get('activityId');
@@ -1276,4 +1278,39 @@ exports.getActivityIntroUrl = function(activityId) {
     }
 
     return 'http://api.imsahala.com/activityIntro/'.concat(activityId);
+}
+
+/*
+    七牛 *.qiniudn.com域名失效，将动态里面的域名替换为7qnct0.com1.z0.glb.clouddn.com
+ */
+exports.formatDynamic = function(dynamic) {
+    var thumbs = dynamic.get('thumbs');
+    if (_.isArray(thumbs) && thumbs.length>0) {
+        for (var i in thumbs) {
+            var image = thumbs[i];
+            image = image.replace(/hoopeng.qiniudn.com/gi, '7qnct0.com1.z0.glb.clouddn.com');
+            thumbs[i] = image;
+        }
+
+        dynamic.set('thumbs', thumbs);
+    }
+}
+
+exports.formatActivity = function(activity) {
+    var indexThumb = activity.get('index_thumb_image');
+    if (indexThumb && indexThumb.length>0) {
+        indexThumb = indexThumb.replace(/hoopeng.qiniudn.com/gi, '7qnct0.com1.z0.glb.clouddn.com');
+        activity.set('index_thumb_image', indexThumb);
+    }
+
+    var thumbs = activity.get('thumb_images');
+    if (_.isArray(thumbs) && thumbs.length>0) {
+        for (var i in thumbs) {
+            var image = thumbs[i];
+            image = image.replace(/hoopeng.qiniudn.com/gi, '7qnct0.com1.z0.glb.clouddn.com');
+            thumbs[i] = image;
+        }
+
+        activity.set('thumb_images', thumbs);
+    }
 }
