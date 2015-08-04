@@ -193,14 +193,13 @@ AV.Cloud.define('checkUpdate', function(req, res) {
                         (compareVersion(updateInfo.android.latestVersion, clientVersion)>0),
             showAdForIdfa:true,
             updateType:1,
-            message:'- 动态页面调整，可以看到点赞的用户啦\n' +
-            '- 精选增加按标签筛选功能\n' +
-            '- 新增活动报名信息保存功能\n' +
+            message:'- 新增活动“现场报名”功能，扫二维码或者搜索用户名的方式把用户拉进你的活动里，方便使用活动导航、签到等工具\n' +
+            '- 活动、部落、用户都开通二维码了，分享邀请更方便\n' +
             '- 修复一些体验上的问题\n',
             clickURL:'http://www.imsahala.com/sahala_1.1.7.apk',
             lastVersion:updateInfo.android.latestVersion,
-            packageMd5:'f298ff3cb87250d53280668789e41e8a',
-            fileSize:10984845,
+            packageMd5:'2458c5bc51760094c70734abbfc1c7fd',
+            fileSize:10539973,
             launchOpt:launchOpt
         });
     } else {

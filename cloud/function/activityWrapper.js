@@ -514,6 +514,7 @@ AV.Cloud.define('getActivityDetail', function(req, res){
         }
 
         extraData.tagNames = common.tagNameFromId(currActivity.get('tags'));
+        common.formatActivity(currActivity);
         res.success({
             activity:currActivity,
             extra:extraData
@@ -678,6 +679,7 @@ AV.Cloud.define('getActivityDetail2', function(req, res){
 
         extraData.tagNames = common.tagNameFromId(currActivity.get('tags'));
         extraData.introUrl = common.getActivityIntroUrl(activityId);
+        common.formatActivity(currActivity);
         res.success({
             activity:currActivity._toFullJSON(),
             extra:extraData
@@ -1415,6 +1417,7 @@ AV.Cloud.define('getActivityList', function(req, res){
             _.each(results, function(activity){
                 var retItem = {};
                 activities.push(activity._toPointer());
+                common.formatActivity(activity);
                 retItem.activity = activity._toFullJSON();
                 retItem.activity.price = retItem.activity.price || '0.00';
                 var joinUsers = retItem.activity.joinUsers || [];
