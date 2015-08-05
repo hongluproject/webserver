@@ -1284,6 +1284,7 @@ exports.getActivityIntroUrl = function(activityId) {
     七牛 *.qiniudn.com域名失效，将动态里面的域名替换为7qnct0.com1.z0.glb.clouddn.com
  */
 exports.formatDynamic = function(dynamic) {
+    /* 七牛域名已经恢复，暂时屏蔽
     var thumbs = dynamic.get('thumbs');
     if (_.isArray(thumbs) && thumbs.length>0) {
         for (var i in thumbs) {
@@ -1294,9 +1295,11 @@ exports.formatDynamic = function(dynamic) {
 
         dynamic.set('thumbs', thumbs);
     }
+    */
 }
 
 exports.formatActivity = function(activity) {
+    /* 七牛域名已经恢复，暂时屏蔽
     var indexThumb = activity.get('index_thumb_image');
     if (indexThumb && indexThumb.length>0) {
         indexThumb = indexThumb.replace(/hoopeng.qiniudn.com/gi, '7qnct0.com1.z0.glb.clouddn.com');
@@ -1313,4 +1316,5 @@ exports.formatActivity = function(activity) {
 
         activity.set('thumb_images', thumbs);
     }
+    */
 }
